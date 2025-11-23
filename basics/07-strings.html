@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串操作详解 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>字符串操作详解</h1>
+            
+            <h2>概述</h2>
+            <p>字符串是 JavaScript 中最常用的数据类型之一。掌握字符串的各种操作方法对日常开发至关重要。</p>
+            
+            <h2>一、字符串基础</h2>
+            
+            <h3>1.1 创建字符串</h3>
+            <pre><code>// 字面量
+const str1 = 'Hello';
+const str2 = "World";
+
+// 模板字符串
+const str3 = `Hello ${name}`;
+
+// 构造函数（不推荐）
+const str4 = new String('Hello');</code></pre>
+            
+            <h3>1.2 字符串特性</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>不可变</strong>：字符串创建后无法修改</li>
+                    <li><strong>类数组</strong>：可以通过索引访问字符</li>
+                    <li><strong>UTF-16 编码</strong>：每个字符占用 2 字节</li>
+                </ul>
+            </div>
+            
+            <h2>二、字符串访问</h2>
+            
+            <h3>2.1 charAt() 和 []</h3>
+            <pre><code>const str = 'Hello';
+
+str.charAt(0);  // 'H'
+str[0];         // 'H'
+
+str.charAt(10);  // ''（空字符串）
+str[10];         // undefined</code></pre>
+            
+            <h3>2.2 charCodeAt() 和 codePointAt()</h3>
+            <pre><code>const str = 'ABC';
+
+str.charCodeAt(0);   // 65（A 的 Unicode 编码）
+str.codePointAt(0);  // 65
+
+// 处理 emoji 等需要两个码点的字符
+'😀'.charCodeAt(0);   // 55357（不完整）
+'😀'.codePointAt(0);  // 128512（完整）</code></pre>
+            
+            <h2>三、字符串搜索</h2>
+            
+            <h3>3.1 indexOf() / lastIndexOf()</h3>
+            <pre><code>const str = 'Hello World';
+
+str.indexOf('o');        // 4（第一个出现的位置）
+str.lastIndexOf('o');    // 7（最后一个出现的位置）
+str.indexOf('x');        // -1（不存在）
+
+// 指定起始位置
+str.indexOf('o', 5);     // 7</code></pre>
+            
+            <h3>3.2 includes()</h3>
+            <pre><code>const str = 'Hello World';
+
+str.includes('World');   // true
+str.includes('world');   // false（区分大小写）
+str.includes('o', 5);    // true（从索引5开始）</code></pre>
+            
+            <h3>3.3 startsWith() / endsWith()</h3>
+            <pre><code>const str = 'Hello World';
+
+str.startsWith('Hello'); // true
+str.endsWith('World');   // true
+
+// 指定范围
+str.startsWith('World', 6); // true</code></pre>
+            
+            <h3>3.4 search()</h3>
+            <p>使用正则表达式搜索：</p>
+            <pre><code>const str = 'Hello World 123';
+
+str.search(/\d/);     // 12（第一个数字的位置）
+str.search(/world/i); // 6（不区分大小写）</code></pre>
+            
+            <h2>四、字符串提取</h2>
+            
+            <h3>4.1 slice()</h3>
+            <pre><code>const str = 'Hello World';
+
+str.slice(0, 5);   // 'Hello'
+str.slice(6);      // 'World'
+str.slice(-5);     // 'World'（从后往前）
+str.slice(-5, -1); // 'Worl'</code></pre>
+            
+            <h3>4.2 substring()</h3>
+            <pre><code>const str = 'Hello World';
+
+str.substring(0, 5);  // 'Hello'
+str.substring(6);     // 'World'
+
+// 与 slice 的区别：不支持负数
+str.substring(-5);    // 'Hello World'（负数视为0）</code></pre>
+            
+            <h3>4.3 substr()（已废弃）</h3>
+            <pre><code>// 不推荐使用
+str.substr(0, 5);  // 'Hello'（第二个参数是长度）</code></pre>
+            
+            <h2>五、字符串分割和连接</h2>
+            
+            <h3>5.1 split()</h3>
+            <pre><code>const str = 'apple,banana,orange';
+
+str.split(',');      // ['apple', 'banana', 'orange']
+str.split(',', 2);   // ['apple', 'banana']（限制数量）
+str.split('');       // ['a', 'p', 'p', 'l', 'e', ...]
+
+// 使用正则
+'a1b2c3'.split(/\d/); // ['a', 'b', 'c', '']</code></pre>
+            
+            <h3>5.2 concat()</h3>
+            <pre><code>const str1 = 'Hello';
+const str2 = 'World';
+
+str1.concat(' ', str2);  // 'Hello World'
+
+// 推荐使用模板字符串或 +
+`${str1} ${str2}`;       // 'Hello World'
+str1 + ' ' + str2;       // 'Hello World'</code></pre>
+            
+            <h2>六、字符串转换</h2>
+            
+            <h3>6.1 大小写转换</h3>
+            <pre><code>const str = 'Hello World';
+
+str.toLowerCase();      // 'hello world'
+str.toUpperCase();      // 'HELLO WORLD'
+
+// 本地化方法
+str.toLocaleLowerCase();
+str.toLocaleUpperCase();</code></pre>
+            
+            <h3>6.2 trim()</h3>
+            <pre><code>const str = '  Hello World  ';
+
+str.trim();       // 'Hello World'
+str.trimStart();  // 'Hello World  '
+str.trimEnd();    // '  Hello World'
+
+// 别名
+str.trimLeft();   // 同 trimStart
+str.trimRight();  // 同 trimEnd</code></pre>
+            
+            <h3>6.3 repeat()</h3>
+            <pre><code>'abc'.repeat(3);    // 'abcabcabc'
+'*'.repeat(10);     // '**********'</code></pre>
+            
+            <h3>6.4 padStart() / padEnd()</h3>
+            <pre><code>const str = '5';
+
+str.padStart(3, '0');    // '005'
+str.padEnd(3, '0');      // '500'
+
+'abc'.padStart(10, '-'); // '-------abc'</code></pre>
+            
+            <h2>七、字符串替换</h2>
+            
+            <h3>7.1 replace()</h3>
+            <pre><code>const str = 'Hello World';
+
+// 只替换第一个
+str.replace('o', 'O');         // 'HellO World'
+
+// 使用正则替换所有
+str.replace(/o/g, 'O');        // 'HellO WOrld'
+
+// 使用函数
+str.replace(/\w+/g, match => match.toUpperCase());
+// 'HELLO WORLD'</code></pre>
+            
+            <h3>7.2 replaceAll() (ES2021)</h3>
+            <pre><code>const str = 'Hello World';
+
+str.replaceAll('o', 'O');  // 'HellO WOrld'
+
+// 也可以使用正则
+str.replaceAll(/o/g, 'O'); // 'HellO WOrld'</code></pre>
+            
+            <h2>八、字符串匹配</h2>
+            
+            <h3>8.1 match()</h3>
+            <pre><code>const str = 'Hello World 123';
+
+// 不带 g 标志
+str.match(/\d+/);
+// ['123', index: 12, input: '...']
+
+// 带 g 标志
+str.match(/\w+/g);
+// ['Hello', 'World', '123']</code></pre>
+            
+            <h3>8.2 matchAll() (ES2020)</h3>
+            <pre><code>const str = 'test1 test2 test3';
+const matches = str.matchAll(/test(\d)/g);
+
+for (const match of matches) {
+    console.log(match[0], match[1]);
+}
+// test1 1
+// test2 2
+// test3 3</code></pre>
+            
+            <h2>九、模板字符串</h2>
+            
+            <h3>9.1 基本用法</h3>
+            <pre><code>const name = 'Alice';
+const age = 25;
+
+const msg = `Hello, ${name}! You are ${age} years old.`;
+
+// 表达式
+const total = `Total: ${price * quantity}`;
+
+// 函数调用
+const result = `Result: ${calculate(a, b)}`;</code></pre>
+            
+            <h3>9.2 多行字符串</h3>
+            <pre><code>const html = `
+  &lt;div&gt;
+    &lt;h1&gt;${title}&lt;/h1&gt;
+    &lt;p&gt;${content}&lt;/p&gt;
+  &lt;/div&gt;
+`;</code></pre>
+            
+            <h3>9.3 标签模板</h3>
+            <pre><code>function highlight(strings, ...values) {
+    return strings.reduce((result, str, i) => {
+        return result + str + (values[i] ? `<b>${values[i]}</b>` : '');
+    }, '');
+}
+
+const name = 'Alice';
+const result = highlight`Hello, ${name}!`;
+// "Hello, <b>Alice</b>!"</code></pre>
+            
+            <h2>十、Unicode 和 Emoji</h2>
+            
+            <h3>10.1 Unicode 转义</h3>
+            <pre><code>'\u0041';        // 'A'
+'\u{1F600}';     // '😀'
+
+String.fromCharCode(65);           // 'A'
+String.fromCodePoint(0x1F600);     // '😀'</code></pre>
+            
+            <h3>10.2 处理 Emoji</h3>
+            <pre><code>const emoji = '😀';
+
+emoji.length;              // 2（占用2个码点）
+[...emoji].length;         // 1（正确的字符数）
+
+// 遍历
+for (const char of emoji) {
+    console.log(char);     // '😀'
+}</code></pre>
+            
+            <h2>十一、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用模板字符串</strong>：代替字符串拼接</li>
+                    <li><strong>使用 includes</strong>：代替 indexOf !== -1</li>
+                    <li><strong>使用 startsWith/endsWith</strong>：代替 indexOf === 0</li>
+                    <li><strong>注意不可变性</strong>：方法返回新字符串</li>
+                    <li><strong>处理 Unicode</strong>：使用扩展运算符或 for...of</li>
+                    <li><strong>性能考虑</strong>：大量拼接使用数组 join</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-string-objects" target="_blank">ECMAScript - String Objects</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String" target="_blank">MDN - String</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="06-typed-array.html" class="nav-link prev">上一节：TypedArray</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="07-regex.html" class="nav-link next">下一节：正则表达式</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：字符串访问和搜索</h3>
+                <div class="code-block">
+                    <pre><code>const str = 'Hello World';
+
+// 访问字符
+console.log('charAt(0):', str.charAt(0));
+console.log('[0]:', str[0]);
+console.log('charCodeAt(0):', str.charCodeAt(0));
+
+// 搜索
+console.log('\nindexOf("o"):', str.indexOf('o'));
+console.log('lastIndexOf("o"):', str.lastIndexOf('o'));
+console.log('includes("World"):', str.includes('World'));
+
+// startsWith / endsWith
+console.log('\nstartsWith("Hello"):', str.startsWith('Hello'));
+console.log('endsWith("World"):', str.endsWith('World'));
+
+// Emoji 处理
+const emoji = '😀👍';
+console.log('\nemoji.length:', emoji.length);
+console.log('[...emoji].length:', [...emoji].length);
+console.log('展开:', [...emoji]);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：字符串提取</h3>
+                <div class="code-block">
+                    <pre><code>const str = 'Hello World';
+
+// slice
+console.log('slice(0, 5):', str.slice(0, 5));
+console.log('slice(6):', str.slice(6));
+console.log('slice(-5):', str.slice(-5));
+console.log('slice(-5, -1):', str.slice(-5, -1));
+
+// substring
+console.log('\nsubstring(0, 5):', str.substring(0, 5));
+console.log('substring(6):', str.substring(6));
+
+// split
+const csv = 'apple,banana,orange';
+console.log('\nsplit(","):', csv.split(','));
+console.log('split(",", 2):', csv.split(',', 2));
+
+const text = 'a1b2c3';
+console.log('split(/\\d/):', text.split(/\d/));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：字符串转换</h3>
+                <div class="code-block">
+                    <pre><code>const str = 'Hello World';
+
+// 大小写
+console.log('toLowerCase():', str.toLowerCase());
+console.log('toUpperCase():', str.toUpperCase());
+
+// trim
+const padded = '  Hello World  ';
+console.log('\ntrim():', `"${padded.trim()}"`);
+console.log('trimStart():', `"${padded.trimStart()}"`);
+console.log('trimEnd():', `"${padded.trimEnd()}"`);
+
+// repeat
+console.log('\nrepeat(3):', 'abc'.repeat(3));
+console.log('repeat(5):', '*'.repeat(5));
+
+// padStart / padEnd
+const num = '5';
+console.log('\npadStart(3, "0"):', num.padStart(3, '0'));
+console.log('padEnd(3, "0"):', num.padEnd(3, '0'));
+
+const text = 'abc';
+console.log('padStart(10, "-"):', text.padStart(10, '-'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：字符串替换</h3>
+                <div class="code-block">
+                    <pre><code>const str = 'Hello World';
+
+// replace（只替换第一个）
+console.log('replace("o", "O"):', str.replace('o', 'O'));
+
+// 使用正则替换所有
+console.log('replace(/o/g, "O"):', str.replace(/o/g, 'O'));
+
+// 使用函数
+const result1 = str.replace(/\w+/g, match => match.toUpperCase());
+console.log('replace with func:', result1);
+
+// replaceAll（ES2021）
+console.log('\nreplaceAll("o", "O"):', str.replaceAll('o', 'O'));
+
+// 实用：驼峰转下划线
+function toSnakeCase(str) {
+    return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+}
+console.log('\ntoSnakeCase:', toSnakeCase('helloWorldTest'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：模板字符串</h3>
+                <div class="code-block">
+                    <pre><code>const name = 'Alice';
+const age = 25;
+const city = 'Beijing';
+
+// 基本插值
+const msg = `Hello, ${name}!`;
+console.log(msg);
+
+// 表达式
+const info = `${name} is ${age} years old and lives in ${city}.`;
+console.log(info);
+
+// 计算
+const price = 100;
+const quantity = 3;
+console.log(`Total: $${price * quantity}`);
+
+// 函数调用
+function greet(name) {
+    return `Hi, ${name}!`;
+}
+console.log(`Message: ${greet('Bob')}`);
+
+// 多行字符串
+const html = `
+  <div>
+    <h1>${name}</h1>
+    <p>Age: ${age}</p>
+  </div>
+`;
+console.log('\nHTML:', html);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 技巧1：首字母大写
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+console.log('capitalize:', capitalize('hello'));
+
+// 技巧2：反转字符串
+function reverse(str) {
+    return [...str].reverse().join('');
+}
+console.log('reverse:', reverse('hello'));
+
+// 技巧3：判断回文
+function isPalindrome(str) {
+    const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return cleaned === reverse(cleaned);
+}
+console.log('\nisPalindrome("A man a plan a canal Panama"):', 
+    isPalindrome('A man a plan a canal Panama'));
+
+// 技巧4：截断字符串
+function truncate(str, maxLen) {
+    return str.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+}
+console.log('\ntruncate:', truncate('Hello World', 8));
+
+// 技巧5：统计字符
+function countChars(str) {
+    return [...str].reduce((acc, char) => {
+        acc[char] = (acc[char] || 0) + 1;
+        return acc;
+    }, {});
+}
+console.log('\ncountChars:', countChars('hello'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

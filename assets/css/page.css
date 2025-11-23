@@ -1,0 +1,318 @@
+/* 知识点页面专用样式 */
+
+/* ==================== 页面布局 ==================== */
+.page-layout {
+    display: grid;
+    grid-template-columns: 58% 40%;
+    gap: 2%;
+    max-width: 1600px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+@media (max-width: 1200px) {
+    .page-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .code-panel {
+        position: relative !important;
+        top: 0 !important;
+    }
+}
+
+.doc-panel {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    overflow-y: auto;
+    max-height: calc(100vh - 8rem);
+}
+
+.code-panel {
+    background: var(--bg-code);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    color: #e2e8f0;
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+}
+
+/* ==================== 文档样式 ==================== */
+.doc-panel h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.doc-panel h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.doc-panel h3 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.doc-panel p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+}
+
+.doc-panel ul, .doc-panel ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.doc-panel li {
+    margin-bottom: 0.5rem;
+}
+
+.doc-panel code {
+    background: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+    color: #dc2626;
+}
+
+.doc-panel pre {
+    background: var(--bg-code);
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.doc-panel pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.doc-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.doc-panel th,
+.doc-panel td {
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.doc-panel th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+}
+
+/* 提示框样式 */
+.note, .warning, .info, .tip, .spec {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin: 1rem 0;
+    border-left: 4px solid;
+}
+
+.note {
+    background: #eff6ff;
+    border-color: var(--primary-color);
+}
+
+.note::before {
+    content: "📝 注意：";
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.warning {
+    background: #fef3c7;
+    border-color: var(--warning-color);
+}
+
+.warning::before {
+    content: "⚠️ 警告：";
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.info {
+    background: #f0fdf4;
+    border-color: var(--success-color);
+}
+
+.info::before {
+    content: "💡 提示：";
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.tip {
+    background: #faf5ff;
+    border-color: var(--secondary-color);
+}
+
+.tip::before {
+    content: "✨ 技巧：";
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.spec {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.spec::before {
+    content: "📖 规范：";
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* ==================== 代码示例样式 ==================== */
+.code-example {
+    margin-bottom: 2rem;
+}
+
+.code-example h3 {
+    color: #60a5fa;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.code-block {
+    background: #0f172a;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.code-block pre {
+    margin: 0;
+    overflow-x: auto;
+}
+
+.code-block code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+}
+
+.run-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    margin-bottom: 0.5rem;
+}
+
+.run-btn:hover {
+    background: #047857;
+    transform: translateY(-1px);
+}
+
+.output {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-top: 0.5rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.output-line {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #1e293b;
+}
+
+.output-line:last-child {
+    border-bottom: none;
+}
+
+.output-line.log {
+    color: #94a3b8;
+}
+
+.output-line.error {
+    color: #f87171;
+}
+
+.output-line.warn {
+    color: #fbbf24;
+}
+
+.output-line.info {
+    color: #60a5fa;
+}
+
+/* ==================== 导航链接 ==================== */
+.nav-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.nav-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nav-link.prev::before {
+    content: "← ";
+}
+
+.nav-link.next::after {
+    content: " →";
+}
+
+.nav-link.home {
+    background: var(--bg-secondary);
+}
+
+/* ==================== 语法高亮 ==================== */
+.keyword { color: #c678dd; }
+.string { color: #98c379; }
+.comment { color: #5c6370; font-style: italic; }
+.function { color: #61afef; }
+.number { color: #d19a66; }
+.operator { color: #56b6c2; }

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数组高级操作 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>数组高级操作</h1>
+            
+            <h2>概述</h2>
+            <p>除了基本的高阶方法，JavaScript 数组还提供了许多高级操作和技巧，掌握这些可以让代码更加优雅和高效。</p>
+            
+            <h2>一、数组解构</h2>
+            
+            <h3>1.1 基本解构</h3>
+            <pre><code>const arr = [1, 2, 3, 4, 5];
+
+// 基本解构
+const [a, b, c] = arr;
+console.log(a, b, c);  // 1 2 3
+
+// 跳过元素
+const [first, , third] = arr;
+console.log(first, third);  // 1 3
+
+// 剩余元素
+const [head, ...tail] = arr;
+console.log(head);  // 1
+console.log(tail);  // [2, 3, 4, 5]</code></pre>
+            
+            <h3>1.2 默认值</h3>
+            <pre><code>const [a = 10, b = 20] = [1];
+console.log(a, b);  // 1 20</code></pre>
+            
+            <h3>1.3 交换变量</h3>
+            <pre><code>let x = 1, y = 2;
+[x, y] = [y, x];
+console.log(x, y);  // 2 1</code></pre>
+            
+            <h2>二、扩展运算符（...）</h2>
+            
+            <h3>2.1 复制数组</h3>
+            <pre><code>const original = [1, 2, 3];
+const copy = [...original];
+
+// 浅拷贝
+copy.push(4);
+console.log(original);  // [1, 2, 3]
+console.log(copy);      // [1, 2, 3, 4]</code></pre>
+            
+            <h3>2.2 合并数组</h3>
+            <pre><code>const arr1 = [1, 2, 3];
+const arr2 = [4, 5, 6];
+const merged = [...arr1, ...arr2];
+// [1, 2, 3, 4, 5, 6]</code></pre>
+            
+            <h3>2.3 展开字符串</h3>
+            <pre><code>const str = 'hello';
+const chars = [...str];
+// ['h', 'e', 'l', 'l', 'o']</code></pre>
+            
+            <h3>2.4 函数参数</h3>
+            <pre><code>function sum(...numbers) {
+    return numbers.reduce((a, b) => a + b, 0);
+}
+
+sum(1, 2, 3, 4, 5);  // 15</code></pre>
+            
+            <h2>三、数组方法组合</h2>
+            
+            <h3>3.1 at() 方法（ES2022）</h3>
+            <p>支持负索引的数组访问：</p>
+            
+            <pre><code>const arr = [1, 2, 3, 4, 5];
+
+arr.at(0);   // 1
+arr.at(-1);  // 5（最后一个）
+arr.at(-2);  // 4（倒数第二个）</code></pre>
+            
+            <h3>3.2 with() 方法（ES2023）</h3>
+            <p>不改变原数组的元素替换：</p>
+            
+            <pre><code>const arr = [1, 2, 3, 4, 5];
+const newArr = arr.with(2, 99);
+// arr: [1, 2, 3, 4, 5]（不变）
+// newArr: [1, 2, 99, 4, 5]</code></pre>
+            
+            <h3>3.3 copyWithin()</h3>
+            <p>复制数组的一部分到另一个位置：</p>
+            
+            <pre><code>const arr = [1, 2, 3, 4, 5];
+arr.copyWithin(0, 3);  // 从索引3开始复制到索引0
+// [4, 5, 3, 4, 5]</code></pre>
+            
+            <h3>3.4 fill()</h3>
+            <p>填充数组：</p>
+            
+            <pre><code>const arr = new Array(5).fill(0);
+// [0, 0, 0, 0, 0]
+
+arr.fill(1, 2, 4);  // 从索引2到4填充1
+// [0, 0, 1, 1, 0]</code></pre>
+            
+            <h2>四、数组搜索和判断</h2>
+            
+            <h3>4.1 indexOf() / lastIndexOf()</h3>
+            <pre><code>const arr = [1, 2, 3, 2, 1];
+
+arr.indexOf(2);      // 1（第一个出现的位置）
+arr.lastIndexOf(2);  // 3（最后一个出现的位置）
+arr.indexOf(5);      // -1（不存在）</code></pre>
+            
+            <h3>4.2 Array.isArray()</h3>
+            <pre><code>Array.isArray([]);        // true
+Array.isArray({});        // false
+Array.isArray('array');   // false</code></pre>
+            
+            <h2>五、数组转换</h2>
+            
+            <h3>5.1 Array.from()</h3>
+            <p>从类数组对象或可迭代对象创建数组：</p>
+            
+            <pre><code>// 从字符串
+Array.from('hello');  // ['h', 'e', 'l', 'l', 'o']
+
+// 从 Set
+Array.from(new Set([1, 2, 2, 3]));  // [1, 2, 3]
+
+// 从类数组对象
+Array.from({ length: 3, 0: 'a', 1: 'b', 2: 'c' });
+// ['a', 'b', 'c']
+
+// 使用映射函数
+Array.from([1, 2, 3], x => x * 2);  // [2, 4, 6]
+
+// 生成数字序列
+Array.from({ length: 5 }, (_, i) => i);
+// [0, 1, 2, 3, 4]</code></pre>
+            
+            <h3>5.2 Array.of()</h3>
+            <p>创建包含参数的数组：</p>
+            
+            <pre><code>Array.of(1, 2, 3);     // [1, 2, 3]
+Array.of(7);           // [7]（不同于 new Array(7)）
+
+// 对比
+new Array(7);          // [空 × 7]
+Array.of(7);           // [7]</code></pre>
+            
+            <h2>六、数组分组（ES2024）</h2>
+            
+            <h3>6.1 Object.groupBy()</h3>
+            <pre><code>const people = [
+    { name: 'Alice', age: 25 },
+    { name: 'Bob', age: 30 },
+    { name: 'Charlie', age: 25 }
+];
+
+const grouped = Object.groupBy(people, p => p.age);
+// {
+//   25: [{ name: 'Alice', age: 25 }, { name: 'Charlie', age: 25 }],
+//   30: [{ name: 'Bob', age: 30 }]
+// }</code></pre>
+            
+            <h3>6.2 Map.groupBy()</h3>
+            <pre><code>const grouped = Map.groupBy(people, p => p.age);
+// Map {
+//   25 => [{ name: 'Alice', age: 25 }, { name: 'Charlie', age: 25 }],
+//   30 => [{ name: 'Bob', age: 30 }]
+// }</code></pre>
+            
+            <h2>七、多维数组</h2>
+            
+            <h3>7.1 创建二维数组</h3>
+            <pre><code>// 错误方式（引用相同）
+const wrong = new Array(3).fill([]);
+wrong[0].push(1);  // 所有行都被修改！
+
+// 正确方式
+const matrix = Array.from({ length: 3 }, () => []);
+const matrix2 = Array(3).fill(null).map(() => []);</code></pre>
+            
+            <h3>7.2 遍历二维数组</h3>
+            <pre><code>const matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+];
+
+// 嵌套循环
+for (let i = 0; i < matrix.length; i++) {
+    for (let j = 0; j < matrix[i].length; j++) {
+        console.log(matrix[i][j]);
+    }
+}
+
+// 使用 flat
+matrix.flat();  // [1, 2, 3, 4, 5, 6, 7, 8, 9]</code></pre>
+            
+            <h2>八、数组性能优化</h2>
+            
+            <h3>8.1 避免稀疏数组</h3>
+            <div class="warning">
+                <pre><code>// 不推荐
+const sparse = new Array(1000);
+sparse[999] = 1;
+
+// 推荐
+const dense = Array(1000).fill(0);
+dense[999] = 1;</code></pre>
+            </div>
+            
+            <h3>8.2 提前分配容量</h3>
+            <pre><code>// 如果知道数组大小，提前分配
+const arr = new Array(1000);
+
+// 避免频繁扩容
+for (let i = 0; i < 1000; i++) {
+    arr[i] = i;
+}</code></pre>
+            
+            <h3>8.3 使用 for 循环代替方法链</h3>
+            <div class="tip">
+                对于大数组和性能敏感的场景，传统 for 循环比方法链更快：
+                
+                <pre><code>// 方法链（可读性好）
+const result = largeArray
+    .filter(x => x > 10)
+    .map(x => x * 2)
+    .reduce((a, b) => a + b, 0);
+
+// for 循环（性能好）
+let result = 0;
+for (let i = 0; i < largeArray.length; i++) {
+    if (largeArray[i] > 10) {
+        result += largeArray[i] * 2;
+    }
+}</code></pre>
+            </div>
+            
+            <h2>九、实用技巧</h2>
+            
+            <h3>9.1 数组去重</h3>
+            <pre><code>// 使用 Set
+const unique = [...new Set(arr)];
+
+// 使用 filter
+const unique = arr.filter((item, index) => 
+    arr.indexOf(item) === index
+);</code></pre>
+            
+            <h3>9.2 数组打乱</h3>
+            <pre><code>function shuffle(arr) {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}</code></pre>
+            
+            <h3>9.3 数组分组</h3>
+            <pre><code>function chunk(arr, size) {
+    return Array.from(
+        { length: Math.ceil(arr.length / size) },
+        (_, i) => arr.slice(i * size, i * size + size)
+    );
+}
+
+chunk([1, 2, 3, 4, 5, 6, 7], 3);
+// [[1, 2, 3], [4, 5, 6], [7]]</code></pre>
+            
+            <h3>9.4 数组求交集、并集、差集</h3>
+            <pre><code>const arr1 = [1, 2, 3, 4];
+const arr2 = [3, 4, 5, 6];
+
+// 交集
+const intersection = arr1.filter(x => arr2.includes(x));
+// [3, 4]
+
+// 并集
+const union = [...new Set([...arr1, ...arr2])];
+// [1, 2, 3, 4, 5, 6]
+
+// 差集
+const difference = arr1.filter(x => !arr2.includes(x));
+// [1, 2]</code></pre>
+            
+            <h3>9.5 数组求最大/最小值</h3>
+            <pre><code>const numbers = [3, 1, 4, 1, 5, 9, 2, 6];
+
+const max = Math.max(...numbers);
+const min = Math.min(...numbers);
+
+// 或使用 reduce
+const max = numbers.reduce((a, b) => Math.max(a, b));
+const min = numbers.reduce((a, b) => Math.min(a, b));</code></pre>
+            
+            <h2>十、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>优先使用不可变方法</strong>：map/filter/slice 代替 splice/push</li>
+                    <li><strong>使用扩展运算符</strong>：复制和合并数组</li>
+                    <li><strong>避免直接修改数组</strong>：保持数据不可变性</li>
+                    <li><strong>使用 Array.from</strong>：转换类数组对象</li>
+                    <li><strong>合理使用解构</strong>：简化代码</li>
+                    <li><strong>注意性能</strong>：大数组使用 for 循环</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-array-objects" target="_blank">ECMAScript - Array Objects</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array" target="_blank">MDN - Array</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="06-array-methods.html" class="nav-link prev">上一节：数组高阶方法</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="06-typed-array.html" class="nav-link next">下一节：TypedArray</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：数组解构</h3>
+                <div class="code-block">
+                    <pre><code>const arr = [1, 2, 3, 4, 5];
+
+// 基本解构
+const [a, b, c] = arr;
+console.log('a, b, c:', a, b, c);
+
+// 跳过元素
+const [first, , third] = arr;
+console.log('first, third:', first, third);
+
+// 剩余元素
+const [head, ...tail] = arr;
+console.log('head:', head);
+console.log('tail:', tail);
+
+// 默认值
+const [x = 10, y = 20, z = 30] = [1, 2];
+console.log('\n默认值:', x, y, z);
+
+// 交换变量
+let m = 1, n = 2;
+console.log('\n交换前:', m, n);
+[m, n] = [n, m];
+console.log('交换后:', m, n);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：扩展运算符</h3>
+                <div class="code-block">
+                    <pre><code>// 复制数组
+const original = [1, 2, 3];
+const copy = [...original];
+copy.push(4);
+console.log('original:', original);
+console.log('copy:', copy);
+
+// 合并数组
+const arr1 = [1, 2, 3];
+const arr2 = [4, 5, 6];
+const merged = [...arr1, ...arr2];
+console.log('\nmerged:', merged);
+
+// 展开字符串
+const str = 'hello';
+const chars = [...str];
+console.log('\nchars:', chars);
+
+// 函数参数
+function sum(...numbers) {
+    return numbers.reduce((a, b) => a + b, 0);
+}
+console.log('\nsum(1,2,3,4,5):', sum(1, 2, 3, 4, 5));
+
+// 在数组中插入元素
+const arr = [1, 2, 5, 6];
+const inserted = [...arr.slice(0, 2), 3, 4, ...arr.slice(2)];
+console.log('\ninserted:', inserted);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Array.from 和 Array.of</h3>
+                <div class="code-block">
+                    <pre><code>// Array.from 从字符串
+console.log('from string:', Array.from('hello'));
+
+// 从 Set
+const set = new Set([1, 2, 2, 3]);
+console.log('from Set:', Array.from(set));
+
+// 使用映射函数
+console.log('with map:', Array.from([1, 2, 3], x => x * 2));
+
+// 生成序列
+const range = Array.from({ length: 5 }, (_, i) => i);
+console.log('\nrange:', range);
+
+// 生成字母序列
+const letters = Array.from({ length: 5 }, (_, i) => 
+    String.fromCharCode(65 + i)
+);
+console.log('letters:', letters);
+
+// Array.of
+console.log('\nArray.of(1, 2, 3):', Array.of(1, 2, 3));
+console.log('Array.of(7):', Array.of(7));
+console.log('new Array(7):', new Array(7));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：数组新方法</h3>
+                <div class="code-block">
+                    <pre><code>const arr = [1, 2, 3, 4, 5];
+
+// at() - 支持负索引
+console.log('arr.at(0):', arr.at(0));
+console.log('arr.at(-1):', arr.at(-1));
+console.log('arr.at(-2):', arr.at(-2));
+
+// fill() - 填充数组
+const filled = new Array(5).fill(0);
+console.log('\nfilled:', filled);
+
+filled.fill(1, 2, 4);  // 从索引2到4填充1
+console.log('fill(1, 2, 4):', filled);
+
+// copyWithin() - 复制数组片段
+const arr2 = [1, 2, 3, 4, 5];
+arr2.copyWithin(0, 3);  // 从索引3复制到索引0
+console.log('\ncopyWithin:', arr2);
+
+// indexOf / lastIndexOf
+const arr3 = [1, 2, 3, 2, 1];
+console.log('\nindexOf(2):', arr3.indexOf(2));
+console.log('lastIndexOf(2):', arr3.lastIndexOf(2));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 数组去重
+const arr = [1, 2, 2, 3, 3, 4, 5, 5];
+const unique = [...new Set(arr)];
+console.log('去重:', unique);
+
+// 数组打乱
+function shuffle(arr) {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}
+console.log('打乱:', shuffle([1, 2, 3, 4, 5]));
+
+// 数组分组
+function chunk(arr, size) {
+    return Array.from(
+        { length: Math.ceil(arr.length / size) },
+        (_, i) => arr.slice(i * size, i * size + size)
+    );
+}
+console.log('\nchunk([1..7], 3):', chunk([1,2,3,4,5,6,7], 3));
+
+// 求最大/最小值
+const numbers = [3, 1, 4, 1, 5, 9, 2, 6];
+console.log('\nmax:', Math.max(...numbers));
+console.log('min:', Math.min(...numbers));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：集合运算</h3>
+                <div class="code-block">
+                    <pre><code>const arr1 = [1, 2, 3, 4];
+const arr2 = [3, 4, 5, 6];
+
+// 交集
+const intersection = arr1.filter(x => arr2.includes(x));
+console.log('交集:', intersection);
+
+// 并集
+const union = [...new Set([...arr1, ...arr2])];
+console.log('并集:', union);
+
+// 差集
+const difference = arr1.filter(x => !arr2.includes(x));
+console.log('差集 (arr1 - arr2):', difference);
+
+// 对称差集
+const symDiff = [
+    ...arr1.filter(x => !arr2.includes(x)),
+    ...arr2.filter(x => !arr1.includes(x))
+];
+console.log('对称差集:', symDiff);
+
+// 是否为子集
+const isSubset = arr1.every(x => arr2.includes(x));
+console.log('\narr1 是 arr2 的子集?', isSubset);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

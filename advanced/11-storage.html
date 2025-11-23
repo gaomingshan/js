@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地存储方案 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>本地存储方案</h1>
+            
+            <h2>概述</h2>
+            <p>浏览器提供了多种本地存储方案，用于在客户端保存数据。常用的有 Cookie、localStorage、sessionStorage 和 IndexedDB。</p>
+            
+            <h2>一、localStorage</h2>
+            
+            <h3>1.1 基本使用</h3>
+            <pre><code>// 设置数据
+localStorage.setItem('name', 'Alice');
+localStorage.setItem('age', '25');
+
+// 获取数据
+const name = localStorage.getItem('name');
+
+// 删除数据
+localStorage.removeItem('name');
+
+// 清空所有数据
+localStorage.clear();
+
+// 获取键名
+const key = localStorage.key(0);
+
+// 数据数量
+const length = localStorage.length;</code></pre>
+            
+            <h3>1.2 存储对象</h3>
+            <pre><code>// 存储对象（需要序列化）
+const user = { name: 'Alice', age: 25 };
+localStorage.setItem('user', JSON.stringify(user));
+
+// 读取对象
+const storedUser = JSON.parse(localStorage.getItem('user'));</code></pre>
+            
+            <h3>1.3 特性</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>持久化</strong>：数据永久保存，除非手动删除</li>
+                    <li><strong>容量</strong>：通常 5-10MB</li>
+                    <li><strong>作用域</strong>：同源（协议、域名、端口）</li>
+                    <li><strong>同步</strong>：同步 API，可能阻塞</li>
+                </ul>
+            </div>
+            
+            <h2>二、sessionStorage</h2>
+            
+            <h3>2.1 基本使用</h3>
+            <pre><code>// API 与 localStorage 相同
+sessionStorage.setItem('temp', 'value');
+const temp = sessionStorage.getItem('temp');
+sessionStorage.removeItem('temp');
+sessionStorage.clear();</code></pre>
+            
+            <h3>2.2 特性</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>会话级</strong>：标签页关闭后数据清除</li>
+                    <li><strong>容量</strong>：通常 5-10MB</li>
+                    <li><strong>作用域</strong>：同源 + 同标签页</li>
+                    <li><strong>隔离</strong>：不同标签页数据隔离</li>
+                </ul>
+            </div>
+            
+            <h2>三、localStorage vs sessionStorage</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>localStorage</th>
+                        <th>sessionStorage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>生命周期</td>
+                        <td>永久</td>
+                        <td>标签页关闭</td>
+                    </tr>
+                    <tr>
+                        <td>作用域</td>
+                        <td>同源所有标签页</td>
+                        <td>同源同标签页</td>
+                    </tr>
+                    <tr>
+                        <td>容量</td>
+                        <td>5-10MB</td>
+                        <td>5-10MB</td>
+                    </tr>
+                    <tr>
+                        <td>API</td>
+                        <td>同步</td>
+                        <td>同步</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>四、Cookie</h2>
+            
+            <h3>4.1 操作 Cookie</h3>
+            <pre><code>// 设置 Cookie
+document.cookie = 'name=Alice';
+document.cookie = 'age=25; max-age=3600';  // 1小时后过期
+
+// 读取 Cookie
+console.log(document.cookie);  // "name=Alice; age=25"
+
+// 解析 Cookie
+function getCookie(name) {
+    const matches = document.cookie.match(
+        new RegExp(`(?:^|; )${name}=([^;]*)`)
+    );
+    return matches ? decodeURIComponent(matches[1]) : null;
+}
+
+// 删除 Cookie
+document.cookie = 'name=; max-age=0';</code></pre>
+            
+            <h3>4.2 Cookie 属性</h3>
+            <pre><code>document.cookie = 'name=Alice; ' +
+    'max-age=3600; ' +        // 过期时间（秒）
+    'path=/; ' +              // 路径
+    'domain=.example.com; ' + // 域名
+    'secure; ' +              // 仅 HTTPS
+    'samesite=strict';        // 防 CSRF</code></pre>
+            
+            <h3>4.3 特性</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>容量</strong>：每个 Cookie 4KB，每个域名约 50 个</li>
+                    <li><strong>自动发送</strong>：每次请求自动携带</li>
+                    <li><strong>过期时间</strong>：可设置过期时间</li>
+                    <li><strong>HttpOnly</strong>：服务器可设置 JS 无法访问</li>
+                </ul>
+            </div>
+            
+            <h2>五、IndexedDB</h2>
+            
+            <h3>5.1 什么是 IndexedDB</h3>
+            <p>IndexedDB 是浏览器提供的大容量、事务性的客户端数据库。</p>
+            
+            <h3>5.2 基本使用</h3>
+            <pre><code>// 打开数据库
+const request = indexedDB.open('myDB', 1);
+
+request.onupgradeneeded = (event) => {
+    const db = event.target.result;
+    // 创建对象存储
+    const store = db.createObjectStore('users', { keyPath: 'id' });
+    store.createIndex('name', 'name', { unique: false });
+};
+
+request.onsuccess = (event) => {
+    const db = event.target.result;
+    
+    // 添加数据
+    const tx = db.transaction('users', 'readwrite');
+    const store = tx.objectStore('users');
+    store.add({ id: 1, name: 'Alice', age: 25 });
+    
+    // 读取数据
+    const getRequest = store.get(1);
+    getRequest.onsuccess = () => {
+        console.log(getRequest.result);
+    };
+};</code></pre>
+            
+            <h3>5.3 特性</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>容量</strong>：几百 MB 甚至更多</li>
+                    <li><strong>异步 API</strong>：不阻塞主线程</li>
+                    <li><strong>事务</strong>：支持事务操作</li>
+                    <li><strong>索引</strong>：支持索引查询</li>
+                    <li><strong>复杂数据</strong>：可存储结构化数据</li>
+                </ul>
+            </div>
+            
+            <h2>六、存储方案对比</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>方案</th>
+                        <th>容量</th>
+                        <th>生命周期</th>
+                        <th>API</th>
+                        <th>适用场景</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cookie</td>
+                        <td>4KB</td>
+                        <td>可设置</td>
+                        <td>同步</td>
+                        <td>小量数据、需要发送到服务器</td>
+                    </tr>
+                    <tr>
+                        <td>localStorage</td>
+                        <td>5-10MB</td>
+                        <td>永久</td>
+                        <td>同步</td>
+                        <td>持久化简单数据</td>
+                    </tr>
+                    <tr>
+                        <td>sessionStorage</td>
+                        <td>5-10MB</td>
+                        <td>会话</td>
+                        <td>同步</td>
+                        <td>临时数据</td>
+                    </tr>
+                    <tr>
+                        <td>IndexedDB</td>
+                        <td>几百MB+</td>
+                        <td>永久</td>
+                        <td>异步</td>
+                        <td>大量结构化数据</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>七、storage 事件</h2>
+            
+            <h3>7.1 监听存储变化</h3>
+            <pre><code>// 监听 storage 变化（跨标签页）
+window.addEventListener('storage', (e) => {
+    console.log('key:', e.key);
+    console.log('oldValue:', e.oldValue);
+    console.log('newValue:', e.newValue);
+    console.log('url:', e.url);
+});</code></pre>
+            
+            <div class="warning">
+                <strong>注意：</strong>storage 事件只在其他标签页触发，当前标签页不触发。
+            </div>
+            
+            <h2>八、实用工具函数</h2>
+            
+            <h3>8.1 Storage 封装</h3>
+            <pre><code>const storage = {
+    set(key, value, expire = null) {
+        const data = {
+            value,
+            expire: expire ? Date.now() + expire : null
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+    },
+    
+    get(key) {
+        const item = localStorage.getItem(key);
+        if (!item) return null;
+        
+        const data = JSON.parse(item);
+        if (data.expire && Date.now() > data.expire) {
+            this.remove(key);
+            return null;
+        }
+        return data.value;
+    },
+    
+    remove(key) {
+        localStorage.removeItem(key);
+    },
+    
+    clear() {
+        localStorage.clear();
+    }
+};</code></pre>
+            
+            <h3>8.2 Cookie 工具</h3>
+            <pre><code>const cookie = {
+    set(name, value, days = 7) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+    },
+    
+    get(name) {
+        const matches = document.cookie.match(
+            new RegExp(`(?:^|; )${name}=([^;]*)`)
+        );
+        return matches ? decodeURIComponent(matches[1]) : null;
+    },
+    
+    remove(name) {
+        this.set(name, '', -1);
+    }
+};</code></pre>
+            
+            <h2>九、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>选择合适方案</strong>：根据数据量和需求选择</li>
+                    <li><strong>异常处理</strong>：处理配额超限和隐私模式</li>
+                    <li><strong>序列化</strong>：存储对象时使用 JSON</li>
+                    <li><strong>命名空间</strong>：使用前缀避免冲突</li>
+                    <li><strong>敏感数据</strong>：不要存储敏感信息</li>
+                    <li><strong>压缩数据</strong>：大数据考虑压缩</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://html.spec.whatwg.org/#webstorage" target="_blank">HTML Standard - Web Storage</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Web_Storage_API" target="_blank">MDN - Web Storage API</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/IndexedDB_API" target="_blank">MDN - IndexedDB</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="11-bom.html" class="nav-link prev">上一节：浏览器对象模型</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="11-fetch.html" class="nav-link next">下一节：Fetch API</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：localStorage 基础</h3>
+                <div class="code-block">
+                    <pre><code>// localStorage 基本操作
+console.log('=== localStorage 操作 ===\n');
+
+// 设置数据
+localStorage.setItem('name', 'Alice');
+localStorage.setItem('age', '25');
+localStorage.setItem('city', 'Beijing');
+
+// 读取数据
+console.log('name:', localStorage.getItem('name'));
+console.log('age:', localStorage.getItem('age'));
+
+// 数据数量
+console.log('\n数据数量:', localStorage.length);
+
+// 遍历所有数据
+console.log('\n所有数据:');
+for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    console.log(`  ${key}: ${localStorage.getItem(key)}`);
+}
+
+// 删除单个
+localStorage.removeItem('city');
+console.log('\n删除 city 后:', localStorage.length);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：存储对象</h3>
+                <div class="code-block">
+                    <pre><code>// 存储复杂对象
+console.log('=== 存储对象 ===\n');
+
+const user = {
+    id: 1,
+    name: 'Alice',
+    age: 25,
+    skills: ['JavaScript', 'React', 'Node.js']
+};
+
+// 序列化存储
+localStorage.setItem('user', JSON.stringify(user));
+console.log('已存储用户对象');
+
+// 读取并反序列化
+const storedUser = JSON.parse(localStorage.getItem('user'));
+console.log('\n读取的对象:');
+console.log('  name:', storedUser.name);
+console.log('  age:', storedUser.age);
+console.log('  skills:', storedUser.skills);
+
+// 修改并保存
+storedUser.age = 26;
+storedUser.skills.push('TypeScript');
+localStorage.setItem('user', JSON.stringify(storedUser));
+console.log('\n更新后:', JSON.parse(localStorage.getItem('user')));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：sessionStorage</h3>
+                <div class="code-block">
+                    <pre><code>// sessionStorage 操作
+console.log('=== sessionStorage ===\n');
+
+// 设置临时数据
+sessionStorage.setItem('temp', 'temporary data');
+sessionStorage.setItem('sessionId', Math.random().toString(36));
+
+console.log('temp:', sessionStorage.getItem('temp'));
+console.log('sessionId:', sessionStorage.getItem('sessionId'));
+
+console.log('\nsessionStorage 特性:');
+console.log('  - 标签页关闭后数据清除');
+console.log('  - 不同标签页数据隔离');
+console.log('  - API 与 localStorage 相同');
+
+// 清理
+sessionStorage.clear();
+console.log('\n清空后数量:', sessionStorage.length);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Cookie 操作</h3>
+                <div class="code-block">
+                    <pre><code>// Cookie 工具函数
+const cookie = {
+    set(name, value, days = 7) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+    },
+    
+    get(name) {
+        const matches = document.cookie.match(
+            new RegExp(`(?:^|; )${name}=([^;]*)`)
+        );
+        return matches ? decodeURIComponent(matches[1]) : null;
+    },
+    
+    getAll() {
+        const cookies = {};
+        document.cookie.split(';').forEach(item => {
+            const [key, value] = item.trim().split('=');
+            if (key) cookies[key] = decodeURIComponent(value || '');
+        });
+        return cookies;
+    },
+    
+    remove(name) {
+        this.set(name, '', -1);
+    }
+};
+
+// 使用示例
+console.log('=== Cookie 操作 ===\n');
+
+cookie.set('username', 'Alice', 7);
+cookie.set('theme', 'dark', 30);
+
+console.log('username:', cookie.get('username'));
+console.log('theme:', cookie.get('theme'));
+
+console.log('\n所有 Cookie:', cookie.getAll());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：带过期时间的 Storage</h3>
+                <div class="code-block">
+                    <pre><code>// 封装带过期时间的 Storage
+const storage = {
+    set(key, value, expire = null) {
+        const data = {
+            value,
+            expire: expire ? Date.now() + expire : null
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+    },
+    
+    get(key) {
+        const item = localStorage.getItem(key);
+        if (!item) return null;
+        
+        const data = JSON.parse(item);
+        
+        // 检查是否过期
+        if (data.expire && Date.now() > data.expire) {
+            this.remove(key);
+            return null;
+        }
+        
+        return data.value;
+    },
+    
+    remove(key) {
+        localStorage.removeItem(key);
+    }
+};
+
+// 使用示例
+console.log('=== 带过期时间的存储 ===\n');
+
+// 存储 3 秒后过期
+storage.set('temp', 'temporary', 3000);
+console.log('立即读取:', storage.get('temp'));
+
+setTimeout(() => {
+    console.log('3秒后读取:', storage.get('temp'));
+}, 3500);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：存储方案对比</h3>
+                <div class="code-block">
+                    <pre><code>// 存储方案对比
+console.log('=== 存储方案对比 ===\n');
+
+const comparison = [
+    {
+        name: 'Cookie',
+        capacity: '4KB',
+        lifetime: '可设置',
+        scope: '同源',
+        api: '同步',
+        autoSend: '是'
+    },
+    {
+        name: 'localStorage',
+        capacity: '5-10MB',
+        lifetime: '永久',
+        scope: '同源所有标签页',
+        api: '同步',
+        autoSend: '否'
+    },
+    {
+        name: 'sessionStorage',
+        capacity: '5-10MB',
+        lifetime: '会话',
+        scope: '同源同标签页',
+        api: '同步',
+        autoSend: '否'
+    },
+    {
+        name: 'IndexedDB',
+        capacity: '几百MB+',
+        lifetime: '永久',
+        scope: '同源',
+        api: '异步',
+        autoSend: '否'
+    }
+];
+
+comparison.forEach(item => {
+    console.log(`${item.name}:`);
+    console.log(`  容量: ${item.capacity}`);
+    console.log(`  生命周期: ${item.lifetime}`);
+    console.log(`  作用域: ${item.scope}`);
+    console.log(`  API: ${item.api}`);
+    console.log(`  自动发送: ${item.autoSend}\n`);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

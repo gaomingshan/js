@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态导入机制 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>动态导入机制</h1>
+            
+            <h2>概述</h2>
+            <p>动态导入（Dynamic Import）允许在运行时按需加载模块，是代码分割和性能优化的关键技术。</p>
+            
+            <h2>一、基本语法</h2>
+            
+            <pre><code>// 动态导入返回 Promise
+const module = await import('./module.js');
+
+// 使用
+const { func } = await import('./utils.js');
+func();</code></pre>
+            
+            <h2>二、使用场景</h2>
+            
+            <h3>2.1 路由懒加载</h3>
+            <pre><code>const routes = {
+    '/home': () => import('./Home.js'),
+    '/about': () => import('./About.js')
+};</code></pre>
+            
+            <h3>2.2 条件加载</h3>
+            <pre><code>if (condition) {
+    const module = await import('./optional.js');
+}</code></pre>
+            
+            <h2>三、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>合理分割代码</strong></li>
+                    <li><strong>预加载关键资源</strong></li>
+                    <li><strong>错误处理</strong></li>
+                    <li><strong>缓存策略</strong></li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/proposal-dynamic-import/" target="_blank">TC39 - Dynamic Import</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="24-module-graph.html" class="nav-link prev">上一节：模块依赖图</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="25-symbol.html" class="nav-link next">下一节：Symbol 深入</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：动态导入模拟</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 动态导入 ===\n');
+
+async function loadModule(name) {
+    console.log(`加载模块: ${name}`);
+    await new Promise(r => setTimeout(r, 100));
+    return { name, loaded: true };
+}
+
+loadModule('feature').then(m => {
+    console.log('模块已加载:', m);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：条件加载</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 条件加载 ===\n');
+
+async function load(type) {
+    if (type === 'A') {
+        console.log('加载模块 A');
+        return { type: 'A' };
+    } else {
+        console.log('加载模块 B');
+        return { type: 'B' };
+    }
+}
+
+load('A').then(m => console.log('加载:', m));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

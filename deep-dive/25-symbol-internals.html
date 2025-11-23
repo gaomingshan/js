@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symbol 内部槽位 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Symbol 内部槽位</h1>
+            
+            <h2>概述</h2>
+            <p>Symbol 是 ES6 引入的原始数据类型，用于创建唯一标识符。理解 Symbol 的内部实现有助于更好地使用它。</p>
+            
+            <h2>一、Symbol 基础</h2>
+            
+            <h3>1.1 创建与特性</h3>
+            <pre><code>// 每个 Symbol 都是唯一的
+const sym1 = Symbol();
+const sym2 = Symbol();
+console.log(sym1 === sym2);  // false
+
+// 带描述
+const sym = Symbol('mySymbol');
+console.log(sym.description);  // "mySymbol"
+
+// Symbol 不能使用 new
+const sym = new Symbol();  // ❌ TypeError</code></pre>
+            
+            <h3>1.2 全局注册表</h3>
+            <pre><code>// Symbol.for() - 全局共享
+const sym1 = Symbol.for('app.id');
+const sym2 = Symbol.for('app.id');
+console.log(sym1 === sym2);  // true
+
+// Symbol.keyFor() - 获取 key
+console.log(Symbol.keyFor(sym1));  // "app.id"</code></pre>
+            
+            <h2>二、内部槽位</h2>
+            
+            <h3>2.1 [[Description]]</h3>
+            <pre><code>// Symbol 的描述信息
+const sym = Symbol('test');
+
+// 内部槽位：
+// [[Description]]: "test"
+// [[SymbolData]]: 唯一标识符
+
+console.log(sym.description);  // 访问 [[Description]]</code></pre>
+            
+            <h3>2.2 Symbol 注册表</h3>
+            <pre><code>// 全局 Symbol 注册表结构（简化）
+GlobalSymbolRegistry = Map {
+    "app.id" => Symbol(app.id),
+    "shared.key" => Symbol(shared.key)
+}
+
+// Symbol.for() 实现（伪代码）
+function SymbolFor(key) {
+    const stringKey = ToString(key);
+    if (GlobalSymbolRegistry.has(stringKey)) {
+        return GlobalSymbolRegistry.get(stringKey);
+    }
+    const newSymbol = Symbol(stringKey);
+    GlobalSymbolRegistry.set(stringKey, newSymbol);
+    return newSymbol;
+}</code></pre>
+            
+            <h2>三、Symbol 作为属性键</h2>
+            
+            <h3>3.1 属性访问</h3>
+            <pre><code>const sym = Symbol('key');
+const obj = { [sym]: 'value' };
+
+// Symbol 属性不出现在：
+// - Object.keys()
+// - Object.getOwnPropertyNames()
+// - for...in
+// - JSON.stringify()
+
+// 只能通过以下方式访问：
+console.log(Object.getOwnPropertySymbols(obj));
+console.log(Reflect.ownKeys(obj));</code></pre>
+            
+            <h2>四、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用描述</strong>：便于调试</li>
+                    <li><strong>全局 Symbol</strong>：跨模块用 Symbol.for()</li>
+                    <li><strong>元数据存储</strong>：避免命名冲突</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-symbol-objects" target="_blank">ECMAScript - Symbol Objects</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="24-dynamic-import.html" class="nav-link prev">上一节：动态导入机制</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="25-well-known-symbols.html" class="nav-link next">下一节：Well-Known Symbols</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Symbol 唯一性</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== Symbol 唯一性 ===\n');
+
+const sym1 = Symbol('test');
+const sym2 = Symbol('test');
+
+console.log('sym1 === sym2:', sym1 === sym2);
+console.log('sym1.description:', sym1.description);
+console.log('sym2.description:', sym2.description);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：全局注册表</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 全局注册表 ===\n');
+
+const sym1 = Symbol.for('app.id');
+const sym2 = Symbol.for('app.id');
+
+console.log('sym1 === sym2:', sym1 === sym2);
+console.log('Symbol.keyFor(sym1):', Symbol.keyFor(sym1));
+
+const local = Symbol('local');
+console.log('Symbol.keyFor(local):', Symbol.keyFor(local));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

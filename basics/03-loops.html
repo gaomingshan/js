@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>循环语句详解 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>循环语句详解</h1>
+            
+            <h2>概述</h2>
+            <p>循环语句允许重复执行代码块，是处理集合数据和重复任务的基础。JavaScript 提供了多种循环方式，适用于不同场景。</p>
+            
+            <h2>一、for 循环</h2>
+            
+            <h3>1.1 基本语法</h3>
+            <pre><code>for (初始化; 条件; 更新) {
+    // 循环体
+}</code></pre>
+            
+            <h3>1.2 执行流程</h3>
+            <ol>
+                <li>执行初始化表达式（仅一次）</li>
+                <li>判断条件表达式，如果为假则退出循环</li>
+                <li>执行循环体</li>
+                <li>执行更新表达式</li>
+                <li>返回步骤 2</li>
+            </ol>
+            
+            <h3>1.3 使用场景</h3>
+            <p>已知循环次数时使用：</p>
+            <pre><code>for (let i = 0; i < 10; i++) {
+    console.log(i);
+}</code></pre>
+            
+            <h2>二、while 循环</h2>
+            
+            <h3>2.1 基本语法</h3>
+            <pre><code>while (condition) {
+    // 循环体
+}</code></pre>
+            
+            <h3>2.2 使用场景</h3>
+            <p>循环次数不确定，由条件决定：</p>
+            <pre><code>let i = 0;
+while (i < 10) {
+    console.log(i);
+    i++;
+}</code></pre>
+            
+            <div class="warning">
+                确保条件最终会变为假，否则会造成死循环！
+            </div>
+            
+            <h2>三、do...while 循环</h2>
+            
+            <h3>3.1 基本语法</h3>
+            <pre><code>do {
+    // 循环体
+} while (condition);</code></pre>
+            
+            <h3>3.2 与 while 的区别</h3>
+            <p><code>do...while</code> 至少执行一次循环体，然后才检查条件。</p>
+            
+            <h2>四、for...in 循环</h2>
+            
+            <h3>4.1 基本语法</h3>
+            <pre><code>for (let key in object) {
+    // key 是对象的属性名
+}</code></pre>
+            
+            <h3>4.2 特性</h3>
+            <ul>
+                <li>遍历对象的可枚举属性</li>
+                <li>包括原型链上的属性</li>
+                <li>遍历顺序不保证</li>
+                <li>可用于数组，但不推荐</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>注意：</strong>
+                <ul>
+                    <li>使用 <code>hasOwnProperty()</code> 过滤原型属性</li>
+                    <li>不要用于遍历数组（使用 for...of）</li>
+                </ul>
+            </div>
+            
+            <h2>五、for...of 循环（ES6）</h2>
+            
+            <h3>5.1 基本语法</h3>
+            <pre><code>for (let value of iterable) {
+    // value 是元素值
+}</code></pre>
+            
+            <h3>5.2 可遍历对象</h3>
+            <ul>
+                <li>Array - 数组</li>
+                <li>String - 字符串</li>
+                <li>Map - 映射</li>
+                <li>Set - 集合</li>
+                <li>TypedArray - 类型化数组</li>
+                <li>arguments - 函数参数</li>
+                <li>NodeList - DOM 节点列表</li>
+            </ul>
+            
+            <h3>5.3 for...of vs for...in</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>for...in</th>
+                        <th>for...of</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>遍历内容</td>
+                        <td>属性名（key）</td>
+                        <td>属性值（value）</td>
+                    </tr>
+                    <tr>
+                        <td>适用对象</td>
+                        <td>对象</td>
+                        <td>可迭代对象</td>
+                    </tr>
+                    <tr>
+                        <td>原型链</td>
+                        <td>包含</td>
+                        <td>不包含</td>
+                    </tr>
+                    <tr>
+                        <td>数组推荐</td>
+                        <td>否</td>
+                        <td>是</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>六、循环控制语句</h2>
+            
+            <h3>6.1 break 语句</h3>
+            <p>立即终止循环：</p>
+            <pre><code>for (let i = 0; i < 10; i++) {
+    if (i === 5) break;
+    console.log(i);  // 输出 0-4
+}</code></pre>
+            
+            <h3>6.2 continue 语句</h3>
+            <p>跳过当前迭代，继续下一次：</p>
+            <pre><code>for (let i = 0; i < 5; i++) {
+    if (i === 2) continue;
+    console.log(i);  // 输出 0,1,3,4（跳过2）
+}</code></pre>
+            
+            <h3>6.3 标签语句（Label）</h3>
+            <p>用于跳出多层循环：</p>
+            <pre><code>outer: for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+        if (i === 1 && j === 1) {
+            break outer;  // 跳出外层循环
+        }
+    }
+}</code></pre>
+            
+            <h2>七、数组遍历方法</h2>
+            
+            <h3>7.1 forEach()</h3>
+            <pre><code>arr.forEach((item, index, array) => {
+    console.log(item);
+});</code></pre>
+            
+            <div class="warning">
+                <code>forEach</code> 不能使用 break/continue，要提前终止使用 <code>some()</code> 或 <code>every()</code>。
+            </div>
+            
+            <h3>7.2 map()</h3>
+            <p>映射为新数组：</p>
+            <pre><code>const doubled = arr.map(x => x * 2);</code></pre>
+            
+            <h3>7.3 filter()</h3>
+            <p>过滤元素：</p>
+            <pre><code>const evens = arr.filter(x => x % 2 === 0);</code></pre>
+            
+            <h3>7.4 reduce()</h3>
+            <p>归约为单个值：</p>
+            <pre><code>const sum = arr.reduce((acc, cur) => acc + cur, 0);</code></pre>
+            
+            <h2>八、循环性能优化</h2>
+            
+            <h3>8.1 缓存数组长度</h3>
+            <div class="tip">
+                <strong>不推荐：</strong>
+                <pre><code>for (let i = 0; i < arr.length; i++) {
+    // 每次都计算 length
+}</code></pre>
+                
+                <strong>推荐：</strong>
+                <pre><code>for (let i = 0, len = arr.length; i < len; i++) {
+    // 缓存 length
+}</code></pre>
+            </div>
+            
+            <h3>8.2 倒序循环</h3>
+            <p>某些场景下性能更好：</p>
+            <pre><code>for (let i = arr.length - 1; i >= 0; i--) {
+    // 倒序遍历
+}</code></pre>
+            
+            <h3>8.3 避免在循环中创建函数</h3>
+            <div class="warning">
+                <pre><code>// 不推荐
+for (let i = 0; i < 1000; i++) {
+    arr[i].addEventListener('click', function() {
+        // 创建了 1000 个函数
+    });
+}
+
+// 推荐
+function handleClick(e) { ... }
+for (let i = 0; i < 1000; i++) {
+    arr[i].addEventListener('click', handleClick);
+}</code></pre>
+            </div>
+            
+            <h2>九、循环选择指南</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>场景</th>
+                        <th>推荐使用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>已知次数的循环</td>
+                        <td>for</td>
+                    </tr>
+                    <tr>
+                        <td>条件循环</td>
+                        <td>while</td>
+                    </tr>
+                    <tr>
+                        <td>至少执行一次</td>
+                        <td>do...while</td>
+                    </tr>
+                    <tr>
+                        <td>遍历数组</td>
+                        <td>for...of 或数组方法</td>
+                    </tr>
+                    <tr>
+                        <td>遍历对象属性</td>
+                        <td>for...in 或 Object.keys()</td>
+                    </tr>
+                    <tr>
+                        <td>函数式处理数组</td>
+                        <td>map/filter/reduce</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>十、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li>优先使用 <code>for...of</code> 遍历数组</li>
+                    <li>使用 <code>const</code> 声明循环变量（for...of, for...in）</li>
+                    <li>避免修改循环条件变量</li>
+                    <li>复杂逻辑使用数组高阶方法</li>
+                    <li>注意死循环和性能问题</li>
+                    <li>使用 <code>break</code>/<code>continue</code> 提高效率</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-iteration-statements" target="_blank">ECMAScript - Iteration Statements</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Loops_and_iteration" target="_blank">MDN - 循环与迭代</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/for...of" target="_blank">MDN - for...of</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="03-conditionals.html" class="nav-link prev">上一节：条件语句</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="03-error-handling.html" class="nav-link next">下一节：异常处理</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：for 循环</h3>
+                <div class="code-block">
+                    <pre><code>// 基本 for 循环
+console.log('=== 基本循环 ===');
+for (let i = 0; i < 5; i++) {
+    console.log('i =', i);
+}
+
+// 遍历数组
+console.log('\n=== 遍历数组 ===');
+const fruits = ['apple', 'banana', 'orange'];
+for (let i = 0; i < fruits.length; i++) {
+    console.log(`${i}: ${fruits[i]}`);
+}
+
+// 倒序循环
+console.log('\n=== 倒序循环 ===');
+for (let i = 4; i >= 0; i--) {
+    console.log('倒数:', i);
+}
+
+// 步长为 2
+console.log('\n=== 步长为 2 ===');
+for (let i = 0; i < 10; i += 2) {
+    console.log('偶数索引:', i);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：while 和 do...while</h3>
+                <div class="code-block">
+                    <pre><code>// while 循环
+console.log('=== while 循环 ===');
+let count = 0;
+while (count < 3) {
+    console.log('count =', count);
+    count++;
+}
+
+// do...while 循环（至少执行一次）
+console.log('\n=== do...while 循环 ===');
+let num = 0;
+do {
+    console.log('num =', num);
+    num++;
+} while (num < 3);
+
+// 对比：条件一开始就为假
+console.log('\n=== 条件为假的对比 ===');
+let x = 10;
+while (x < 5) {
+    console.log('while: 不会执行');
+}
+
+let y = 10;
+do {
+    console.log('do...while: 至少执行一次, y =', y);
+} while (y < 5);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：for...in 和 for...of</h3>
+                <div class="code-block">
+                    <pre><code>// for...in 遍历对象
+console.log('=== for...in 遍历对象 ===');
+const person = {
+    name: 'Alice',
+    age: 25,
+    city: 'Beijing'
+};
+
+for (let key in person) {
+    console.log(`${key}: ${person[key]}`);
+}
+
+// for...of 遍历数组
+console.log('\n=== for...of 遍历数组 ===');
+const colors = ['red', 'green', 'blue'];
+for (let color of colors) {
+    console.log('颜色:', color);
+}
+
+// 对比数组遍历
+console.log('\n=== 对比数组遍历 ===');
+const arr = ['a', 'b', 'c'];
+
+console.log('for...in（遍历索引）:');
+for (let i in arr) {
+    console.log(i, '→', arr[i]);
+}
+
+console.log('for...of（遍历值）:');
+for (let value of arr) {
+    console.log(value);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：break 和 continue</h3>
+                <div class="code-block">
+                    <pre><code>// break - 终止循环
+console.log('=== break 示例 ===');
+for (let i = 0; i < 10; i++) {
+    if (i === 5) {
+        console.log('遇到 5，终止循环');
+        break;
+    }
+    console.log('i =', i);
+}
+
+// continue - 跳过当前迭代
+console.log('\n=== continue 示例 ===');
+for (let i = 0; i < 5; i++) {
+    if (i === 2) {
+        console.log('跳过 2');
+        continue;
+    }
+    console.log('i =', i);
+}
+
+// 实用：查找第一个匹配项
+console.log('\n=== 查找示例 ===');
+const numbers = [1, 3, 5, 7, 8, 9];
+let firstEven;
+for (let num of numbers) {
+    if (num % 2 === 0) {
+        firstEven = num;
+        break;  // 找到后立即退出
+    }
+}
+console.log('第一个偶数:', firstEven);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：数组高阶方法</h3>
+                <div class="code-block">
+                    <pre><code>const numbers = [1, 2, 3, 4, 5];
+
+// forEach - 遍历
+console.log('=== forEach ===');
+numbers.forEach((num, index) => {
+    console.log(`[${index}] = ${num}`);
+});
+
+// map - 映射
+console.log('\n=== map ===');
+const doubled = numbers.map(x => x * 2);
+console.log('原数组:', numbers);
+console.log('翻倍后:', doubled);
+
+// filter - 过滤
+console.log('\n=== filter ===');
+const evens = numbers.filter(x => x % 2 === 0);
+console.log('偶数:', evens);
+
+// reduce - 归约
+console.log('\n=== reduce ===');
+const sum = numbers.reduce((acc, cur) => acc + cur, 0);
+console.log('求和:', sum);
+
+// 链式调用
+console.log('\n=== 链式调用 ===');
+const result = numbers
+    .filter(x => x > 2)
+    .map(x => x * 2)
+    .reduce((acc, cur) => acc + cur, 0);
+console.log('大于2的数，翻倍后求和:', result);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 技巧1：遍历字符串
+console.log('=== 遍历字符串 ===');
+for (let char of 'Hello') {
+    console.log(char);
+}
+
+// 技巧2：遍历 Map
+console.log('\n=== 遍历 Map ===');
+const map = new Map([
+    ['name', 'Alice'],
+    ['age', 25]
+]);
+for (let [key, value] of map) {
+    console.log(`${key}: ${value}`);
+}
+
+// 技巧3：遍历 Set
+console.log('\n=== 遍历 Set ===');
+const set = new Set([1, 2, 3]);
+for (let value of set) {
+    console.log(value);
+}
+
+// 技巧4：同时获取索引和值
+console.log('\n=== entries() ===');
+const fruits = ['apple', 'banana', 'orange'];
+for (let [index, fruit] of fruits.entries()) {
+    console.log(`${index}: ${fruit}`);
+}
+
+// 技巧5：嵌套循环打印九九乘法表
+console.log('\n=== 九九乘法表（部分）===');
+for (let i = 1; i <= 3; i++) {
+    let row = '';
+    for (let j = 1; j <= i; j++) {
+        row += `${j}×${i}=${i*j} `;
+    }
+    console.log(row);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

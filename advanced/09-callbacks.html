@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回调函数模式 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>回调函数模式</h1>
+            
+            <h2>概述</h2>
+            <p>回调函数是 JavaScript 异步编程的基础。理解回调模式是掌握异步编程的第一步。</p>
+            
+            <h2>一、什么是回调函数</h2>
+            
+            <h3>1.1 回调函数定义</h3>
+            <p>回调函数是作为参数传递给另一个函数的函数，在特定事件或条件满足时被调用。</p>
+            
+            <pre><code>function fetchData(callback) {
+    // 模拟异步操作
+    setTimeout(() => {
+        const data = { id: 1, name: 'Alice' };
+        callback(data);
+    }, 1000);
+}
+
+fetchData((data) => {
+    console.log('收到数据:', data);
+});</code></pre>
+            
+            <h3>1.2 同步回调 vs 异步回调</h3>
+            <div class="info">
+                <strong>同步回调：</strong>立即执行
+                <pre><code>[1, 2, 3].forEach(item => {
+    console.log(item); // 同步执行
+});</code></pre>
+                
+                <strong>异步回调：</strong>延迟执行
+                <pre><code>setTimeout(() => {
+    console.log('异步执行');
+}, 1000);</code></pre>
+            </div>
+            
+            <h2>二、常见回调模式</h2>
+            
+            <h3>2.1 Error-First 回调</h3>
+            <p>Node.js 风格的回调，第一个参数是错误对象：</p>
+            
+            <pre><code>function readFile(path, callback) {
+    // 模拟文件读取
+    setTimeout(() => {
+        if (!path) {
+            callback(new Error('路径不能为空'), null);
+        } else {
+            callback(null, '文件内容');
+        }
+    }, 1000);
+}
+
+readFile('test.txt', (err, data) => {
+    if (err) {
+        console.error('错误:', err.message);
+        return;
+    }
+    console.log('数据:', data);
+});</code></pre>
+            
+            <h3>2.2 事件监听回调</h3>
+            <pre><code>// DOM 事件
+button.addEventListener('click', function(event) {
+    console.log('按钮被点击');
+});
+
+// 自定义事件
+class EventEmitter {
+    constructor() {
+        this.events = {};
+    }
+    
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+    
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(cb => cb(data));
+        }
+    }
+}</code></pre>
+            
+            <h2>三、回调地狱（Callback Hell）</h2>
+            
+            <h3>3.1 什么是回调地狱</h3>
+            <p>多层嵌套的回调函数导致代码难以阅读和维护：</p>
+            
+            <div class="warning">
+                <pre><code>// 回调地狱示例
+getData(function(a) {
+    getMoreData(a, function(b) {
+        getMoreData(b, function(c) {
+            getMoreData(c, function(d) {
+                getMoreData(d, function(e) {
+                    console.log(e);
+                });
+            });
+        });
+    });
+});</code></pre>
+            </div>
+            
+            <h3>3.2 回调地狱的问题</h3>
+            <ul>
+                <li>代码横向发展，难以阅读</li>
+                <li>错误处理复杂</li>
+                <li>代码复用困难</li>
+                <li>调试困难</li>
+            </ul>
+            
+            <h2>四、改善回调代码</h2>
+            
+            <h3>4.1 命名函数</h3>
+            <pre><code>// 不好：匿名函数嵌套
+getData(function(a) {
+    getMoreData(a, function(b) {
+        console.log(b);
+    });
+});
+
+// 好：使用命名函数
+function handleMoreData(b) {
+    console.log(b);
+}
+
+function handleData(a) {
+    getMoreData(a, handleMoreData);
+}
+
+getData(handleData);</code></pre>
+            
+            <h3>4.2 模块化</h3>
+            <pre><code>// 将回调逻辑分离到独立函数
+const handlers = {
+    onSuccess(data) {
+        console.log('成功:', data);
+    },
+    onError(error) {
+        console.error('错误:', error);
+    }
+};
+
+fetchData(handlers.onSuccess, handlers.onError);</code></pre>
+            
+            <h3>4.3 提前返回</h3>
+            <pre><code>function processData(data, callback) {
+    if (!data) {
+        return callback(new Error('无数据'));
+    }
+    
+    if (!data.isValid) {
+        return callback(new Error('数据无效'));
+    }
+    
+    // 主要逻辑
+    callback(null, processedData);
+}</code></pre>
+            
+            <h2>五、回调函数最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>统一错误处理</strong>：使用 Error-First 回调</li>
+                    <li><strong>避免深层嵌套</strong>：提取命名函数</li>
+                    <li><strong>及时返回</strong>：避免回调后继续执行</li>
+                    <li><strong>处理所有情况</strong>：成功和失败都要处理</li>
+                    <li><strong>避免回调地狱</strong>：考虑使用 Promise 或 async/await</li>
+                </ol>
+            </div>
+            
+            <h2>六、回调的局限性</h2>
+            
+            <div class="warning">
+                <ul>
+                    <li>无法处理多个并行异步操作</li>
+                    <li>无法取消已发起的异步操作</li>
+                    <li>难以实现错误恢复</li>
+                    <li>控制流复杂</li>
+                    <li>难以组合和复用</li>
+                </ul>
+                <p>这些问题促使了 Promise 和 async/await 的诞生。</p>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="http://callbackhell.com/" target="_blank">Callback Hell</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Glossary/Callback_function" target="_blank">MDN - 回调函数</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="../basics/08-symbol-bigint.html" class="nav-link prev">上一节：Symbol 与 BigInt</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="09-promises.html" class="nav-link next">下一节：Promise 详解</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：基本回调函数</h3>
+                <div class="code-block">
+                    <pre><code>// 简单回调
+function greet(name, callback) {
+    console.log('Hello, ' + name);
+    callback();
+}
+
+greet('Alice', function() {
+    console.log('回调执行完成');
+});
+
+// 同步回调
+console.log('\n数组方法回调:');
+[1, 2, 3].forEach(item => {
+    console.log('  ', item);
+});
+
+// 异步回调
+console.log('\n异步回调:');
+console.log('开始');
+setTimeout(() => {
+    console.log('1秒后执行');
+}, 1000);
+console.log('结束（但回调还没执行）');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Error-First 回调</h3>
+                <div class="code-block">
+                    <pre><code>// Error-First 回调模式
+function fetchData(id, callback) {
+    setTimeout(() => {
+        if (id < 0) {
+            callback(new Error('ID 不能为负数'), null);
+        } else {
+            callback(null, { id, name: 'User' + id });
+        }
+    }, 500);
+}
+
+// 成功情况
+console.log('=== 成功情况 ===');
+fetchData(1, (err, data) => {
+    if (err) {
+        console.error('错误:', err.message);
+        return;
+    }
+    console.log('数据:', data);
+});
+
+// 错误情况
+console.log('\n=== 错误情况 ===');
+fetchData(-1, (err, data) => {
+    if (err) {
+        console.error('错误:', err.message);
+        return;
+    }
+    console.log('数据:', data);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：回调地狱演示</h3>
+                <div class="code-block">
+                    <pre><code>// 模拟异步操作
+function step1(callback) {
+    setTimeout(() => {
+        console.log('Step 1 完成');
+        callback('result1');
+    }, 300);
+}
+
+function step2(data, callback) {
+    setTimeout(() => {
+        console.log('Step 2 完成, 数据:', data);
+        callback('result2');
+    }, 300);
+}
+
+function step3(data, callback) {
+    setTimeout(() => {
+        console.log('Step 3 完成, 数据:', data);
+        callback('final');
+    }, 300);
+}
+
+// 回调地狱
+console.log('开始执行...');
+step1((result1) => {
+    step2(result1, (result2) => {
+        step3(result2, (final) => {
+            console.log('全部完成:', final);
+        });
+    });
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：改善回调 - 命名函数</h3>
+                <div class="code-block">
+                    <pre><code>// 使用命名函数避免嵌套
+function step1(callback) {
+    setTimeout(() => {
+        console.log('Step 1');
+        callback('data1');
+    }, 200);
+}
+
+function step2(data, callback) {
+    setTimeout(() => {
+        console.log('Step 2:', data);
+        callback('data2');
+    }, 200);
+}
+
+function step3(data, callback) {
+    setTimeout(() => {
+        console.log('Step 3:', data);
+        callback('final');
+    }, 200);
+}
+
+// 命名函数版本
+function handleStep3(data) {
+    console.log('完成:', data);
+}
+
+function handleStep2(data) {
+    step3(data, handleStep3);
+}
+
+function handleStep1(data) {
+    step2(data, handleStep2);
+}
+
+console.log('改善版本执行:');
+step1(handleStep1);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：事件发射器</h3>
+                <div class="code-block">
+                    <pre><code>// 简单的事件发射器
+class EventEmitter {
+    constructor() {
+        this.events = {};
+    }
+    
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+    
+    emit(event, data) {
+        if (this.events[event]) {
+            this.events[event].forEach(cb => cb(data));
+        }
+    }
+    
+    off(event, callback) {
+        if (this.events[event]) {
+            this.events[event] = this.events[event]
+                .filter(cb => cb !== callback);
+        }
+    }
+}
+
+// 使用
+const emitter = new EventEmitter();
+
+emitter.on('data', (data) => {
+    console.log('收到数据:', data);
+});
+
+emitter.on('data', (data) => {
+    console.log('另一个监听器:', data);
+});
+
+emitter.emit('data', { id: 1, value: 100 });</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：并行回调</h3>
+                <div class="code-block">
+                    <pre><code>// 并行执行多个异步操作
+function parallelTasks(tasks, callback) {
+    const results = [];
+    let completed = 0;
+    
+    tasks.forEach((task, index) => {
+        task((err, result) => {
+            if (err) {
+                return callback(err);
+            }
+            results[index] = result;
+            completed++;
+            
+            if (completed === tasks.length) {
+                callback(null, results);
+            }
+        });
+    });
+}
+
+// 定义任务
+const task1 = (cb) => setTimeout(() => cb(null, 'Task 1'), 300);
+const task2 = (cb) => setTimeout(() => cb(null, 'Task 2'), 200);
+const task3 = (cb) => setTimeout(() => cb(null, 'Task 3'), 100);
+
+console.log('并行执行任务...');
+parallelTasks([task1, task2, task3], (err, results) => {
+    if (err) {
+        console.error('错误:', err);
+        return;
+    }
+    console.log('全部完成:', results);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闭包的内存模型 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>闭包的内存模型</h1>
+            
+            <h2>概述</h2>
+            <p>闭包（Closure）是 JavaScript 最强大也最容易误用的特性之一。理解闭包的内存模型对于编写高效、无内存泄漏的代码至关重要。</p>
+            
+            <h2>一、什么是闭包</h2>
+            
+            <h3>1.1 定义</h3>
+            <div class="info">
+                <p><strong>闭包 = 函数 + 函数能够访问的自由变量</strong></p>
+                <p>从技术角度讲，所有 JavaScript 函数都是闭包，因为它们都在创建时保存了上层作用域的引用。</p>
+            </div>
+            
+            <h3>1.2 经典示例</h3>
+            <pre><code>function createCounter() {
+    let count = 0;  // 自由变量
+    
+    return function() {
+        return ++count;
+    };
+}
+
+const counter = createCounter();
+console.log(counter());  // 1
+console.log(counter());  // 2
+console.log(counter());  // 3
+
+// count 变量在 createCounter 执行完后仍然存在
+// 因为返回的函数保持了对它的引用</code></pre>
+            
+            <h2>二、闭包的内存结构</h2>
+            
+            <h3>2.1 内存分配</h3>
+            <pre><code>function outer() {
+    var a = 1;
+    var b = 2;
+    var c = 3;
+    
+    return function inner() {
+        console.log(a);  // 只使用 a
+    };
+}
+
+const fn = outer();
+
+// 内存中的结构：
+// 1. fn 函数对象
+// 2. fn.[[Scope]] 指向 outer 的作用域
+// 3. outer 的作用域包含 a, b, c（即使只用了 a）
+// 
+// 内存布局：
+// +------------------+
+// | fn (函数对象)     |
+// +------------------+
+//        |
+//        v
+// +------------------+
+// | [[Scope]]        |
+// +------------------+
+//        |
+//        v
+// +------------------+
+// | outer 作用域     |
+// | - a: 1          |
+// | - b: 2          |
+// | - c: 3          |
+// +------------------+</code></pre>
+            
+            <h3>2.2 作用域链保持</h3>
+            <pre><code>function level1() {
+    var v1 = 1;
+    
+    function level2() {
+        var v2 = 2;
+        
+        function level3() {
+            var v3 = 3;
+            console.log(v1, v2, v3);
+        }
+        
+        return level3;
+    }
+    
+    return level2();
+}
+
+const fn = level1();
+
+// fn.[[Scope]] = [level3VO, level2VO, level1VO, globalVO]
+// 整个作用域链都被保持在内存中</code></pre>
+            
+            <h2>三、闭包与垃圾回收</h2>
+            
+            <h3>3.1 何时回收</h3>
+            <pre><code>function createClosure() {
+    var data = new Array(1000000);  // 大数组
+    
+    return function() {
+        console.log(data.length);
+    };
+}
+
+var closure = createClosure();
+// data 不会被回收，因为 closure 引用了它
+
+closure = null;  // 解除引用
+// 现在 data 可以被回收了</code></pre>
+            
+            <h3>3.2 垃圾回收时机</h3>
+            <pre><code>function outer() {
+    var largeData = new Array(1000000);
+    
+    function inner1() {
+        console.log(largeData.length);  // 使用 largeData
+    }
+    
+    function inner2() {
+        console.log('No data');  // 不使用 largeData
+    }
+    
+    return { inner1, inner2 };
+}
+
+const obj = outer();
+
+// inner1 和 inner2 都引用同一个作用域
+// largeData 不会被回收，即使 inner2 不使用它</code></pre>
+            
+            <h2>四、常见的闭包场景</h2>
+            
+            <h3>4.1 模块模式</h3>
+            <pre><code>const Module = (function() {
+    // 私有变量
+    let privateVar = 0;
+    
+    function privateMethod() {
+        return 'Private';
+    }
+    
+    // 公共接口
+    return {
+        publicMethod() {
+            privateVar++;
+            return privateMethod();
+        },
+        getCount() {
+            return privateVar;
+        }
+    };
+})();
+
+Module.publicMethod();
+console.log(Module.getCount());  // 1
+console.log(Module.privateVar);  // undefined（私有）</code></pre>
+            
+            <h3>4.2 事件处理器</h3>
+            <pre><code>function setupButtons() {
+    for (var i = 0; i < 3; i++) {
+        (function(index) {
+            document.getElementById('btn-' + index)
+                .addEventListener('click', function() {
+                    console.log('Button ' + index);  // 闭包捕获 index
+                });
+        })(i);
+    }
+}
+
+// 每个事件处理器都保持对 index 的引用</code></pre>
+            
+            <h3>4.3 函数工厂</h3>
+            <pre><code>function createMultiplier(multiplier) {
+    return function(num) {
+        return num * multiplier;
+    };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5));  // 10
+console.log(triple(5));  // 15
+
+// double 和 triple 各自保持对不同 multiplier 的引用</code></pre>
+            
+            <h2>五、内存泄漏场景</h2>
+            
+            <h3>5.1 意外的全局变量</h3>
+            <pre><code>function createLeak() {
+    // 忘记 var/let/const
+    leakedVar = 'I am global';  // 意外创建全局变量
+    
+    return function() {
+        console.log(leakedVar);
+    };
+}
+
+// leakedVar 永远不会被回收</code></pre>
+            
+            <h3>5.2 循环引用</h3>
+            <pre><code>function createCircular() {
+    var obj1 = {};
+    var obj2 = {};
+    
+    obj1.ref = obj2;
+    obj2.ref = obj1;  // 循环引用
+    
+    return function() {
+        console.log(obj1, obj2);
+    };
+}
+
+// 在老版本 IE 中可能导致内存泄漏
+// 现代浏览器的 GC 可以处理</code></pre>
+            
+            <h3>5.3 定时器中的闭包</h3>
+            <pre><code>function startTimer() {
+    var largeData = new Array(1000000);
+    
+    setInterval(function() {
+        console.log(largeData.length);
+    }, 1000);
+    
+    // largeData 永远不会被回收
+    // 因为定时器一直运行
+}
+
+// 解决方案：清除定时器
+function startTimerCorrect() {
+    var largeData = new Array(1000000);
+    
+    var timer = setInterval(function() {
+        console.log(largeData.length);
+    }, 1000);
+    
+    // 在适当时机清除
+    setTimeout(function() {
+        clearInterval(timer);
+    }, 10000);
+}</code></pre>
+            
+            <h3>5.4 DOM 引用</h3>
+            <pre><code>function createDOMLeak() {
+    var element = document.getElementById('myDiv');
+    
+    return function() {
+        console.log(element.innerHTML);
+    };
+}
+
+// 即使 DOM 元素被删除，闭包仍然引用它
+// 导致 DOM 节点无法回收
+
+// 解决方案：
+function createDOMCorrect() {
+    var element = document.getElementById('myDiv');
+    var html = element.innerHTML;  // 只保存需要的数据
+    element = null;  // 解除 DOM 引用
+    
+    return function() {
+        console.log(html);
+    };
+}</code></pre>
+            
+            <h2>六、闭包优化技巧</h2>
+            
+            <h3>6.1 最小化闭包作用域</h3>
+            <pre><code>// 不好 ❌
+function bad() {
+    var largeData1 = new Array(1000000);
+    var largeData2 = new Array(1000000);
+    var largeData3 = new Array(1000000);
+    
+    return function() {
+        console.log(largeData1[0]);  // 只用 largeData1
+    };
+    // 但 largeData2, largeData3 也被保持
+}
+
+// 好 ✅
+function good() {
+    var largeData1 = new Array(1000000);
+    var data = largeData1[0];  // 只保存需要的
+    
+    return function() {
+        console.log(data);
+    };
+    // largeData1 可以被回收
+}</code></pre>
+            
+            <h3>6.2 及时解除引用</h3>
+            <pre><code>var closures = [];
+
+function createClosures() {
+    for (let i = 0; i < 100; i++) {
+        closures.push(function() {
+            console.log(i);
+        });
+    }
+}
+
+createClosures();
+
+// 使用完后清理
+closures.forEach(fn => fn());
+closures = null;  // 解除引用</code></pre>
+            
+            <h3>6.3 使用 WeakMap/WeakSet</h3>
+            <pre><code>// 使用 WeakMap 避免内存泄漏
+const privateData = new WeakMap();
+
+class MyClass {
+    constructor() {
+        privateData.set(this, {
+            secret: 'private data'
+        });
+    }
+    
+    getSecret() {
+        return privateData.get(this).secret;
+    }
+}
+
+let obj = new MyClass();
+console.log(obj.getSecret());
+
+obj = null;  // privateData 中的数据会被自动回收</code></pre>
+            
+            <h2>七、调试闭包</h2>
+            
+            <h3>7.1 检查作用域</h3>
+            <pre><code>function outer() {
+    var a = 1;
+    
+    function inner() {
+        debugger;  // 在此处断点
+        console.log(a);
+    }
+    
+    return inner;
+}
+
+// 在开发者工具中可以查看：
+// - Scope Chain
+// - Closure 变量
+// - 内存占用</code></pre>
+            
+            <h3>7.2 使用性能分析工具</h3>
+            <pre><code>// Chrome DevTools:
+// 1. Memory > Take Heap Snapshot
+// 2. 查找 closure 关键字
+// 3. 分析闭包占用的内存
+// 4. 对比多次快照，找出内存增长</code></pre>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>理解闭包原理</strong>：知道什么时候创建闭包</li>
+                    <li><strong>最小化作用域</strong>：只保留必要的变量</li>
+                    <li><strong>及时解除引用</strong>：不用的闭包设为 null</li>
+                    <li><strong>避免循环引用</strong>：特别是 DOM 引用</li>
+                    <li><strong>清除定时器</strong>：避免长期运行的闭包</li>
+                    <li><strong>使用弱引用</strong>：WeakMap/WeakSet</li>
+                    <li><strong>定期检测</strong>：使用开发者工具监控</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Closures" target="_blank">MDN - 闭包</a></li>
+                <li><a href="https://v8.dev/blog/trash-talk" target="_blank">V8 - Trash talk (GC)</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="14-scope-chain.html" class="nav-link prev">上一节：作用域链</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="15-prototype-chain.html" class="nav-link next">下一节：原型链实现</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：基本闭包</h3>
+                <div class="code-block">
+                    <pre><code>// 闭包基础示例
+console.log('=== 基本闭包 ===\n');
+
+function createCounter() {
+    let count = 0;  // 私有变量
+    
+    return function() {
+        return ++count;
+    };
+}
+
+const counter1 = createCounter();
+const counter2 = createCounter();
+
+console.log('counter1:');
+console.log('  第1次调用:', counter1());  // 1
+console.log('  第2次调用:', counter1());  // 2
+console.log('  第3次调用:', counter1());  // 3
+
+console.log('\ncounter2（独立）:');
+console.log('  第1次调用:', counter2());  // 1
+console.log('  第2次调用:', counter2());  // 2
+
+console.log('\n每个闭包都有独立的 count 变量');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：闭包的内存结构</h3>
+                <div class="code-block">
+                    <pre><code>// 闭包内存结构演示
+console.log('=== 闭包内存结构 ===\n');
+
+function outer() {
+    var a = 1;
+    var b = 2;
+    var c = 3;
+    
+    console.log('outer 创建了变量: a, b, c');
+    
+    return function inner() {
+        console.log('inner 只使用 a:', a);
+        // 但 b, c 也在闭包作用域中
+    };
+}
+
+const fn = outer();
+console.log('\nouter 执行完毕');
+console.log('但 fn 仍然保持对 outer 作用域的引用');
+console.log('包括未使用的 b, c');
+
+console.log('\n调用 fn:');
+fn();
+
+console.log('\n内存中保存:');
+console.log('  - fn 函数对象');
+console.log('  - fn.[[Scope]] → outer 作用域');
+console.log('  - outer 作用域包含 a, b, c');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：循环中的闭包陷阱</h3>
+                <div class="code-block">
+                    <pre><code>// 循环中的闭包问题
+console.log('=== 循环闭包陷阱 ===\n');
+
+console.log('问题: 使用 var');
+var funcs1 = [];
+for (var i = 0; i < 3; i++) {
+    funcs1.push(function() {
+        return i;
+    });
+}
+console.log('输出:', funcs1.map(f => f()));  // [3, 3, 3]
+console.log('原因: 所有函数共享同一个 i\n');
+
+console.log('解决方案1: IIFE');
+var funcs2 = [];
+for (var i = 0; i < 3; i++) {
+    funcs2.push((function(index) {
+        return function() {
+            return index;
+        };
+    })(i));
+}
+console.log('输出:', funcs2.map(f => f()));  // [0, 1, 2]
+
+console.log('\n解决方案2: let');
+var funcs3 = [];
+for (let i = 0; i < 3; i++) {
+    funcs3.push(function() {
+        return i;
+    });
+}
+console.log('输出:', funcs3.map(f => f()));  // [0, 1, 2]</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：模块模式</h3>
+                <div class="code-block">
+                    <pre><code>// 使用闭包实现模块模式
+console.log('=== 模块模式 ===\n');
+
+const Calculator = (function() {
+    // 私有变量
+    let history = [];
+    
+    // 私有方法
+    function log(operation, result) {
+        history.push({ operation, result, time: Date.now() });
+    }
+    
+    // 公共接口
+    return {
+        add(a, b) {
+            const result = a + b;
+            log(`${a} + ${b}`, result);
+            return result;
+        },
+        
+        subtract(a, b) {
+            const result = a - b;
+            log(`${a} - ${b}`, result);
+            return result;
+        },
+        
+        getHistory() {
+            return history.map(h => 
+                `${h.operation} = ${h.result}`
+            );
+        }
+    };
+})();
+
+console.log('10 + 5 =', Calculator.add(10, 5));
+console.log('10 - 5 =', Calculator.subtract(10, 5));
+console.log('\n历史记录:');
+Calculator.getHistory().forEach(h => console.log('  ' + h));
+
+console.log('\n私有变量无法直接访问:');
+console.log('  history:', typeof Calculator.history);  // undefined</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：内存泄漏示例</h3>
+                <div class="code-block">
+                    <pre><code>// 内存泄漏场景演示
+console.log('=== 内存泄漏场景 ===\n');
+
+console.log('场景1: 未使用的变量');
+function createLeak1() {
+    var unused = new Array(1000);  // 大数组
+    var used = 1;
+    
+    return function() {
+        return used;  // 只用 used
+    };
+    // 但 unused 也在闭包中，无法回收
+}
+const fn1 = createLeak1();
+console.log('返回函数保持了 unused 的引用');
+
+console.log('\n场景2: 定时器');
+let timerId;
+function createLeak2() {
+    var data = new Array(1000);
+    
+    timerId = setInterval(() => {
+        console.log('  Timer:', data.length);
+    }, 1000);
+    
+    // data 永远不会被回收
+}
+// createLeak2();  // 取消注释会启动定时器
+
+console.log('定时器持续引用 data');
+
+console.log('\n解决方案:');
+console.log('1. 最小化闭包作用域');
+console.log('2. 及时清除定时器');
+console.log('3. 解除不需要的引用');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：闭包优化</h3>
+                <div class="code-block">
+                    <pre><code>// 闭包优化技巧
+console.log('=== 闭包优化 ===\n');
+
+console.log('优化前:');
+function createBad() {
+    var largeArray = new Array(1000000).fill(1);
+    var largeObject = { data: new Array(1000000) };
+    var smallValue = 42;
+    
+    return function() {
+        return smallValue;  // 只用 smallValue
+    };
+    // 但 largeArray 和 largeObject 也在闭包中
+}
+const bad = createBad();
+console.log('  保持了所有变量的引用');
+console.log('  包括未使用的大对象\n');
+
+console.log('优化后:');
+function createGood() {
+    var largeArray = new Array(1000000).fill(1);
+    var largeObject = { data: new Array(1000000) };
+    var smallValue = 42;
+    
+    // 提取需要的值
+    var value = smallValue;
+    
+    // 清除大对象引用
+    largeArray = null;
+    largeObject = null;
+    
+    return function() {
+        return value;
+    };
+}
+const good = createGood();
+console.log('  只保持必要的引用');
+console.log('  大对象可以被回收\n');
+
+console.log('优化效果:');
+console.log('  ✓ 减少内存占用');
+console.log('  ✓ 提高 GC 效率');
+console.log('  ✓ 避免内存泄漏');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

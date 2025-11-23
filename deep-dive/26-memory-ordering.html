@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内存序与同步 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>内存序与同步</h1>
+            
+            <h2>概述</h2>
+            <p>理解内存序对于编写正确的并发程序至关重要。</p>
+            
+            <h2>一、内存序问题</h2>
+            
+            <pre><code>// 没有同步可能导致数据竞争
+// Worker 1
+sharedArray[0] = 42;
+sharedArray[1] = 1;  // 标志位
+
+// Worker 2
+while (sharedArray[1] !== 1) {}
+console.log(sharedArray[0]);  // 可能不是42！</code></pre>
+            
+            <h2>二、使用 Atomics 同步</h2>
+            
+            <pre><code>// Worker 1
+Atomics.store(sharedArray, 0, 42);
+Atomics.store(sharedArray, 1, 1);
+
+// Worker 2
+while (Atomics.load(sharedArray, 1) !== 1) {}
+console.log(Atomics.load(sharedArray, 0));  // 保证是42</code></pre>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-memory-model" target="_blank">ECMAScript - Memory Model</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="26-atomics.html" class="nav-link prev">上一节：Atomics API</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="27-tc39-process.html" class="nav-link next">下一节：TC39 提案流程</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例：内存序演示</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 内存序 ===\n');
+
+console.log('正确的同步方式:');
+console.log('// Worker 1');
+console.log('Atomics.store(arr, 0, 42);');
+console.log('Atomics.store(arr, 1, 1);');
+
+console.log('\n// Worker 2');
+console.log('while (Atomics.load(arr, 1) !== 1) {}');
+console.log('const value = Atomics.load(arr, 0);');
+
+console.log('\n使用 Atomics 保证内存可见性');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

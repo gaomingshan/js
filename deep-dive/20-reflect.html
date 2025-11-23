@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflect 反射 API - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Reflect 反射 API</h1>
+            
+            <h2>概述</h2>
+            <p>Reflect 是 ES6 引入的内置对象，提供了一组操作对象的方法。它与 Proxy 配合使用，使得元编程更加简洁和规范。</p>
+            
+            <h2>一、Reflect 简介</h2>
+            
+            <h3>1.1 设计目的</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>规范化</strong>：将 Object 上的一些方法移到 Reflect</li>
+                    <li><strong>函数式</strong>：操作对象变成函数调用</li>
+                    <li><strong>返回值合理</strong>：失败返回 false 而非抛出错误</li>
+                    <li><strong>配合 Proxy</strong>：Reflect 方法与 Proxy 陷阱一一对应</li>
+                </ul>
+            </div>
+            
+            <h3>1.2 与 Object 方法对比</h3>
+            <pre><code>// 传统方式
+try {
+    Object.defineProperty(obj, name, desc);
+    // 成功
+} catch (e) {
+    // 失败
+}
+
+// Reflect 方式
+if (Reflect.defineProperty(obj, name, desc)) {
+    // 成功
+} else {
+    // 失败
+}
+
+// 更简洁，返回值更合理</code></pre>
+            
+            <h2>二、Reflect 方法</h2>
+            
+            <h3>2.1 Reflect.get()</h3>
+            <pre><code>// 读取对象属性
+const obj = { name: 'Alice', age: 25 };
+
+// 传统方式
+console.log(obj.name);  // "Alice"
+
+// Reflect 方式
+console.log(Reflect.get(obj, 'name'));  // "Alice"
+
+// 指定 receiver（this 值）
+const proxy = new Proxy(obj, {
+    get(target, property, receiver) {
+        console.log('Reading:', property);
+        return Reflect.get(target, property, receiver);
+    }
+});
+
+proxy.name;  // Reading: name → "Alice"</code></pre>
+            
+            <h3>2.2 Reflect.set()</h3>
+            <pre><code>// 设置对象属性
+const obj = { name: 'Alice' };
+
+// 传统方式
+obj.age = 25;
+
+// Reflect 方式
+Reflect.set(obj, 'age', 25);  // true（成功）
+
+// 返回 false 表示失败
+const frozen = Object.freeze({ x: 1 });
+console.log(Reflect.set(frozen, 'x', 2));  // false</code></pre>
+            
+            <h3>2.3 Reflect.has()</h3>
+            <pre><code>// 检查属性是否存在
+const obj = { name: 'Alice' };
+
+// 传统方式
+console.log('name' in obj);  // true
+
+// Reflect 方式
+console.log(Reflect.has(obj, 'name'));  // true</code></pre>
+            
+            <h3>2.4 Reflect.deleteProperty()</h3>
+            <pre><code>// 删除属性
+const obj = { name: 'Alice', age: 25 };
+
+// 传统方式
+delete obj.age;
+
+// Reflect 方式
+Reflect.deleteProperty(obj, 'age');  // true（成功）
+
+// 不可删除时返回 false
+Object.defineProperty(obj, 'id', {
+    value: 123,
+    configurable: false
+});
+
+console.log(Reflect.deleteProperty(obj, 'id'));  // false</code></pre>
+            
+            <h3>2.5 Reflect.ownKeys()</h3>
+            <pre><code>// 获取所有属性键
+const obj = {
+    name: 'Alice',
+    [Symbol('id')]: 123
+};
+
+// Reflect.ownKeys 包含所有类型的键
+console.log(Reflect.ownKeys(obj));
+// ['name', Symbol(id)]
+
+// 对比其他方法
+console.log(Object.keys(obj));              // ['name']
+console.log(Object.getOwnPropertyNames(obj));  // ['name']
+console.log(Object.getOwnPropertySymbols(obj));  // [Symbol(id)]</code></pre>
+            
+            <h3>2.6 Reflect.getPrototypeOf()</h3>
+            <pre><code>// 获取原型
+const obj = {};
+
+// 传统方式
+Object.getPrototypeOf(obj);
+
+// Reflect 方式
+Reflect.getPrototypeOf(obj);  // Object.prototype
+
+// 非对象参数
+Reflect.getPrototypeOf(1);  // TypeError
+Object.getPrototypeOf(1);   // Number.prototype（自动转换）</code></pre>
+            
+            <h3>2.7 Reflect.setPrototypeOf()</h3>
+            <pre><code>// 设置原型
+const obj = {};
+const proto = { x: 1 };
+
+// Reflect 方式
+Reflect.setPrototypeOf(obj, proto);  // true
+console.log(obj.x);  // 1
+
+// 失败时返回 false
+const frozen = Object.freeze({});
+console.log(Reflect.setPrototypeOf(frozen, proto));  // false</code></pre>
+            
+            <h3>2.8 Reflect.apply()</h3>
+            <pre><code>// 调用函数
+function sum(a, b) {
+    return a + b;
+}
+
+// 传统方式
+sum.apply(null, [1, 2]);
+
+// Reflect 方式
+Reflect.apply(sum, null, [1, 2]);  // 3
+
+// 优势：避免 Function.prototype.apply 被覆盖
+const obj = {
+    apply() {
+        return 'fake apply';
+    }
+};
+
+// 安全调用
+Reflect.apply(Array.prototype.slice, [1, 2, 3], [1]);  // [2, 3]</code></pre>
+            
+            <h3>2.9 Reflect.construct()</h3>
+            <pre><code>// 使用 new 调用构造函数
+function Person(name) {
+    this.name = name;
+}
+
+// 传统方式
+new Person('Alice');
+
+// Reflect 方式
+Reflect.construct(Person, ['Alice']);
+
+// 指定不同的原型
+function Animal(name) {
+    this.name = name;
+}
+
+const person = Reflect.construct(Person, ['Alice'], Animal);
+console.log(person instanceof Animal);  // true
+console.log(person.name);  // "Alice"</code></pre>
+            
+            <h2>三、配合 Proxy 使用</h2>
+            
+            <h3>3.1 标准用法</h3>
+            <pre><code>// Proxy + Reflect 的标准模式
+const handler = {
+    get(target, property, receiver) {
+        console.log(`Getting ${property}`);
+        return Reflect.get(target, property, receiver);
+    },
+    
+    set(target, property, value, receiver) {
+        console.log(`Setting ${property} = ${value}`);
+        return Reflect.set(target, property, value, receiver);
+    }
+};
+
+const obj = new Proxy({ name: 'Alice' }, handler);
+
+obj.name;       // Getting name
+obj.age = 25;   // Setting age = 25</code></pre>
+            
+            <h3>3.2 为什么使用 Reflect</h3>
+            <pre><code>// 问题：直接操作可能导致 this 不正确
+const parent = {
+    get value() {
+        return this.name;
+    }
+};
+
+const child = {
+    name: 'Child',
+    __proto__: parent
+};
+
+// 错误做法
+const handler1 = {
+    get(target, property) {
+        return target[property];  // this 指向 target
+    }
+};
+
+const proxy1 = new Proxy(child, handler1);
+console.log(proxy1.value);  // undefined（this 是 child 的原型）
+
+// 正确做法
+const handler2 = {
+    get(target, property, receiver) {
+        return Reflect.get(target, property, receiver);  // this 指向 receiver
+    }
+};
+
+const proxy2 = new Proxy(child, handler2);
+console.log(proxy2.value);  // "Child"</code></pre>
+            
+            <h2>四、实际应用</h2>
+            
+            <h3>4.1 观察者模式</h3>
+            <pre><code>// 使用 Reflect 实现观察者
+const observers = new Set();
+
+function observe(fn) {
+    observers.add(fn);
+}
+
+function observable(obj) {
+    return new Proxy(obj, {
+        set(target, property, value, receiver) {
+            const result = Reflect.set(target, property, value, receiver);
+            
+            if (result) {
+                observers.forEach(fn => fn(property, value));
+            }
+            
+            return result;
+        }
+    });
+}
+
+// 使用
+const state = observable({ count: 0 });
+
+observe((prop, value) => {
+    console.log(`${prop} changed to ${value}`);
+});
+
+state.count = 1;  // count changed to 1
+state.count = 2;  // count changed to 2</code></pre>
+            
+            <h3>4.2 函数验证</h3>
+            <pre><code>// 验证函数参数
+function validate(...validators) {
+    return function(target) {
+        return new Proxy(target, {
+            apply(target, thisArg, args) {
+                // 验证参数
+                validators.forEach((validator, index) => {
+                    if (!validator(args[index])) {
+                        throw new TypeError(`Invalid argument ${index}`);
+                    }
+                });
+                
+                return Reflect.apply(target, thisArg, args);
+            }
+        });
+    };
+}
+
+// 使用
+const isString = x => typeof x === 'string';
+const isNumber = x => typeof x === 'number';
+
+const greet = validate(isString, isNumber)(
+    function(name, age) {
+        return `${name} is ${age} years old`;
+    }
+);
+
+console.log(greet('Alice', 25));  // "Alice is 25 years old"
+greet('Alice', 'invalid');         // TypeError</code></pre>
+            
+            <h2>五、完整的 Reflect 方法列表</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reflect 方法</th>
+                        <th>对应的 Proxy 陷阱</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Reflect.get()</td>
+                        <td>get</td>
+                        <td>读取属性</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.set()</td>
+                        <td>set</td>
+                        <td>设置属性</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.has()</td>
+                        <td>has</td>
+                        <td>in 操作符</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.deleteProperty()</td>
+                        <td>deleteProperty</td>
+                        <td>delete 操作符</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.ownKeys()</td>
+                        <td>ownKeys</td>
+                        <td>获取所有键</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.getOwnPropertyDescriptor()</td>
+                        <td>getOwnPropertyDescriptor</td>
+                        <td>获取属性描述符</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.defineProperty()</td>
+                        <td>defineProperty</td>
+                        <td>定义属性</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.preventExtensions()</td>
+                        <td>preventExtensions</td>
+                        <td>阻止扩展</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.getPrototypeOf()</td>
+                        <td>getPrototypeOf</td>
+                        <td>获取原型</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.isExtensible()</td>
+                        <td>isExtensible</td>
+                        <td>检查可扩展性</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.setPrototypeOf()</td>
+                        <td>setPrototypeOf</td>
+                        <td>设置原型</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.apply()</td>
+                        <td>apply</td>
+                        <td>调用函数</td>
+                    </tr>
+                    <tr>
+                        <td>Reflect.construct()</td>
+                        <td>construct</td>
+                        <td>new 操作符</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>六、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>Proxy 中使用 Reflect</strong>：保持默认行为</li>
+                    <li><strong>正确传递 receiver</strong>：保证 this 指向正确</li>
+                    <li><strong>检查返回值</strong>：Reflect 方法返回操作是否成功</li>
+                    <li><strong>优先 Reflect</strong>：新代码优先使用 Reflect API</li>
+                    <li><strong>函数式编程</strong>：Reflect 方法更适合函数式风格</li>
+                    <li><strong>错误处理</strong>：利用返回值而非 try/catch</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-reflect-object" target="_blank">ECMAScript - Reflect Object</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Reflect" target="_blank">MDN - Reflect</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="20-proxy.html" class="nav-link prev">上一节：Proxy 代理</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="20-metaprogramming.html" class="nav-link next">下一节：元编程实践</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Reflect 基础</h3>
+                <div class="code-block">
+                    <pre><code>// Reflect 基本方法
+console.log('=== Reflect 基础 ===\n');
+
+const obj = {
+    name: 'Alice',
+    age: 25
+};
+
+console.log('1. Reflect.get():');
+console.log('  name =', Reflect.get(obj, 'name'));
+
+console.log('\n2. Reflect.set():');
+const success = Reflect.set(obj, 'city', 'Beijing');
+console.log('  设置成功:', success);
+console.log('  city =', obj.city);
+
+console.log('\n3. Reflect.has():');
+console.log('  "name" in obj:', Reflect.has(obj, 'name'));
+console.log('  "email" in obj:', Reflect.has(obj, 'email'));
+
+console.log('\n4. Reflect.ownKeys():');
+console.log('  所有键:', Reflect.ownKeys(obj));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Reflect vs 传统方式</h3>
+                <div class="code-block">
+                    <pre><code>// Reflect 与传统方式对比
+console.log('=== Reflect vs 传统 ===\n');
+
+const obj = {};
+Object.freeze(obj);
+
+console.log('1. 设置属性:');
+console.log('  传统: obj.x = 1（静默失败）');
+obj.x = 1;
+console.log('  结果: obj.x =', obj.x);
+
+console.log('\n  Reflect: Reflect.set(obj, "y", 2)');
+const success = Reflect.set(obj, 'y', 2);
+console.log('  返回:', success);
+console.log('  结果: obj.y =', obj.y);
+
+console.log('\n2. 删除属性:');
+Object.defineProperty(obj, 'z', {
+    value: 3,
+    configurable: false
+});
+
+console.log('  delete obj.z:', delete obj.z);
+console.log('  Reflect.deleteProperty(obj, "z"):', 
+    Reflect.deleteProperty(obj, 'z'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Proxy + Reflect</h3>
+                <div class="code-block">
+                    <pre><code>// Proxy 中使用 Reflect
+console.log('=== Proxy + Reflect ===\n');
+
+const target = {
+    name: 'Alice',
+    age: 25
+};
+
+const handler = {
+    get(target, property, receiver) {
+        console.log(`  读取: ${property}`);
+        return Reflect.get(target, property, receiver);
+    },
+    
+    set(target, property, value, receiver) {
+        console.log(`  设置: ${property} = ${value}`);
+        return Reflect.set(target, property, value, receiver);
+    }
+};
+
+const proxy = new Proxy(target, handler);
+
+console.log('操作代理:');
+console.log('proxy.name =', proxy.name);
+proxy.age = 26;
+console.log('proxy.age =', proxy.age);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：receiver 参数</h3>
+                <div class="code-block">
+                    <pre><code>// receiver 参数的重要性
+console.log('=== receiver 参数 ===\n');
+
+const parent = {
+    get value() {
+        console.log('  this:', this === parent ? 'parent' : 'other');
+        return this.name;
+    }
+};
+
+const child = {
+    name: 'Child',
+    __proto__: parent
+};
+
+console.log('1. 直接访问:');
+console.log('  child.value =', child.value);
+
+console.log('\n2. 不使用 receiver（错误）:');
+const proxy1 = new Proxy(child, {
+    get(target, property) {
+        return target[property];
+    }
+});
+console.log('  proxy1.value =', proxy1.value);
+
+console.log('\n3. 使用 receiver（正确）:');
+const proxy2 = new Proxy(child, {
+    get(target, property, receiver) {
+        return Reflect.get(target, property, receiver);
+    }
+});
+console.log('  proxy2.value =', proxy2.value);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：Reflect.apply()</h3>
+                <div class="code-block">
+                    <pre><code>// Reflect.apply 的使用
+console.log('=== Reflect.apply ===\n');
+
+function sum(a, b, c) {
+    console.log('  this:', this);
+    return a + b + c;
+}
+
+console.log('1. 普通调用:');
+console.log('  sum(1, 2, 3) =', sum(1, 2, 3));
+
+console.log('\n2. Reflect.apply:');
+const result = Reflect.apply(sum, { name: 'context' }, [4, 5, 6]);
+console.log('  result =', result);
+
+console.log('\n3. 数组方法调用:');
+const arr = [1, 2, 3, 4, 5];
+const sliced = Reflect.apply(Array.prototype.slice, arr, [1, 3]);
+console.log('  sliced =', sliced);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：观察者模式</h3>
+                <div class="code-block">
+                    <pre><code>// 使用 Reflect 实现观察者
+console.log('=== 观察者模式 ===\n');
+
+const observers = [];
+
+function observe(fn) {
+    observers.push(fn);
+    console.log('  添加观察者');
+}
+
+function observable(obj) {
+    return new Proxy(obj, {
+        set(target, property, value, receiver) {
+            const oldValue = target[property];
+            const result = Reflect.set(target, property, value, receiver);
+            
+            if (result && oldValue !== value) {
+                observers.forEach(fn => fn(property, value, oldValue));
+            }
+            
+            return result;
+        }
+    });
+}
+
+const state = observable({ count: 0 });
+
+observe((prop, newVal, oldVal) => {
+    console.log(`  ${prop}: ${oldVal} → ${newVal}`);
+});
+
+console.log('\n修改状态:');
+state.count = 1;
+state.count = 2;
+state.count = 3;</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

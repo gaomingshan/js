@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块依赖图 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>模块依赖图</h1>
+            
+            <h2>概述</h2>
+            <p>模块依赖图（Module Dependency Graph）描述了模块之间的依赖关系。理解依赖图有助于优化打包、代码分割和性能调优。</p>
+            
+            <h2>一、依赖图基础</h2>
+            
+            <h3>1.1 图的结构</h3>
+            <pre><code>// 示例模块结构
+// app.js
+import { utilA } from './utilA.js';
+import { utilB } from './utilB.js';
+
+// utilA.js
+import { helper } from './helper.js';
+
+// utilB.js
+import { helper } from './helper.js';
+
+// helper.js
+export function helper() {}
+
+// 依赖图：
+//     app.js
+//    /      \
+// utilA    utilB
+//    \      /
+//    helper</code></pre>
+            
+            <h3>1.2 图的遍历</h3>
+            <pre><code>// 深度优先遍历（DFS）
+function dfs(module, visited = new Set()) {
+    if (visited.has(module)) return;
+    visited.add(module);
+    
+    console.log('访问:', module.id);
+    
+    for (const dep of module.dependencies) {
+        dfs(dep, visited);
+    }
+}
+
+// 广度优先遍历（BFS）
+function bfs(module) {
+    const queue = [module];
+    const visited = new Set([module]);
+    
+    while (queue.length > 0) {
+        const current = queue.shift();
+        console.log('访问:', current.id);
+        
+        for (const dep of current.dependencies) {
+            if (!visited.has(dep)) {
+                visited.add(dep);
+                queue.push(dep);
+            }
+        }
+    }
+}</code></pre>
+            
+            <h2>二、循环依赖检测</h2>
+            
+            <h3>2.1 检测算法</h3>
+            <pre><code>// 使用 DFS 检测循环依赖
+function detectCycle(module, visited = new Set(), stack = new Set()) {
+    if (stack.has(module)) {
+        return true;  // 发现循环
+    }
+    
+    if (visited.has(module)) {
+        return false;  // 已访问，无循环
+    }
+    
+    visited.add(module);
+    stack.add(module);
+    
+    for (const dep of module.dependencies) {
+        if (detectCycle(dep, visited, stack)) {
+            console.log('循环依赖:', module.id, '->', dep.id);
+            return true;
+        }
+    }
+    
+    stack.delete(module);
+    return false;
+}</code></pre>
+            
+            <h3>2.2 解决循环依赖</h3>
+            <pre><code>// 方法 1：重构代码
+// 不好 ❌
+// a.js
+import { b } from './b.js';
+export const a = 'A' + b;
+
+// b.js
+import { a } from './a.js';
+export const b = 'B' + a;
+
+// 好 ✓
+// a.js
+export const a = 'A';
+
+// b.js
+export const b = 'B';
+
+// combined.js
+import { a } from './a.js';
+import { b } from './b.js';
+export const combined = a + b;
+
+// 方法 2：延迟导入
+// a.js
+export const a = 'A';
+export function getB() {
+    return require('./b.js').b;
+}</code></pre>
+            
+            <h2>三、拓扑排序</h2>
+            
+            <h3>3.1 Kahn 算法</h3>
+            <pre><code>// 拓扑排序：确定模块加载顺序
+function topologicalSort(modules) {
+    const inDegree = new Map();
+    const result = [];
+    
+    // 计算入度
+    for (const module of modules) {
+        if (!inDegree.has(module)) {
+            inDegree.set(module, 0);
+        }
+        for (const dep of module.dependencies) {
+            inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
+        }
+    }
+    
+    // 找到所有入度为 0 的节点
+    const queue = modules.filter(m => inDegree.get(m) === 0);
+    
+    while (queue.length > 0) {
+        const module = queue.shift();
+        result.push(module);
+        
+        for (const dep of module.dependencies) {
+            inDegree.set(dep, inDegree.get(dep) - 1);
+            if (inDegree.get(dep) === 0) {
+                queue.push(dep);
+            }
+        }
+    }
+    
+    return result;
+}</code></pre>
+            
+            <h2>四、代码分割</h2>
+            
+            <h3>4.1 动态导入点</h3>
+            <pre><code>// 识别代码分割点
+// app.js
+import { common } from './common.js';
+
+// 路由懒加载
+const routes = {
+    '/home': () => import('./pages/home.js'),
+    '/about': () => import('./pages/about.js'),
+    '/contact': () => import('./pages/contact.js')
+};
+
+// 依赖图中的分割点
+//      app.js
+//         |
+//      common.js
+//      /  |  \
+//   home about contact（动态导入）</code></pre>
+            
+            <h3>4.2 Chunk 划分</h3>
+            <pre><code>// Webpack 配置示例
+module.exports = {
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+                // 提取第三方库
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    priority: 10
+                },
+                // 提取公共代码
+                commons: {
+                    name: 'commons',
+                    minChunks: 2,
+                    priority: 5
+                }
+            }
+        }
+    }
+};</code></pre>
+            
+            <h2>五、Tree Shaking</h2>
+            
+            <h3>5.1 死代码消除</h3>
+            <pre><code>// utils.js
+export function usedFunction() {
+    return 'used';
+}
+
+export function unusedFunction() {
+    return 'unused';  // 未使用
+}
+
+// app.js
+import { usedFunction } from './utils.js';
+
+console.log(usedFunction());
+
+// 打包后：unusedFunction 被移除
+
+// 依赖图分析：
+// - 标记所有使用的导出
+// - 删除未标记的代码</code></pre>
+            
+            <h3>5.2 副作用处理</h3>
+            <pre><code>// package.json
+{
+    "sideEffects": false  // 所有文件无副作用
+}
+
+// 或指定有副作用的文件
+{
+    "sideEffects": [
+        "./src/polyfill.js",
+        "*.css"
+    ]
+}
+
+// 有副作用的代码（不能被删除）
+// polyfill.js
+Array.prototype.myMethod = function() {};  // 副作用
+
+// 无副作用的代码（可以被 tree-shake）
+// utils.js
+export function pureFunction(x) {
+    return x * 2;
+}</code></pre>
+            
+            <h2>六、性能优化</h2>
+            
+            <h3>6.1 并行加载</h3>
+            <pre><code>// 识别可并行加载的模块
+//      app.js
+//     /  |  \
+//    A   B   C（相互独立，可并行）
+//
+// A, B, C 可以并行下载和执行
+
+// 实现并行加载
+async function loadParallel() {
+    const [modA, modB, modC] = await Promise.all([
+        import('./a.js'),
+        import('./b.js'),
+        import('./c.js')
+    ]);
+    
+    return { modA, modB, modC };
+}</code></pre>
+            
+            <h3>6.2 预加载</h3>
+            <pre><code>// 预加载关键路径模块
+&lt;link rel="modulepreload" href="./critical.js"&gt;
+
+// 预测性预加载
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            import('./lazy-module.js');
+        }
+    });
+});
+
+observer.observe(document.querySelector('#trigger'));</code></pre>
+            
+            <h2>七、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>避免循环依赖</strong>：重构代码结构</li>
+                    <li><strong>合理代码分割</strong>：按路由或功能</li>
+                    <li><strong>标记副作用</strong>：帮助 tree shaking</li>
+                    <li><strong>监控包大小</strong>：使用分析工具</li>
+                    <li><strong>预加载关键资源</strong>：提升性能</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://webpack.js.org/concepts/dependency-graph/" target="_blank">Webpack - Dependency Graph</a></li>
+                <li><a href="https://webpack.js.org/guides/tree-shaking/" target="_blank">Webpack - Tree Shaking</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="24-module-resolution.html" class="nav-link prev">上一节：模块解析算法</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="24-dynamic-import.html" class="nav-link next">下一节：动态导入机制</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：依赖图模拟</h3>
+                <div class="code-block">
+                    <pre><code>// 模拟模块依赖图
+console.log('=== 依赖图 ===\n');
+
+class Module {
+    constructor(id) {
+        this.id = id;
+        this.dependencies = [];
+    }
+    
+    addDependency(module) {
+        this.dependencies.push(module);
+    }
+}
+
+const app = new Module('app');
+const utilA = new Module('utilA');
+const utilB = new Module('utilB');
+const helper = new Module('helper');
+
+app.addDependency(utilA);
+app.addDependency(utilB);
+utilA.addDependency(helper);
+utilB.addDependency(helper);
+
+console.log('依赖关系:');
+console.log('  app -> utilA, utilB');
+console.log('  utilA -> helper');
+console.log('  utilB -> helper');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：循环依赖检测</h3>
+                <div class="code-block">
+                    <pre><code>// 循环依赖检测
+console.log('=== 循环依赖检测 ===\n');
+
+class Module {
+    constructor(id) {
+        this.id = id;
+        this.dependencies = [];
+    }
+}
+
+function detectCycle(module, visited = new Set(), stack = new Set()) {
+    if (stack.has(module.id)) {
+        return true;
+    }
+    if (visited.has(module.id)) {
+        return false;
+    }
+    
+    visited.add(module.id);
+    stack.add(module.id);
+    
+    for (const dep of module.dependencies) {
+        if (detectCycle(dep, visited, stack)) {
+            return true;
+        }
+    }
+    
+    stack.delete(module.id);
+    return false;
+}
+
+const a = new Module('a');
+const b = new Module('b');
+a.dependencies = [b];
+b.dependencies = [a];  // 循环！
+
+console.log('检测结果:', detectCycle(a) ? '发现循环' : '无循环');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：DFS 遍历</h3>
+                <div class="code-block">
+                    <pre><code>// 深度优先遍历
+console.log('=== DFS 遍历 ===\n');
+
+class Module {
+    constructor(id) {
+        this.id = id;
+        this.dependencies = [];
+    }
+}
+
+function dfs(module, visited = new Set()) {
+    if (visited.has(module.id)) return;
+    
+    visited.add(module.id);
+    console.log('  访问:', module.id);
+    
+    for (const dep of module.dependencies) {
+        dfs(dep, visited);
+    }
+}
+
+const app = new Module('app');
+const a = new Module('A');
+const b = new Module('B');
+const c = new Module('C');
+
+app.dependencies = [a, b];
+a.dependencies = [c];
+b.dependencies = [c];
+
+console.log('DFS 顺序:');
+dfs(app);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：BFS 遍历</h3>
+                <div class="code-block">
+                    <pre><code>// 广度优先遍历
+console.log('=== BFS 遍历 ===\n');
+
+class Module {
+    constructor(id) {
+        this.id = id;
+        this.dependencies = [];
+    }
+}
+
+function bfs(module) {
+    const queue = [module];
+    const visited = new Set([module.id]);
+    
+    console.log('BFS 顺序:');
+    while (queue.length > 0) {
+        const current = queue.shift();
+        console.log('  访问:', current.id);
+        
+        for (const dep of current.dependencies) {
+            if (!visited.has(dep.id)) {
+                visited.add(dep.id);
+                queue.push(dep);
+            }
+        }
+    }
+}
+
+const app = new Module('app');
+const a = new Module('A');
+const b = new Module('B');
+const c = new Module('C');
+
+app.dependencies = [a, b];
+a.dependencies = [c];
+b.dependencies = [c];
+
+bfs(app);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：拓扑排序</h3>
+                <div class="code-block">
+                    <pre><code>// 拓扑排序（简化版）
+console.log('=== 拓扑排序 ===\n');
+
+function topologicalSort(graph) {
+    const inDegree = new Map();
+    const result = [];
+    
+    // 初始化入度
+    for (const node of Object.keys(graph)) {
+        inDegree.set(node, 0);
+    }
+    
+    // 计算入度
+    for (const node of Object.keys(graph)) {
+        for (const dep of graph[node]) {
+            inDegree.set(dep, inDegree.get(dep) + 1);
+        }
+    }
+    
+    // 找入度为 0 的节点
+    const queue = [];
+    for (const [node, degree] of inDegree) {
+        if (degree === 0) queue.push(node);
+    }
+    
+    while (queue.length > 0) {
+        const node = queue.shift();
+        result.push(node);
+        
+        for (const dep of graph[node]) {
+            inDegree.set(dep, inDegree.get(dep) - 1);
+            if (inDegree.get(dep) === 0) {
+                queue.push(dep);
+            }
+        }
+    }
+    
+    return result;
+}
+
+const graph = {
+    app: ['A', 'B'],
+    A: ['C'],
+    B: ['C'],
+    C: []
+};
+
+console.log('加载顺序:', topologicalSort(graph));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：并行加载模拟</h3>
+                <div class="code-block">
+                    <pre><code>// 并行加载模拟
+console.log('=== 并行加载 ===\n');
+
+async function loadModule(name, delay) {
+    console.log(`  开始加载 ${name}`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    console.log(`  完成加载 ${name}`);
+    return { name, loaded: true };
+}
+
+async function sequentialLoad() {
+    console.log('1. 顺序加载:');
+    console.time('sequential');
+    await loadModule('A', 100);
+    await loadModule('B', 100);
+    await loadModule('C', 100);
+    console.timeEnd('sequential');
+}
+
+async function parallelLoad() {
+    console.log('\n2. 并行加载:');
+    console.time('parallel');
+    await Promise.all([
+        loadModule('A', 100),
+        loadModule('B', 100),
+        loadModule('C', 100)
+    ]);
+    console.timeEnd('parallel');
+}
+
+sequentialLoad().then(() => parallelLoad());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>类型转换与判断 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>类型转换与判断</h1>
+            
+            <h2>概述</h2>
+            <p>JavaScript 是动态类型语言，会在需要时自动进行类型转换（隐式转换）。理解类型转换规则对于避免 bug 至关重要。</p>
+            
+            <h2>一、类型转换分类</h2>
+            
+            <h3>1.1 显式转换（Explicit Conversion）</h3>
+            <p>程序员主动调用转换函数：</p>
+            <ul>
+                <li><code>Number()</code> - 转换为数字</li>
+                <li><code>String()</code> - 转换为字符串</li>
+                <li><code>Boolean()</code> - 转换为布尔值</li>
+            </ul>
+            
+            <h3>1.2 隐式转换（Implicit Conversion）</h3>
+            <p>JavaScript 自动进行的类型转换，也称为"类型强制"（Type Coercion）。</p>
+            
+            <h2>二、转换为字符串</h2>
+            
+            <h3>2.1 String() 函数</h3>
+            <pre><code>String(123)        // "123"
+String(true)       // "true"
+String(null)       // "null"
+String(undefined)  // "undefined"
+String([1,2,3])    // "1,2,3"
+String({a:1})      // "[object Object]"</code></pre>
+            
+            <h3>2.2 toString() 方法</h3>
+            <pre><code>(123).toString()   // "123"
+[1,2,3].toString() // "1,2,3"
+// null 和 undefined 没有 toString 方法</code></pre>
+            
+            <h3>2.3 隐式转换</h3>
+            <ul>
+                <li>字符串拼接：<code>123 + ""  // "123"</code></li>
+                <li>模板字符串：<code>`${123}`  // "123"</code></li>
+            </ul>
+            
+            <h2>三、转换为数字</h2>
+            
+            <h3>3.1 Number() 函数</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>输入</th>
+                        <th>输出</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Number("123")</code></td>
+                        <td>123</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number("12.5")</code></td>
+                        <td>12.5</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number("")</code></td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number("abc")</code></td>
+                        <td>NaN</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number(true)</code></td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number(false)</code></td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number(null)</code></td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td><code>Number(undefined)</code></td>
+                        <td>NaN</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>3.2 parseInt() 和 parseFloat()</h3>
+            <pre><code>parseInt("123")      // 123
+parseInt("123px")    // 123 (解析到非数字停止)
+parseInt("12.5")     // 12 (只取整数部分)
+parseFloat("12.5")   // 12.5
+parseInt("0x10")     // 16 (十六进制)
+parseInt("10", 2)    // 2 (二进制)</code></pre>
+            
+            <h3>3.3 隐式转换</h3>
+            <ul>
+                <li>算术运算：<code>"5" - 2  // 3</code></li>
+                <li>一元加号：<code>+"123"  // 123</code></li>
+                <li>比较运算：<code>"5" > 3  // true</code></li>
+            </ul>
+            
+            <h2>四、转换为布尔值</h2>
+            
+            <h3>4.1 Boolean() 函数</h3>
+            <div class="info">
+                <strong>假值（Falsy）：</strong>
+                <ul>
+                    <li><code>false</code></li>
+                    <li><code>0</code>、<code>-0</code>、<code>0n</code></li>
+                    <li><code>""</code>（空字符串）</li>
+                    <li><code>null</code></li>
+                    <li><code>undefined</code></li>
+                    <li><code>NaN</code></li>
+                </ul>
+                <strong>其他所有值都是真值（Truthy）！</strong>
+            </div>
+            
+            <h3>4.2 隐式转换</h3>
+            <ul>
+                <li>逻辑运算：<code>!!"hello"  // true</code></li>
+                <li>条件判断：<code>if (value) {...}</code></li>
+                <li>三元运算符：<code>value ? a : b</code></li>
+            </ul>
+            
+            <h2>五、相等性比较</h2>
+            
+            <h3>5.1 == vs ===</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>比较</th>
+                        <th>==（允许类型转换）</th>
+                        <th>===（严格相等）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>5 == "5"</code></td>
+                        <td>true</td>
+                        <td>false</td>
+                    </tr>
+                    <tr>
+                        <td><code>0 == false</code></td>
+                        <td>true</td>
+                        <td>false</td>
+                    </tr>
+                    <tr>
+                        <td><code>null == undefined</code></td>
+                        <td>true</td>
+                        <td>false</td>
+                    </tr>
+                    <tr>
+                        <td><code>NaN == NaN</code></td>
+                        <td>false</td>
+                        <td>false</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="warning">
+                <strong>推荐使用 ===</strong>，避免类型转换带来的意外结果。
+            </div>
+            
+            <h3>5.2 Object.is()</h3>
+            <p>更严格的相等性判断：</p>
+            <pre><code>Object.is(NaN, NaN)      // true
+Object.is(+0, -0)        // false
+Object.is(5, 5)          // true</code></pre>
+            
+            <h2>六、类型判断方法</h2>
+            
+            <h3>6.1 typeof 操作符</h3>
+            <pre><code>typeof 123           // "number"
+typeof "abc"         // "string"
+typeof true          // "boolean"
+typeof undefined     // "undefined"
+typeof Symbol()      // "symbol"
+typeof 123n          // "bigint"
+typeof null          // "object" ⚠️
+typeof []            // "object" ⚠️
+typeof {}            // "object"
+typeof function(){}  // "function"</code></pre>
+            
+            <div class="warning">
+                <code>typeof null</code> 返回 "object" 是 JavaScript 的历史 bug！
+            </div>
+            
+            <h3>6.2 instanceof 操作符</h3>
+            <p>检测对象是否是某个构造函数的实例：</p>
+            <pre><code>[] instanceof Array        // true
+{} instanceof Object       // true
+new Date() instanceof Date // true</code></pre>
+            
+            <h3>6.3 Object.prototype.toString.call()</h3>
+            <p>最精确的类型检测方法：</p>
+            <pre><code>Object.prototype.toString.call([])        // "[object Array]"
+Object.prototype.toString.call({})        // "[object Object]"
+Object.prototype.toString.call(null)      // "[object Null]"
+Object.prototype.toString.call(undefined) // "[object Undefined]"</code></pre>
+            
+            <h3>6.4 Array.isArray()</h3>
+            <pre><code>Array.isArray([])   // true
+Array.isArray({})   // false</code></pre>
+            
+            <h3>6.5 Number.isNaN()</h3>
+            <pre><code>Number.isNaN(NaN)      // true
+Number.isNaN("abc")    // false (不进行类型转换)
+isNaN("abc")           // true (会先转换为数字)</code></pre>
+            
+            <h2>七、特殊情况</h2>
+            
+            <h3>7.1 对象转原始值</h3>
+            <p>对象转换时会调用 <code>valueOf()</code> 和 <code>toString()</code>：</p>
+            
+            <div class="spec">
+                <strong>ToPrimitive 抽象操作：</strong>
+                <pre>1. 如果有 [Symbol.toPrimitive] 方法，调用它
+2. 否则，根据 hint：
+   - "number"：先 valueOf()，再 toString()
+   - "string"：先 toString()，再 valueOf()
+   - "default"：通常同 "number"</pre>
+            </div>
+            
+            <h3>7.2 常见陷阱</h3>
+            <div class="warning">
+                <pre><code>// 陷阱1：+ 运算符
+"5" + 3          // "53" (字符串拼接)
+"5" - 3          // 2 (数字运算)
+
+// 陷阱2：空数组和对象
+[] + []          // "" (两个空字符串相加)
+[] + {}          // "[object Object]"
+{} + []          // 0 (语法歧义，{} 被当作代码块)
+
+// 陷阱3：比较运算
+[] == ![]        // true (复杂的类型转换)
+[] == 0          // true
+
+// 陷阱4：自动装箱
+const str = "hello";
+str.length       // 5 (自动转换为 String 对象)</code></pre>
+            </div>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <strong>建议：</strong>
+                <ul>
+                    <li>始终使用 <code>===</code> 和 <code>!==</code></li>
+                    <li>显式进行类型转换，避免依赖隐式转换</li>
+                    <li>使用 <code>Number.isNaN()</code> 而不是 <code>isNaN()</code></li>
+                    <li>使用 <code>Array.isArray()</code> 检测数组</li>
+                    <li>对于精确类型判断，使用 <code>Object.prototype.toString.call()</code></li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-type-conversion" target="_blank">ECMAScript - Type Conversion</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-abstract-equality-comparison" target="_blank">ECMAScript - Abstract Equality Comparison</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Equality_comparisons_and_sameness" target="_blank">MDN - 相等性判断</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="01-datatypes.html" class="nav-link prev">上一节：数据类型详解</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="02-operators.html" class="nav-link next">下一节：运算符完全指南</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：显式类型转换</h3>
+                <div class="code-block">
+                    <pre><code>// 转换为字符串
+console.log('String(123):', String(123));
+console.log('String(true):', String(true));
+console.log('String(null):', String(null));
+console.log('String([1,2,3]):', String([1,2,3]));
+
+// 转换为数字
+console.log('Number("123"):', Number("123"));
+console.log('Number(""):', Number(""));
+console.log('Number("abc"):', Number("abc"));
+console.log('Number(true):', Number(true));
+console.log('Number(null):', Number(null));
+console.log('Number(undefined):', Number(undefined));
+
+// 转换为布尔值
+console.log('Boolean(0):', Boolean(0));
+console.log('Boolean(""):', Boolean(""));
+console.log('Boolean("hello"):', Boolean("hello"));
+console.log('Boolean([]):', Boolean([]));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：隐式类型转换</h3>
+                <div class="code-block">
+                    <pre><code>// 字符串拼接 vs 数字运算
+console.log('"5" + 3:', "5" + 3);       // "53"
+console.log('"5" - 3:', "5" - 3);       // 2
+console.log('"5" * 2:', "5" * 2);       // 10
+
+// 一元加号转换
+console.log('+"123":', +"123");
+console.log('+true:', +true);
+console.log('+false:', +false);
+console.log('+"abc":', +"abc");
+
+// 逻辑非转换
+console.log('!!"hello":', !!"hello");
+console.log('!!0:', !!0);
+console.log('!![]:', !![]);
+
+// 比较运算中的转换
+console.log('"5" > 3:', "5" > 3);
+console.log('true == 1:', true == 1);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：== vs ===</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 宽松相等 (==) ===');
+console.log('5 == "5":', 5 == "5");
+console.log('0 == false:', 0 == false);
+console.log('"" == false:', "" == false);
+console.log('null == undefined:', null == undefined);
+console.log('[] == 0:', [] == 0);
+
+console.log('\n=== 严格相等 (===) ===');
+console.log('5 === "5":', 5 === "5");
+console.log('0 === false:', 0 === false);
+console.log('"" === false:', "" === false);
+console.log('null === undefined:', null === undefined);
+console.log('[] === 0:', [] === 0);
+
+console.log('\n=== Object.is() ===');
+console.log('Object.is(NaN, NaN):', Object.is(NaN, NaN));
+console.log('NaN === NaN:', NaN === NaN);
+console.log('Object.is(+0, -0):', Object.is(+0, -0));
+console.log('+0 === -0:', +0 === -0);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：类型判断</h3>
+                <div class="code-block">
+                    <pre><code>// typeof
+console.log('=== typeof ===');
+console.log('typeof 123:', typeof 123);
+console.log('typeof "abc":', typeof "abc");
+console.log('typeof true:', typeof true);
+console.log('typeof null:', typeof null);        // "object"!
+console.log('typeof undefined:', typeof undefined);
+console.log('typeof []:', typeof []);            // "object"!
+console.log('typeof {}:', typeof {});
+console.log('typeof function(){}:', typeof function(){});
+
+// 精确类型检测
+function getType(value) {
+    return Object.prototype.toString.call(value).slice(8, -1);
+}
+
+console.log('\n=== 精确类型 ===');
+console.log('getType([]):', getType([]));
+console.log('getType({}):', getType({}));
+console.log('getType(null):', getType(null));
+console.log('getType(undefined):', getType(undefined));
+console.log('getType(123):', getType(123));
+
+// 特殊检测
+console.log('\n=== 特殊检测 ===');
+console.log('Array.isArray([]):', Array.isArray([]));
+console.log('Number.isNaN(NaN):', Number.isNaN(NaN));
+console.log('Number.isNaN("abc"):', Number.isNaN("abc"));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：parseInt 陷阱</h3>
+                <div class="code-block">
+                    <pre><code>// parseInt 的特殊行为
+console.log('parseInt("123"):', parseInt("123"));
+console.log('parseInt("123px"):', parseInt("123px"));     // 123
+console.log('parseInt("px123"):', parseInt("px123"));     // NaN
+console.log('parseInt("12.5"):', parseInt("12.5"));       // 12
+console.log('parseFloat("12.5"):', parseFloat("12.5"));   // 12.5
+
+// 进制转换
+console.log('\n=== 进制转换 ===');
+console.log('parseInt("10", 10):', parseInt("10", 10));   // 10
+console.log('parseInt("10", 2):', parseInt("10", 2));     // 2
+console.log('parseInt("10", 8):', parseInt("10", 8));     // 8
+console.log('parseInt("10", 16):', parseInt("10", 16));   // 16
+
+// 陷阱：数组 map
+const arr = ["1", "2", "3"];
+console.log('\n=== 数组 map 陷阱 ===');
+console.log('arr.map(parseInt):', arr.map(parseInt));
+// 相当于：[parseInt("1", 0), parseInt("2", 1), parseInt("3", 2)]
+// 结果：[1, NaN, NaN]
+
+console.log('正确写法:', arr.map(x => parseInt(x, 10)));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：经典陷阱</h3>
+                <div class="code-block">
+                    <pre><code>// 陷阱1：空数组和对象
+console.log('=== 空数组和对象 ===');
+console.log('[] + []:', [] + []);            // ""
+console.log('[1] + [2]:', [1] + [2]);        // "12"
+console.log('[] == ![]:', [] == ![]);        // true!
+
+// 陷阱2：加号运算符
+console.log('\n=== 加号运算符 ===');
+console.log('1 + 2:', 1 + 2);                // 3
+console.log('"1" + 2:', "1" + 2);            // "12"
+console.log('1 + "2":', 1 + "2");            // "12"
+console.log('true + 1:', true + 1);          // 2
+console.log('false + 1:', false + 1);        // 1
+
+// 陷阱3：减号运算符
+console.log('\n=== 减号运算符 ===');
+console.log('"5" - 3:', "5" - 3);            // 2
+console.log('"5" - "3":', "5" - "3");        // 2
+console.log('"abc" - 1:', "abc" - 1);        // NaN
+
+// 陷阱4：自动装箱
+console.log('\n=== 自动装箱 ===');
+const str = "hello";
+console.log('str.length:', str.length);       // 5
+console.log('typeof str:', typeof str);       // "string"
+console.log('str[0]:', str[0]);               // "h"</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

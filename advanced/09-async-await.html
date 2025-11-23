@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>async/await 语法 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>async/await 语法</h1>
+            
+            <h2>概述</h2>
+            <p>async/await 是 ES2017 引入的异步编程语法糖，基于 Promise，让异步代码看起来像同步代码，极大提升了代码可读性。</p>
+            
+            <h2>一、async 函数</h2>
+            
+            <h3>1.1 async 基础</h3>
+            <pre><code>// async 函数总是返回 Promise
+async function fetchData() {
+    return 'data';
+}
+
+fetchData().then(data => {
+    console.log(data); // 'data'
+});
+
+// 等价于
+function fetchData() {
+    return Promise.resolve('data');
+}</code></pre>
+            
+            <h3>1.2 async 函数声明方式</h3>
+            <pre><code>// 函数声明
+async function func1() {}
+
+// 函数表达式
+const func2 = async function() {};
+
+// 箭头函数
+const func3 = async () => {};
+
+// 对象方法
+const obj = {
+    async method() {}
+};
+
+// 类方法
+class MyClass {
+    async method() {}
+}</code></pre>
+            
+            <h2>二、await 表达式</h2>
+            
+            <h3>2.1 await 基础</h3>
+            <pre><code>async function example() {
+    // await 等待 Promise 完成
+    const result = await Promise.resolve('value');
+    console.log(result); // 'value'
+    
+    // await 可以等待任何值
+    const num = await 42;
+    console.log(num); // 42
+}</code></pre>
+            
+            <h3>2.2 await 特性</h3>
+            <div class="info">
+                <ul>
+                    <li>只能在 async 函数中使用</li>
+                    <li>暂停 async 函数执行，等待 Promise 完成</li>
+                    <li>Promise fulfilled 时返回结果</li>
+                    <li>Promise rejected 时抛出错误</li>
+                </ul>
+            </div>
+            
+            <h2>三、错误处理</h2>
+            
+            <h3>3.1 try/catch</h3>
+            <pre><code>async function fetchUser(id) {
+    try {
+        const user = await fetch(`/api/user/${id}`);
+        const data = await user.json();
+        return data;
+    } catch (error) {
+        console.error('获取用户失败:', error);
+        throw error;
+    }
+}</code></pre>
+            
+            <h3>3.2 捕获特定错误</h3>
+            <pre><code>async function example() {
+    try {
+        await riskyOperation();
+    } catch (error) {
+        if (error.name === 'NetworkError') {
+            // 处理网络错误
+        } else if (error.name === 'ValidationError') {
+            // 处理验证错误
+        } else {
+            throw error; // 重新抛出
+        }
+    }
+}</code></pre>
+            
+            <h2>四、并发控制</h2>
+            
+            <h3>4.1 串行执行</h3>
+            <pre><code>async function sequential() {
+    const result1 = await task1(); // 等待完成
+    const result2 = await task2(); // 然后执行
+    const result3 = await task3(); // 最后执行
+    return [result1, result2, result3];
+}</code></pre>
+            
+            <h3>4.2 并行执行</h3>
+            <pre><code>async function parallel() {
+    // 同时启动
+    const promise1 = task1();
+    const promise2 = task2();
+    const promise3 = task3();
+    
+    // 等待所有完成
+    const results = await Promise.all([
+        promise1,
+        promise2,
+        promise3
+    ]);
+    return results;
+}
+
+// 或使用 Promise.all
+async function parallelSimple() {
+    return await Promise.all([
+        task1(),
+        task2(),
+        task3()
+    ]);
+}</code></pre>
+            
+            <h2>五、实用模式</h2>
+            
+            <h3>5.1 循环中使用 await</h3>
+            <pre><code>// 串行处理
+async function processItems(items) {
+    for (const item of items) {
+        await processItem(item); // 一个接一个
+    }
+}
+
+// 并行处理
+async function processItemsParallel(items) {
+    await Promise.all(
+        items.map(item => processItem(item))
+    );
+}</code></pre>
+            
+            <h3>5.2 条件 await</h3>
+            <pre><code>async function conditionalAwait(useCache) {
+    let data;
+    if (useCache) {
+        data = getFromCache();
+    } else {
+        data = await fetchFromServer();
+    }
+    return data;
+}</code></pre>
+            
+            <h3>5.3 超时控制</h3>
+            <pre><code>async function fetchWithTimeout(url, timeout) {
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('超时')), timeout);
+    });
+    
+    return Promise.race([
+        fetch(url),
+        timeoutPromise
+    ]);
+}</code></pre>
+            
+            <h3>5.4 重试机制</h3>
+            <pre><code>async function retry(fn, maxAttempts) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (attempt === maxAttempts) {
+                throw error;
+            }
+            console.log(`重试第 ${attempt} 次`);
+            await new Promise(resolve => 
+                setTimeout(resolve, 1000 * attempt)
+            );
+        }
+    }
+}</code></pre>
+            
+            <h2>六、async/await vs Promise</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>Promise</th>
+                        <th>async/await</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>语法</td>
+                        <td>链式调用</td>
+                        <td>同步风格</td>
+                    </tr>
+                    <tr>
+                        <td>错误处理</td>
+                        <td>.catch()</td>
+                        <td>try/catch</td>
+                    </tr>
+                    <tr>
+                        <td>可读性</td>
+                        <td>较差（嵌套多时）</td>
+                        <td>更好</td>
+                    </tr>
+                    <tr>
+                        <td>调试</td>
+                        <td>较难</td>
+                        <td>更容易</td>
+                    </tr>
+                    <tr>
+                        <td>条件逻辑</td>
+                        <td>复杂</td>
+                        <td>简单</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>七、常见陷阱</h2>
+            
+            <h3>7.1 忘记 await</h3>
+            <div class="warning">
+                <pre><code>// 错误：忘记 await
+async function wrong() {
+    const result = fetchData(); // 返回 Promise，不是值
+    console.log(result); // Promise { pending }
+}
+
+// 正确
+async function correct() {
+    const result = await fetchData();
+    console.log(result); // 实际的值
+}</code></pre>
+            </div>
+            
+            <h3>7.2 串行 vs 并行</h3>
+            <div class="warning">
+                <pre><code>// 慢：串行执行
+async function slow() {
+    const a = await task1(); // 等待
+    const b = await task2(); // 再等待
+    return [a, b];
+}
+
+// 快：并行执行
+async function fast() {
+    const [a, b] = await Promise.all([
+        task1(),
+        task2()
+    ]);
+    return [a, b];
+}</code></pre>
+            </div>
+            
+            <h3>7.3 循环中的 await</h3>
+            <pre><code>// forEach 不会等待
+async function wrong(items) {
+    items.forEach(async item => {
+        await processItem(item); // 不会按预期工作
+    });
+}
+
+// 正确方式
+async function correct(items) {
+    for (const item of items) {
+        await processItem(item);
+    }
+}</code></pre>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>总是用 await</strong>：不要忘记 await Promise</li>
+                    <li><strong>并行优先</strong>：独立任务使用 Promise.all</li>
+                    <li><strong>错误处理</strong>：使用 try/catch</li>
+                    <li><strong>避免阻塞</strong>：不要在循环中串行执行耗时操作</li>
+                    <li><strong>返回 Promise</strong>：async 函数可以直接返回 await 的结果</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-async-function-definitions" target="_blank">ECMAScript - Async Functions</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/async_function" target="_blank">MDN - async function</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="09-promises.html" class="nav-link prev">上一节：Promise 详解</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="09-event-loop.html" class="nav-link next">下一节：事件循环</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：async/await 基础</h3>
+                <div class="code-block">
+                    <pre><code>// async 函数返回 Promise
+async function getMessage() {
+    return 'Hello';
+}
+
+getMessage().then(msg => console.log(msg));
+
+// await 等待 Promise
+async function example() {
+    const result = await Promise.resolve('World');
+    console.log('Result:', result);
+    
+    // await 任何值
+    const num = await 42;
+    console.log('Number:', num);
+}
+
+example();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：错误处理</h3>
+                <div class="code-block">
+                    <pre><code>// 使用 try/catch 处理错误
+async function fetchUser(id) {
+    try {
+        if (id < 0) {
+            throw new Error('ID 不能为负数');
+        }
+        
+        // 模拟异步操作
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { id, name: 'User' + id };
+    } catch (error) {
+        console.error('错误:', error.message);
+        throw error;
+    }
+}
+
+// 测试成功
+fetchUser(1)
+    .then(user => console.log('成功:', user))
+    .catch(err => console.log('捕获:', err.message));
+
+// 测试失败
+fetchUser(-1)
+    .then(user => console.log('成功:', user))
+    .catch(err => console.log('捕获:', err.message));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：串行 vs 并行</h3>
+                <div class="code-block">
+                    <pre><code>// 模拟异步任务
+const task = (name, delay) => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            console.log(`${name} 完成`);
+            resolve(name);
+        }, delay);
+    });
+};
+
+// 串行执行（慢）
+async function sequential() {
+    console.log('=== 串行执行 ===');
+    const start = Date.now();
+    
+    await task('任务1', 300);
+    await task('任务2', 200);
+    await task('任务3', 100);
+    
+    console.log('总耗时:', Date.now() - start, 'ms');
+}
+
+// 并行执行（快）
+async function parallel() {
+    console.log('\n=== 并行执行 ===');
+    const start = Date.now();
+    
+    await Promise.all([
+        task('并行1', 300),
+        task('并行2', 200),
+        task('并行3', 100)
+    ]);
+    
+    console.log('总耗时:', Date.now() - start, 'ms');
+}
+
+// 执行
+sequential().then(() => parallel());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：循环中使用 await</h3>
+                <div class="code-block">
+                    <pre><code>// 串行处理数组
+async function processSerial(items) {
+    console.log('串行处理:');
+    for (const item of items) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        console.log('  处理:', item);
+    }
+}
+
+// 并行处理数组
+async function processParallel(items) {
+    console.log('\n并行处理:');
+    await Promise.all(
+        items.map(async item => {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            console.log('  处理:', item);
+        })
+    );
+}
+
+const items = [1, 2, 3];
+
+processSerial(items).then(() => {
+    return processParallel(items);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：超时控制</h3>
+                <div class="code-block">
+                    <pre><code>// 超时包装函数
+async function withTimeout(promise, ms) {
+    const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('超时')), ms);
+    });
+    return Promise.race([promise, timeout]);
+}
+
+// 测试
+async function testTimeout() {
+    // 快任务（不会超时）
+    const fastTask = new Promise(resolve => {
+        setTimeout(() => resolve('快速完成'), 500);
+    });
+    
+    try {
+        const result = await withTimeout(fastTask, 1000);
+        console.log('成功:', result);
+    } catch (error) {
+        console.log('失败:', error.message);
+    }
+    
+    // 慢任务（会超时）
+    const slowTask = new Promise(resolve => {
+        setTimeout(() => resolve('慢速完成'), 2000);
+    });
+    
+    try {
+        const result = await withTimeout(slowTask, 1000);
+        console.log('成功:', result);
+    } catch (error) {
+        console.log('失败:', error.message);
+    }
+}
+
+testTimeout();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：重试机制</h3>
+                <div class="code-block">
+                    <pre><code>// 重试函数
+async function retry(fn, maxAttempts = 3, delay = 1000) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            console.log(`第 ${attempt} 次尝试失败`);
+            if (attempt === maxAttempts) {
+                throw new Error(`失败 ${maxAttempts} 次: ${error.message}`);
+            }
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
+// 模拟不稳定的操作
+let attempts = 0;
+async function unstableOperation() {
+    attempts++;
+    if (attempts < 3) {
+        throw new Error('暂时失败');
+    }
+    return '成功!';
+}
+
+// 测试重试
+retry(unstableOperation, 3, 500)
+    .then(result => console.log('最终结果:', result))
+    .catch(error => console.error('最终失败:', error.message));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

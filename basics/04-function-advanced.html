@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高阶函数与柯里化 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>高阶函数与柯里化</h1>
+            
+            <h2>概述</h2>
+            <p>高阶函数（Higher-Order Function）是函数式编程的核心概念，可以让代码更加简洁、可复用。柯里化是高阶函数的一种重要应用。</p>
+            
+            <h2>一、高阶函数</h2>
+            
+            <h3>1.1 什么是高阶函数</h3>
+            <div class="info">
+                <strong>高阶函数定义：</strong>
+                满足以下至少一个条件的函数：
+                <ul>
+                    <li>接受一个或多个函数作为参数</li>
+                    <li>返回一个函数作为结果</li>
+                </ul>
+            </div>
+            
+            <h3>1.2 接受函数作为参数</h3>
+            <pre><code>// 数组方法都是高阶函数
+[1, 2, 3].map(x => x * 2);
+[1, 2, 3].filter(x => x > 1);
+[1, 2, 3].reduce((acc, cur) => acc + cur, 0);
+
+// 自定义高阶函数
+function repeat(n, action) {
+    for (let i = 0; i < n; i++) {
+        action(i);
+    }
+}
+
+repeat(3, console.log);  // 0, 1, 2</code></pre>
+            
+            <h3>1.3 返回函数作为结果</h3>
+            <pre><code>function createMultiplier(factor) {
+    return function(number) {
+        return number * factor;
+    };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5));  // 10
+console.log(triple(5));  // 15</code></pre>
+            
+            <h2>二、常用高阶函数模式</h2>
+            
+            <h3>2.1 map - 映射</h3>
+            <pre><code>const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map(x => x * 2);
+// [2, 4, 6, 8, 10]</code></pre>
+            
+            <h3>2.2 filter - 过滤</h3>
+            <pre><code>const numbers = [1, 2, 3, 4, 5];
+const evens = numbers.filter(x => x % 2 === 0);
+// [2, 4]</code></pre>
+            
+            <h3>2.3 reduce - 归约</h3>
+            <pre><code>const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce((acc, cur) => acc + cur, 0);
+// 15</code></pre>
+            
+            <h3>2.4 some / every - 断言</h3>
+            <pre><code>const numbers = [1, 2, 3, 4, 5];
+numbers.some(x => x > 3);   // true（至少一个）
+numbers.every(x => x > 0);  // true（所有）</code></pre>
+            
+            <h2>三、柯里化（Currying）</h2>
+            
+            <h3>3.1 什么是柯里化</h3>
+            <p>柯里化是将多参数函数转换为一系列单参数函数的技术。</p>
+            
+            <pre><code>// 普通函数
+function add(a, b, c) {
+    return a + b + c;
+}
+add(1, 2, 3);  // 6
+
+// 柯里化后
+function curriedAdd(a) {
+    return function(b) {
+        return function(c) {
+            return a + b + c;
+        };
+    };
+}
+curriedAdd(1)(2)(3);  // 6
+
+// ES6 简写
+const curriedAdd = a => b => c => a + b + c;</code></pre>
+            
+            <h3>3.2 柯里化的优势</h3>
+            <ul>
+                <li><strong>参数复用</strong>：预设部分参数，创建特定功能的函数</li>
+                <li><strong>延迟执行</strong>：可以分步传入参数</li>
+                <li><strong>函数组合</strong>：便于组合其他函数</li>
+            </ul>
+            
+            <h3>3.3 实现通用柯里化函数</h3>
+            <pre><code>function curry(fn) {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        } else {
+            return function(...nextArgs) {
+                return curried.apply(this, args.concat(nextArgs));
+            };
+        }
+    };
+}
+
+// 使用
+function sum(a, b, c) {
+    return a + b + c;
+}
+
+const curriedSum = curry(sum);
+
+curriedSum(1)(2)(3);     // 6
+curriedSum(1, 2)(3);     // 6
+curriedSum(1)(2, 3);     // 6
+curriedSum(1, 2, 3);     // 6</code></pre>
+            
+            <h2>四、偏函数应用（Partial Application）</h2>
+            
+            <h3>4.1 偏函数 vs 柯里化</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>柯里化</strong>：将 n 元函数转换为 n 个一元函数</li>
+                    <li><strong>偏函数</strong>：固定函数的部分参数，返回接受剩余参数的新函数</li>
+                </ul>
+            </div>
+            
+            <h3>4.2 实现偏函数</h3>
+            <pre><code>function partial(fn, ...presetArgs) {
+    return function(...laterArgs) {
+        return fn(...presetArgs, ...laterArgs);
+    };
+}
+
+// 使用
+function multiply(a, b, c) {
+    return a * b * c;
+}
+
+const double = partial(multiply, 2);
+double(3, 4);  // 24 (2 * 3 * 4)</code></pre>
+            
+            <h3>4.3 使用 bind 实现偏函数</h3>
+            <pre><code>const greet = (greeting, name) => `${greeting}, ${name}!`;
+
+const sayHello = greet.bind(null, 'Hello');
+sayHello('Alice');  // "Hello, Alice!"</code></pre>
+            
+            <h2>五、函数组合（Function Composition）</h2>
+            
+            <h3>5.1 什么是函数组合</h3>
+            <p>将多个函数组合成一个函数，从右到左执行。</p>
+            
+            <pre><code>// 数学表达：f(g(x))
+const compose = (f, g) => x => f(g(x));
+
+// 多个函数组合
+const compose = (...fns) => x => 
+    fns.reduceRight((acc, fn) => fn(acc), x);</code></pre>
+            
+            <h3>5.2 pipe 函数</h3>
+            <p>与 compose 相反，从左到右执行：</p>
+            
+            <pre><code>const pipe = (...fns) => x => 
+    fns.reduce((acc, fn) => fn(acc), x);
+
+// 使用
+const addOne = x => x + 1;
+const double = x => x * 2;
+const square = x => x * x;
+
+const transform = pipe(addOne, double, square);
+transform(2);  // ((2 + 1) * 2)^2 = 36</code></pre>
+            
+            <h2>六、常用函数式工具</h2>
+            
+            <h3>6.1 identity - 恒等函数</h3>
+            <pre><code>const identity = x => x;
+
+// 用于过滤假值
+[0, 1, false, 2, '', 3].filter(identity);
+// [1, 2, 3]</code></pre>
+            
+            <h3>6.2 constant - 常量函数</h3>
+            <pre><code>const constant = value => () => value;
+
+const getTrue = constant(true);
+getTrue();  // true</code></pre>
+            
+            <h3>6.3 flip - 翻转参数</h3>
+            <pre><code>const flip = fn => (a, b) => fn(b, a);
+
+const divide = (a, b) => a / b;
+const flippedDivide = flip(divide);
+
+divide(10, 2);         // 5
+flippedDivide(10, 2);  // 0.2</code></pre>
+            
+            <h3>6.4 memoize - 记忆化</h3>
+            <p>缓存函数结果，避免重复计算：</p>
+            
+            <pre><code>function memoize(fn) {
+    const cache = new Map();
+    return function(...args) {
+        const key = JSON.stringify(args);
+        if (cache.has(key)) {
+            return cache.get(key);
+        }
+        const result = fn.apply(this, args);
+        cache.set(key, result);
+        return result;
+    };
+}</code></pre>
+            
+            <h2>七、实际应用</h2>
+            
+            <h3>7.1 数据处理管道</h3>
+            <pre><code>const users = [
+    { name: 'Alice', age: 25, active: true },
+    { name: 'Bob', age: 30, active: false },
+    { name: 'Charlie', age: 28, active: true }
+];
+
+const result = users
+    .filter(u => u.active)
+    .map(u => u.name)
+    .sort();
+
+console.log(result);  // ['Alice', 'Charlie']</code></pre>
+            
+            <h3>7.2 表单验证</h3>
+            <pre><code>const required = value => value.trim() !== '';
+const minLength = min => value => value.length >= min;
+const maxLength = max => value => value.length <= max;
+const isEmail = value => /^[^@]+@[^@]+$/.test(value);
+
+const validate = (value, ...validators) => 
+    validators.every(validator => validator(value));
+
+// 使用
+const username = 'alice';
+const isValid = validate(
+    username,
+    required,
+    minLength(3),
+    maxLength(20)
+);</code></pre>
+            
+            <h3>7.3 防抖和节流</h3>
+            <pre><code>// 防抖
+function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+// 节流
+function throttle(fn, delay) {
+    let last = 0;
+    return function(...args) {
+        const now = Date.now();
+        if (now - last >= delay) {
+            last = now;
+            fn.apply(this, args);
+        }
+    };
+}</code></pre>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>纯函数</strong>：尽量编写无副作用的函数</li>
+                    <li><strong>单一职责</strong>：每个函数只做一件事</li>
+                    <li><strong>可组合</strong>：设计便于组合的小函数</li>
+                    <li><strong>声明式</strong>：使用 map/filter/reduce 代替循环</li>
+                    <li><strong>不可变性</strong>：避免修改原始数据</li>
+                    <li><strong>命名</strong>：使用清晰的函数名</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://github.com/getify/Functional-Light-JS" target="_blank">Functional-Light JavaScript</a></li>
+                <li><a href="https://mostly-adequate.gitbook.io/mostly-adequate-guide/" target="_blank">Professor Frisby's Mostly Adequate Guide to Functional Programming</a></li>
+                <li><a href="https://ramdajs.com/" target="_blank">Ramda - 函数式编程库</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="04-arrow-function.html" class="nav-link prev">上一节：箭头函数</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="05-prototype.html" class="nav-link next">下一节：原型与原型链</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：高阶函数基础</h3>
+                <div class="code-block">
+                    <pre><code>// 接受函数作为参数
+function repeat(n, action) {
+    for (let i = 0; i < n; i++) {
+        action(i);
+    }
+}
+
+console.log('=== repeat 示例 ===');
+repeat(3, i => console.log(`第 ${i + 1} 次`));
+
+// 返回函数
+function createGreeter(greeting) {
+    return function(name) {
+        return `${greeting}, ${name}!`;
+    };
+}
+
+const sayHello = createGreeter('Hello');
+const sayHi = createGreeter('Hi');
+
+console.log('\n=== 返回函数示例 ===');
+console.log(sayHello('Alice'));
+console.log(sayHi('Bob'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：柯里化</h3>
+                <div class="code-block">
+                    <pre><code>// 手动柯里化
+const add = a => b => c => a + b + c;
+
+console.log('add(1)(2)(3):', add(1)(2)(3));
+
+// 部分应用
+const add5 = add(5);
+const add5and10 = add5(10);
+console.log('add5and10(2):', add5and10(2));
+
+// 通用柯里化函数
+function curry(fn) {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        }
+        return function(...nextArgs) {
+            return curried.apply(this, args.concat(nextArgs));
+        };
+    };
+}
+
+function multiply(a, b, c) {
+    return a * b * c;
+}
+
+const curriedMultiply = curry(multiply);
+
+console.log('\n=== 通用柯里化 ===');
+console.log('curriedMultiply(2)(3)(4):', curriedMultiply(2)(3)(4));
+console.log('curriedMultiply(2, 3)(4):', curriedMultiply(2, 3)(4));
+console.log('curriedMultiply(2)(3, 4):', curriedMultiply(2)(3, 4));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：函数组合</h3>
+                <div class="code-block">
+                    <pre><code>// pipe - 从左到右
+const pipe = (...fns) => x => 
+    fns.reduce((acc, fn) => fn(acc), x);
+
+// compose - 从右到左
+const compose = (...fns) => x => 
+    fns.reduceRight((acc, fn) => fn(acc), x);
+
+// 定义基本函数
+const addOne = x => x + 1;
+const double = x => x * 2;
+const square = x => x * x;
+
+// 使用 pipe
+const pipeline = pipe(addOne, double, square);
+console.log('pipe(addOne, double, square)(2):');
+console.log('  (2 + 1) * 2 = 6, 6^2 =', pipeline(2));
+
+// 使用 compose
+const composition = compose(square, double, addOne);
+console.log('\ncompose(square, double, addOne)(2):');
+console.log('  (2 + 1) * 2 = 6, 6^2 =', composition(2));
+
+// 实用例子：文本处理
+const trim = str => str.trim();
+const lowercase = str => str.toLowerCase();
+const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
+
+const normalizeText = pipe(trim, lowercase, capitalize);
+console.log('\nnormalizeText("  HELLO  "):', normalizeText("  HELLO  "));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：map/filter/reduce</h3>
+                <div class="code-block">
+                    <pre><code>const numbers = [1, 2, 3, 4, 5];
+
+// map - 映射
+const doubled = numbers.map(x => x * 2);
+console.log('map:', doubled);
+
+// filter - 过滤
+const evens = numbers.filter(x => x % 2 === 0);
+console.log('filter:', evens);
+
+// reduce - 归约
+const sum = numbers.reduce((acc, cur) => acc + cur, 0);
+console.log('reduce sum:', sum);
+
+// 链式调用
+const result = numbers
+    .map(x => x * 2)         // [2, 4, 6, 8, 10]
+    .filter(x => x > 5)      // [6, 8, 10]
+    .reduce((a, b) => a + b, 0);  // 24
+
+console.log('\n链式调用结果:', result);
+
+// 实用：数据处理
+const users = [
+    { name: 'Alice', age: 25, score: 85 },
+    { name: 'Bob', age: 30, score: 92 },
+    { name: 'Charlie', age: 28, score: 78 },
+    { name: 'David', age: 22, score: 95 }
+];
+
+const highScorers = users
+    .filter(u => u.score >= 85)
+    .map(u => u.name)
+    .sort();
+
+console.log('\n高分学生:', highScorers);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：记忆化</h3>
+                <div class="code-block">
+                    <pre><code>// 记忆化函数
+function memoize(fn) {
+    const cache = new Map();
+    return function(...args) {
+        const key = JSON.stringify(args);
+        if (cache.has(key)) {
+            console.log('从缓存返回:', key);
+            return cache.get(key);
+        }
+        console.log('计算结果:', key);
+        const result = fn.apply(this, args);
+        cache.set(key, result);
+        return result;
+    };
+}
+
+// 斐波那契数列（未优化版本）
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// 记忆化版本
+const memoFib = memoize(fibonacci);
+
+console.log('=== 首次调用 ===');
+console.log('memoFib(10):', memoFib(10));
+
+console.log('\n=== 再次调用（使用缓存）===');
+console.log('memoFib(10):', memoFib(10));
+
+console.log('\n=== 计算另一个值 ===');
+console.log('memoFib(8):', memoFib(8));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用工具函数</h3>
+                <div class="code-block">
+                    <pre><code>// 偏函数应用
+function partial(fn, ...presetArgs) {
+    return function(...laterArgs) {
+        return fn(...presetArgs, ...laterArgs);
+    };
+}
+
+function greet(greeting, name, punctuation) {
+    return `${greeting}, ${name}${punctuation}`;
+}
+
+const sayHello = partial(greet, 'Hello');
+console.log(sayHello('Alice', '!'));
+console.log(sayHello('Bob', '.'));
+
+// 防抖
+function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            fn.apply(this, args);
+        }, delay);
+    };
+}
+
+// 节流
+function throttle(fn, delay) {
+    let last = 0;
+    return function(...args) {
+        const now = Date.now();
+        if (now - last >= delay) {
+            last = now;
+            fn.apply(this, args);
+        }
+    };
+}
+
+console.log('\n防抖和节流函数已定义');
+
+// 函数组合工具
+const identity = x => x;
+const constant = value => () => value;
+
+console.log('\nidentity(42):', identity(42));
+console.log('constant(42)():', constant(42)());
+
+// 过滤假值
+const values = [0, 1, false, 2, '', 3, null, 4, undefined, 5];
+console.log('过滤假值:', values.filter(identity));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

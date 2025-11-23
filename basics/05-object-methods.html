@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对象常用方法 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>对象常用方法</h1>
+            
+            <h2>概述</h2>
+            <p>JavaScript 提供了丰富的 Object 静态方法和实例方法来操作对象。掌握这些方法对于日常开发至关重要。</p>
+            
+            <h2>一、创建对象</h2>
+            
+            <h3>1.1 Object.create()</h3>
+            <p>创建一个新对象，使用指定的原型对象：</p>
+            
+            <pre><code>const proto = {
+    greet() {
+        return 'Hello';
+    }
+};
+
+const obj = Object.create(proto);
+console.log(obj.greet());  // "Hello"
+
+// 创建纯净对象（无原型）
+const pureObj = Object.create(null);
+console.log(pureObj.toString);  // undefined</code></pre>
+            
+            <h3>1.2 Object.assign()</h3>
+            <p>复制对象属性（浅拷贝）：</p>
+            
+            <pre><code>const target = { a: 1 };
+const source1 = { b: 2 };
+const source2 = { c: 3 };
+
+Object.assign(target, source1, source2);
+console.log(target);  // { a: 1, b: 2, c: 3 }</code></pre>
+            
+            <h2>二、属性相关方法</h2>
+            
+            <h3>2.1 Object.keys()</h3>
+            <p>返回对象自身可枚举属性名数组：</p>
+            
+            <pre><code>const obj = { a: 1, b: 2, c: 3 };
+console.log(Object.keys(obj));  // ['a', 'b', 'c']</code></pre>
+            
+            <h3>2.2 Object.values()</h3>
+            <p>返回对象自身可枚举属性值数组：</p>
+            
+            <pre><code>const obj = { a: 1, b: 2, c: 3 };
+console.log(Object.values(obj));  // [1, 2, 3]</code></pre>
+            
+            <h3>2.3 Object.entries()</h3>
+            <p>返回对象自身可枚举属性键值对数组：</p>
+            
+            <pre><code>const obj = { a: 1, b: 2, c: 3 };
+console.log(Object.entries(obj));
+// [['a', 1], ['b', 2], ['c', 3]]
+
+// 常用于遍历
+for (const [key, value] of Object.entries(obj)) {
+    console.log(`${key}: ${value}`);
+}</code></pre>
+            
+            <h3>2.4 Object.fromEntries()</h3>
+            <p>entries() 的逆操作，将键值对数组转换为对象：</p>
+            
+            <pre><code>const entries = [['a', 1], ['b', 2]];
+const obj = Object.fromEntries(entries);
+console.log(obj);  // { a: 1, b: 2 }</code></pre>
+            
+            <h3>2.5 Object.getOwnPropertyNames()</h3>
+            <p>返回对象所有自身属性（包括不可枚举）：</p>
+            
+            <pre><code>const obj = {};
+Object.defineProperty(obj, 'hidden', {
+    value: 'secret',
+    enumerable: false
+});
+
+console.log(Object.keys(obj));  // []
+console.log(Object.getOwnPropertyNames(obj));  // ['hidden']</code></pre>
+            
+            <h3>2.6 Object.getOwnPropertySymbols()</h3>
+            <p>返回对象的所有 Symbol 属性：</p>
+            
+            <pre><code>const sym = Symbol('key');
+const obj = { [sym]: 'value' };
+
+console.log(Object.getOwnPropertySymbols(obj));  // [Symbol(key)]</code></pre>
+            
+            <h2>三、属性描述符</h2>
+            
+            <h3>3.1 Object.getOwnPropertyDescriptor()</h3>
+            <p>获取属性的描述符：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+const descriptor = Object.getOwnPropertyDescriptor(obj, 'name');
+
+console.log(descriptor);
+// {
+//   value: 'Alice',
+//   writable: true,
+//   enumerable: true,
+//   configurable: true
+// }</code></pre>
+            
+            <h3>3.2 Object.defineProperty()</h3>
+            <p>定义或修改属性及其描述符：</p>
+            
+            <pre><code>const obj = {};
+
+Object.defineProperty(obj, 'name', {
+    value: 'Alice',
+    writable: false,      // 不可写
+    enumerable: true,     // 可枚举
+    configurable: false   // 不可配置
+});
+
+obj.name = 'Bob';  // 严格模式下抛出错误
+console.log(obj.name);  // 'Alice'</code></pre>
+            
+            <h3>3.3 Object.defineProperties()</h3>
+            <p>同时定义多个属性：</p>
+            
+            <pre><code>const obj = {};
+
+Object.defineProperties(obj, {
+    name: {
+        value: 'Alice',
+        writable: true
+    },
+    age: {
+        value: 25,
+        writable: true
+    }
+});</code></pre>
+            
+            <h2>四、对象状态控制</h2>
+            
+            <h3>4.1 Object.preventExtensions()</h3>
+            <p>阻止对象扩展（不能添加新属性）：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+Object.preventExtensions(obj);
+
+obj.age = 25;  // 无效
+console.log(obj.age);  // undefined
+
+// 可以删除和修改现有属性
+delete obj.name;  // OK
+obj.name = 'Bob';  // OK</code></pre>
+            
+            <h3>4.2 Object.seal()</h3>
+            <p>密封对象（不能添加/删除属性，但可以修改）：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+Object.seal(obj);
+
+obj.age = 25;  // 无效
+delete obj.name;  // 无效
+obj.name = 'Bob';  // OK
+
+console.log(Object.isSealed(obj));  // true</code></pre>
+            
+            <h3>4.3 Object.freeze()</h3>
+            <p>冻结对象（完全不可变）：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+Object.freeze(obj);
+
+obj.age = 25;  // 无效
+delete obj.name;  // 无效
+obj.name = 'Bob';  // 无效
+
+console.log(Object.isFrozen(obj));  // true</code></pre>
+            
+            <h3>4.4 状态检测方法</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>方法</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Object.isExtensible()</code></td>
+                        <td>是否可扩展</td>
+                    </tr>
+                    <tr>
+                        <td><code>Object.isSealed()</code></td>
+                        <td>是否密封</td>
+                    </tr>
+                    <tr>
+                        <td><code>Object.isFrozen()</code></td>
+                        <td>是否冻结</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>五、原型相关</h2>
+            
+            <h3>5.1 Object.getPrototypeOf()</h3>
+            <p>获取对象的原型：</p>
+            
+            <pre><code>const obj = {};
+const proto = Object.getPrototypeOf(obj);
+console.log(proto === Object.prototype);  // true</code></pre>
+            
+            <h3>5.2 Object.setPrototypeOf()</h3>
+            <p>设置对象的原型（不推荐使用）：</p>
+            
+            <pre><code>const obj = {};
+const proto = { greet() { return 'Hello'; } };
+
+Object.setPrototypeOf(obj, proto);
+console.log(obj.greet());  // "Hello"</code></pre>
+            
+            <div class="warning">
+                <code>Object.setPrototypeOf()</code> 性能很差，应该使用 <code>Object.create()</code> 创建对象。
+            </div>
+            
+            <h2>六、对象比较和检测</h2>
+            
+            <h3>6.1 Object.is()</h3>
+            <p>更严格的相等比较：</p>
+            
+            <pre><code>Object.is(NaN, NaN);  // true
+NaN === NaN;          // false
+
+Object.is(+0, -0);    // false
++0 === -0;            // true
+
+Object.is(5, 5);      // true
+5 === 5;              // true</code></pre>
+            
+            <h3>6.2 obj.hasOwnProperty()</h3>
+            <p>检查对象自身是否有某个属性：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+
+console.log(obj.hasOwnProperty('name'));  // true
+console.log(obj.hasOwnProperty('toString'));  // false</code></pre>
+            
+            <h3>6.3 Object.hasOwn()</h3>
+            <p>更安全的 hasOwnProperty（ES2022）：</p>
+            
+            <pre><code>const obj = { name: 'Alice' };
+
+// 推荐使用（如果支持）
+console.log(Object.hasOwn(obj, 'name'));  // true
+
+// 旧方法可能被覆盖
+obj.hasOwnProperty = null;
+// obj.hasOwnProperty('name');  // TypeError</code></pre>
+            
+            <h2>七、实用技巧</h2>
+            
+            <h3>7.1 对象合并</h3>
+            <pre><code>// 浅合并
+const obj1 = { a: 1, b: 2 };
+const obj2 = { b: 3, c: 4 };
+const merged = { ...obj1, ...obj2 };
+// { a: 1, b: 3, c: 4 }
+
+// 或使用 Object.assign
+const merged2 = Object.assign({}, obj1, obj2);</code></pre>
+            
+            <h3>7.2 对象克隆</h3>
+            <pre><code>// 浅克隆
+const original = { a: 1, b: { c: 2 } };
+const clone = { ...original };
+const clone2 = Object.assign({}, original);
+
+// 深克隆（简单方式）
+const deepClone = JSON.parse(JSON.stringify(original));
+
+// 深克隆（结构化克隆，现代浏览器）
+const deepClone2 = structuredClone(original);</code></pre>
+            
+            <h3>7.3 对象过滤</h3>
+            <pre><code>const obj = { a: 1, b: 2, c: 3, d: 4 };
+
+// 过滤出偶数值
+const filtered = Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => value % 2 === 0)
+);
+// { b: 2, d: 4 }</code></pre>
+            
+            <h3>7.4 对象映射</h3>
+            <pre><code>const obj = { a: 1, b: 2, c: 3 };
+
+// 值翻倍
+const doubled = Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [key, value * 2])
+);
+// { a: 2, b: 4, c: 6 }</code></pre>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用 Object.keys/values/entries</strong>：遍历对象</li>
+                    <li><strong>使用扩展运算符</strong>：对象合并和克隆</li>
+                    <li><strong>避免 setPrototypeOf</strong>：使用 Object.create</li>
+                    <li><strong>使用 Object.hasOwn</strong>：代替 hasOwnProperty</li>
+                    <li><strong>freeze 不可变数据</strong>：防止意外修改</li>
+                    <li><strong>defineProperty 封装</strong>：创建只读属性</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-object-objects" target="_blank">ECMAScript - Object Objects</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object" target="_blank">MDN - Object</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="05-class.html" class="nav-link prev">上一节：Class 语法</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="06-array-methods.html" class="nav-link next">下一节：数组方法</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Object.keys/values/entries</h3>
+                <div class="code-block">
+                    <pre><code>const user = {
+    name: 'Alice',
+    age: 25,
+    city: 'Beijing'
+};
+
+// Object.keys
+console.log('keys:', Object.keys(user));
+
+// Object.values
+console.log('values:', Object.values(user));
+
+// Object.entries
+console.log('entries:', Object.entries(user));
+
+// 遍历
+console.log('\n遍历对象:');
+for (const [key, value] of Object.entries(user)) {
+    console.log(`${key}: ${value}`);
+}
+
+// fromEntries
+const entries = [['a', 1], ['b', 2], ['c', 3]];
+const obj = Object.fromEntries(entries);
+console.log('\nfromEntries:', obj);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Object.assign 和对象合并</h3>
+                <div class="code-block">
+                    <pre><code>// Object.assign
+const target = { a: 1, b: 2 };
+const source1 = { b: 3, c: 4 };
+const source2 = { c: 5, d: 6 };
+
+Object.assign(target, source1, source2);
+console.log('assign 后 target:', target);
+
+// 扩展运算符（不修改原对象）
+const obj1 = { a: 1, b: 2 };
+const obj2 = { b: 3, c: 4 };
+const merged = { ...obj1, ...obj2 };
+console.log('\n扩展运算符:', merged);
+console.log('obj1 未变:', obj1);
+
+// 默认值合并
+const defaults = { host: 'localhost', port: 8080 };
+const config = { port: 3000 };
+const final = { ...defaults, ...config };
+console.log('\n配置合并:', final);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Object.freeze/seal</h3>
+                <div class="code-block">
+                    <pre><code>// freeze - 完全冻结
+const frozen = { name: 'Alice', age: 25 };
+Object.freeze(frozen);
+
+frozen.name = 'Bob';  // 无效
+frozen.city = 'Beijing';  // 无效
+delete frozen.age;  // 无效
+
+console.log('frozen:', frozen);
+console.log('isFrozen:', Object.isFrozen(frozen));
+
+// seal - 密封（可修改，不可添加/删除）
+const sealed = { name: 'Charlie', age: 30 };
+Object.seal(sealed);
+
+sealed.name = 'David';  // OK
+sealed.city = 'Shanghai';  // 无效
+delete sealed.age;  // 无效
+
+console.log('\nsealed:', sealed);
+console.log('isSealed:', Object.isSealed(sealed));
+
+// preventExtensions - 不可扩展
+const obj = { name: 'Eve' };
+Object.preventExtensions(obj);
+
+obj.name = 'Frank';  // OK
+obj.age = 28;  // 无效
+delete obj.name;  // OK
+
+console.log('\npreventExtensions:', obj);
+console.log('isExtensible:', Object.isExtensible(obj));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Object.create</h3>
+                <div class="code-block">
+                    <pre><code>// 使用原型创建对象
+const animalMethods = {
+    eat() {
+        console.log(`${this.name} is eating`);
+    },
+    sleep() {
+        console.log(`${this.name} is sleeping`);
+    }
+};
+
+const dog = Object.create(animalMethods);
+dog.name = 'Buddy';
+dog.breed = 'Golden Retriever';
+
+console.log('dog.name:', dog.name);
+dog.eat();
+dog.sleep();
+
+// 检查原型
+console.log('\ngetPrototypeOf:', 
+    Object.getPrototypeOf(dog) === animalMethods);
+
+// 创建纯净对象
+const pureObj = Object.create(null);
+pureObj.name = 'Pure';
+console.log('\npureObj.toString:', pureObj.toString);  // undefined
+console.log('pureObj.name:', pureObj.name);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：属性描述符</h3>
+                <div class="code-block">
+                    <pre><code>const obj = {};
+
+// 定义只读属性
+Object.defineProperty(obj, 'PI', {
+    value: 3.14159,
+    writable: false,
+    enumerable: true,
+    configurable: false
+});
+
+console.log('obj.PI:', obj.PI);
+obj.PI = 3.14;  // 无效
+console.log('尝试修改后:', obj.PI);
+
+// 定义 getter/setter
+Object.defineProperty(obj, 'doubled', {
+    get() {
+        return this.value * 2;
+    },
+    set(val) {
+        this.value = val / 2;
+    },
+    enumerable: true
+});
+
+obj.value = 5;
+console.log('\nobj.doubled:', obj.doubled);
+obj.doubled = 20;
+console.log('设置 doubled=20 后 value:', obj.value);
+
+// 查看属性描述符
+const descriptor = Object.getOwnPropertyDescriptor(obj, 'PI');
+console.log('\nPI 描述符:', descriptor);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 技巧1：对象过滤
+const data = { a: 1, b: 2, c: 3, d: 4, e: 5 };
+
+const evens = Object.fromEntries(
+    Object.entries(data).filter(([k, v]) => v % 2 === 0)
+);
+console.log('过滤偶数:', evens);
+
+// 技巧2：对象映射
+const doubled = Object.fromEntries(
+    Object.entries(data).map(([k, v]) => [k, v * 2])
+);
+console.log('值翻倍:', doubled);
+
+// 技巧3：提取指定属性
+const user = { id: 1, name: 'Alice', age: 25, email: 'alice@example.com' };
+const pick = (obj, keys) => 
+    Object.fromEntries(
+        keys.filter(k => k in obj).map(k => [k, obj[k]])
+    );
+
+console.log('\npick:', pick(user, ['name', 'age']));
+
+// 技巧4：排除指定属性
+const omit = (obj, keys) => 
+    Object.fromEntries(
+        Object.entries(obj).filter(([k]) => !keys.includes(k))
+    );
+
+console.log('omit:', omit(user, ['email', 'age']));
+
+// 技巧5：对象转 Map
+const map = new Map(Object.entries(user));
+console.log('\n转为 Map:', map.get('name'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

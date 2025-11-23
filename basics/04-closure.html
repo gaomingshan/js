@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闭包原理与应用 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>闭包原理与应用</h1>
+            
+            <h2>概述</h2>
+            <p>闭包（Closure）是 JavaScript 中最强大也最容易被误解的特性之一。它是函数和声明该函数的词法环境的组合。</p>
+            
+            <div class="tip">
+                <strong>简单定义：</strong>闭包是指有权访问另一个函数作用域中变量的函数。
+            </div>
+            
+            <h2>一、闭包的形成条件</h2>
+            
+            <h3>1.1 必要条件</h3>
+            <ol>
+                <li>函数嵌套：内部函数引用外部函数的变量</li>
+                <li>外部函数被调用，返回内部函数</li>
+                <li>内部函数在外部被执行</li>
+            </ol>
+            
+            <h3>1.2 词法作用域</h3>
+            <p>JavaScript 采用词法作用域（静态作用域），函数的作用域在函数定义时就确定了，而不是在函数调用时确定。</p>
+            
+            <div class="spec">
+                <strong>ECMAScript 规范：</strong>每个函数都有一个内部属性 [[Environment]]，它保存了函数定义时的词法环境引用。这就是闭包的基础。
+            </div>
+            
+            <h2>二、闭包的工作原理</h2>
+            
+            <h3>2.1 执行上下文</h3>
+            <p>当函数执行时，会创建一个执行上下文（Execution Context），包含：</p>
+            <ul>
+                <li><strong>变量环境</strong>（Variable Environment）：存储 var 声明和函数声明</li>
+                <li><strong>词法环境</strong>（Lexical Environment）：存储 let/const 声明</li>
+                <li><strong>外部环境引用</strong>（Outer Reference）：指向外层作用域</li>
+            </ul>
+            
+            <h3>2.2 作用域链</h3>
+            <p>闭包能访问外部变量，是因为内部函数保持了对外部词法环境的引用，形成了作用域链。</p>
+            
+            <pre><code>作用域链示意：
+内部函数 [[Scope]] → 外部函数的词法环境 → 全局词法环境 → null</code></pre>
+            
+            <h2>三、闭包的应用场景</h2>
+            
+            <h3>3.1 数据私有化</h3>
+            <p>利用闭包创建私有变量，实现封装：</p>
+            
+            <h3>3.2 函数工厂</h3>
+            <p>创建定制化的函数：</p>
+            
+            <h3>3.3 模块模式</h3>
+            <p>实现模块化和命名空间：</p>
+            
+            <h3>3.4 柯里化（Currying）</h3>
+            <p>将多参数函数转换为单参数函数序列：</p>
+            
+            <h3>3.5 事件处理和回调</h3>
+            <p>保持对特定数据的引用：</p>
+            
+            <h2>四、闭包的陷阱</h2>
+            
+            <h3>4.1 循环中的闭包问题</h3>
+            <p>经典的循环陷阱，已在变量声明章节介绍过。</p>
+            
+            <div class="warning">
+                <strong>问题根源：</strong>var 是函数作用域，循环创建的所有闭包共享同一个变量。
+            </div>
+            
+            <h3>4.2 内存泄漏</h3>
+            <p>闭包会保持对外部变量的引用，如果不当使用可能导致内存泄漏：</p>
+            
+            <div class="info">
+                <strong>解决方法：</strong>
+                <ul>
+                    <li>及时解除引用（设为 null）</li>
+                    <li>避免在闭包中引用大对象</li>
+                    <li>使用弱引用（WeakMap/WeakSet）</li>
+                </ul>
+            </div>
+            
+            <h3>4.3 this 指向问题</h3>
+            <p>闭包中的 this 不会继承外部函数的 this，而是指向调用者：</p>
+            
+            <h2>五、闭包 vs 普通函数</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>普通函数</th>
+                        <th>闭包</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>变量访问</td>
+                        <td>只能访问自己的局部变量和全局变量</td>
+                        <td>可以访问外部函数的变量</td>
+                    </tr>
+                    <tr>
+                        <td>生命周期</td>
+                        <td>执行完毕后，局部变量被销毁</td>
+                        <td>外部变量在闭包存活期间保持</td>
+                    </tr>
+                    <tr>
+                        <td>内存占用</td>
+                        <td>较小</td>
+                        <td>较大（保持额外引用）</td>
+                    </tr>
+                    <tr>
+                        <td>状态保持</td>
+                        <td>无法保持状态</td>
+                        <td>可以保持状态</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>六、性能优化建议</h2>
+            
+            <div class="tip">
+                <ul>
+                    <li>避免不必要的闭包：如果不需要访问外部变量，就不要创建闭包</li>
+                    <li>减少闭包中的变量引用：只引用必要的变量</li>
+                    <li>及时释放：不再需要的闭包应该解除引用</li>
+                    <li>使用 WeakMap：存储与 DOM 相关的数据时</li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Closures" target="_blank">MDN - 闭包</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-execution-contexts" target="_blank">ECMAScript - 执行上下文</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-lexical-environments" target="_blank">ECMAScript - 词法环境</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="04-function-basics.html" class="nav-link prev">上一节：函数基础</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="04-this.html" class="nav-link next">下一节：this 绑定规则</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <!-- 示例1: 基本闭包 -->
+            <div class="code-example">
+                <h3>示例 1：基本闭包</h3>
+                <div class="code-block">
+                    <pre><code>function outer() {
+    const outerVar = 'I am from outer!';
+    
+    function inner() {
+        console.log(outerVar);  // 访问外部变量
+    }
+    
+    return inner;
+}
+
+const myClosure = outer();
+myClosure();  // 输出: I am from outer!</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例2: 数据私有化 -->
+            <div class="code-example">
+                <h3>示例 2：数据私有化（计数器）</h3>
+                <div class="code-block">
+                    <pre><code>function createCounter() {
+    let count = 0;  // 私有变量
+    
+    return {
+        increment() {
+            count++;
+            console.log('增加后:', count);
+            return count;
+        },
+        decrement() {
+            count--;
+            console.log('减少后:', count);
+            return count;
+        },
+        getCount() {
+            return count;
+        }
+    };
+}
+
+const counter = createCounter();
+counter.increment();  // 1
+counter.increment();  // 2
+counter.decrement();  // 1
+console.log('当前计数:', counter.getCount());  // 1
+console.log('无法直接访问 count:', counter.count);  // undefined</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例3: 函数工厂 -->
+            <div class="code-example">
+                <h3>示例 3：函数工厂</h3>
+                <div class="code-block">
+                    <pre><code>function createMultiplier(multiplier) {
+    return function(number) {
+        return number * multiplier;
+    };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log('double(5):', double(5));    // 10
+console.log('triple(5):', triple(5));    // 15
+console.log('double(10):', double(10));  // 20</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例4: 模块模式 -->
+            <div class="code-example">
+                <h3>示例 4：模块模式</h3>
+                <div class="code-block">
+                    <pre><code>const Calculator = (function() {
+    // 私有变量和方法
+    let result = 0;
+    
+    function log(operation, value) {
+        console.log(`${operation} ${value}, 结果: ${result}`);
+    }
+    
+    // 公共接口
+    return {
+        add(value) {
+            result += value;
+            log('加', value);
+            return this;
+        },
+        subtract(value) {
+            result -= value;
+            log('减', value);
+            return this;
+        },
+        multiply(value) {
+            result *= value;
+            log('乘', value);
+            return this;
+        },
+        getResult() {
+            return result;
+        },
+        reset() {
+            result = 0;
+            console.log('已重置');
+            return this;
+        }
+    };
+})();
+
+Calculator.add(10).multiply(2).subtract(5);
+console.log('最终结果:', Calculator.getResult());  // 15</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例5: 柯里化 -->
+            <div class="code-example">
+                <h3>示例 5：柯里化应用</h3>
+                <div class="code-block">
+                    <pre><code>function curry(fn) {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        } else {
+            return function(...nextArgs) {
+                return curried.apply(this, args.concat(nextArgs));
+            };
+        }
+    };
+}
+
+function sum(a, b, c) {
+    return a + b + c;
+}
+
+const curriedSum = curry(sum);
+
+console.log('全部参数:', curriedSum(1, 2, 3));      // 6
+console.log('部分应用:', curriedSum(1)(2)(3));      // 6
+console.log('混合调用:', curriedSum(1, 2)(3));      // 6
+
+const add5 = curriedSum(5);
+console.log('复用:', add5(10, 15));                 // 30</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例6: 循环中的闭包陷阱 -->
+            <div class="code-example">
+                <h3>示例 6：解决循环闭包问题</h3>
+                <div class="code-block">
+                    <pre><code>// 方法1: 使用 let
+const funcs1 = [];
+for (let i = 0; i < 3; i++) {
+    funcs1.push(() => i);
+}
+console.log('let 方案:', funcs1.map(f => f()));  // [0, 1, 2]
+
+// 方法2: 使用 IIFE
+const funcs2 = [];
+for (var j = 0; j < 3; j++) {
+    funcs2.push((function(index) {
+        return () => index;
+    })(j));
+}
+console.log('IIFE 方案:', funcs2.map(f => f()));  // [0, 1, 2]
+
+// 方法3: 使用 bind
+const funcs3 = [];
+for (var k = 0; k < 3; k++) {
+    funcs3.push((function(val) {
+        return val;
+    }).bind(null, k));
+}
+console.log('bind 方案:', funcs3.map(f => f()));  // [0, 1, 2]</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

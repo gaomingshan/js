@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>执行上下文详解 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>执行上下文详解</h1>
+            
+            <h2>概述</h2>
+            <p>执行上下文（Execution Context）是 JavaScript 代码执行的环境抽象概念，包含了代码执行所需的所有信息。理解执行上下文是深入理解 JavaScript 运行机制的关键。</p>
+            
+            <h2>一、执行上下文类型</h2>
+            
+            <h3>1.1 三种类型</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>全局执行上下文</strong>：默认的执行环境，代码首次执行时创建</li>
+                    <li><strong>函数执行上下文</strong>：每个函数调用时创建</li>
+                    <li><strong>Eval 执行上下文</strong>：eval() 函数执行时创建（不推荐使用）</li>
+                </ul>
+            </div>
+            
+            <h3>1.2 执行栈</h3>
+            <pre><code>// 执行栈（调用栈）示例
+function first() {
+    console.log('First');
+    second();
+}
+
+function second() {
+    console.log('Second');
+    third();
+}
+
+function third() {
+    console.log('Third');
+}
+
+first();
+
+// 执行栈变化：
+// 1. [全局上下文]
+// 2. [全局上下文, first上下文]
+// 3. [全局上下文, first上下文, second上下文]
+// 4. [全局上下文, first上下文, second上下文, third上下文]
+// 5. [全局上下文, first上下文, second上下文] // third 执行完出栈
+// 6. [全局上下文, first上下文]             // second 执行完出栈
+// 7. [全局上下文]                         // first 执行完出栈</code></pre>
+            
+            <h2>二、执行上下文组成</h2>
+            
+            <h3>2.1 ES5 规范（三个组件）</h3>
+            <pre><code>ExecutionContext = {
+    // 1. 变量对象（Variable Object, VO）
+    VariableObject: {
+        arguments,      // 函数参数
+        variables,      // 函数内变量声明
+        functionDeclarations  // 函数声明
+    },
+    
+    // 2. 作用域链（Scope Chain）
+    ScopeChain: [VO, ...outerScopes],
+    
+    // 3. this 指向
+    this: value
+}</code></pre>
+            
+            <h3>2.2 ES6+ 规范（词法环境）</h3>
+            <pre><code>ExecutionContext = {
+    // 1. 词法环境（Lexical Environment）
+    LexicalEnvironment: {
+        EnvironmentRecord: {    // 环境记录
+            // let, const, function, class 声明
+        },
+        outer: <reference>      // 外部环境引用
+    },
+    
+    // 2. 变量环境（Variable Environment）
+    VariableEnvironment: {
+        EnvironmentRecord: {
+            // var, function 声明
+        },
+        outer: <reference>
+    },
+    
+    // 3. this 绑定
+    ThisBinding: value
+}</code></pre>
+            
+            <h2>三、创建阶段与执行阶段</h2>
+            
+            <h3>3.1 创建阶段</h3>
+            <pre><code>// 创建阶段发生的事情：
+1. 创建变量对象/词法环境
+   - 创建 arguments 对象（函数上下文）
+   - 扫描函数声明（提升）
+   - 扫描变量声明（提升，初始化为 undefined）
+
+2. 建立作用域链
+
+3. 确定 this 指向
+
+// 示例
+function example(a, b) {
+    console.log(x);  // undefined（变量提升）
+    var x = 10;
+    
+    console.log(fn);  // function fn() {...}（函数提升）
+    function fn() {}
+}
+
+example(1, 2);
+
+// 创建阶段：
+ExecutionContext = {
+    VariableObject: {
+        arguments: { 0: 1, 1: 2, length: 2 },
+        x: undefined,   // var 声明提升
+        fn: <function>  // 函数声明提升
+    },
+    ScopeChain: [...],
+    this: <value>
+}</code></pre>
+            
+            <h3>3.2 执行阶段</h3>
+            <pre><code>// 执行阶段：
+// 1. 变量赋值
+// 2. 执行代码
+// 3. 函数调用
+
+// 执行阶段后：
+ExecutionContext = {
+    VariableObject: {
+        arguments: { 0: 1, 1: 2, length: 2 },
+        x: 10,          // 赋值完成
+        fn: <function>
+    },
+    ScopeChain: [...],
+    this: <value>
+}</code></pre>
+            
+            <h2>四、变量对象详解</h2>
+            
+            <h3>4.1 全局上下文的变量对象</h3>
+            <pre><code>// 浏览器中，全局变量对象是 window
+var globalVar = 'global';
+function globalFunc() {}
+
+// 相当于
+window.globalVar = 'global';
+window.globalFunc = function() {};</code></pre>
+            
+            <h3>4.2 函数上下文的变量对象</h3>
+            <pre><code>function example(param1, param2) {
+    var localVar = 'local';
+    function innerFunc() {}
+}
+
+// 进入函数时，变量对象（活动对象 AO）：
+AO = {
+    arguments: {
+        0: param1的值,
+        1: param2的值,
+        length: 2
+    },
+    param1: 实参值,
+    param2: 实参值,
+    localVar: undefined,      // 创建阶段
+    innerFunc: <function>
+}
+
+// 执行后：
+AO = {
+    arguments: {...},
+    param1: 实参值,
+    param2: 实参值,
+    localVar: 'local',        // 执行阶段赋值
+    innerFunc: <function>
+}</code></pre>
+            
+            <h2>五、变量提升与函数提升</h2>
+            
+            <h3>5.1 变量提升（Hoisting）</h3>
+            <pre><code>// var 声明会提升
+console.log(a);  // undefined
+var a = 10;
+console.log(a);  // 10
+
+// 相当于：
+var a;           // 声明提升
+console.log(a);  // undefined
+a = 10;          // 赋值不提升
+console.log(a);  // 10
+
+// let/const 不会提升（暂时性死区）
+console.log(b);  // ReferenceError
+let b = 20;</code></pre>
+            
+            <h3>5.2 函数提升</h3>
+            <pre><code>// 函数声明会整体提升
+console.log(fn);  // function fn() {...}
+fn();             // 可以调用
+
+function fn() {
+    console.log('Function');
+}
+
+// 函数表达式不会提升
+console.log(fn2);  // undefined
+fn2();             // TypeError: fn2 is not a function
+
+var fn2 = function() {
+    console.log('Expression');
+};</code></pre>
+            
+            <h3>5.3 提升优先级</h3>
+            <pre><code>// 函数声明 > 变量声明
+console.log(foo);  // function foo() {}
+
+function foo() {}
+var foo = 10;
+
+// 相当于：
+function foo() {}  // 函数声明提升
+var foo;           // 变量声明提升，但已存在，忽略
+console.log(foo);  // function
+foo = 10;          // 赋值</code></pre>
+            
+            <h2>六、词法环境与变量环境</h2>
+            
+            <h3>6.1 词法环境（Lexical Environment）</h3>
+            <pre><code>// 存储 let, const, function, class 声明
+{
+    let x = 10;
+    const y = 20;
+    function fn() {}
+    class MyClass {}
+}
+
+LexicalEnvironment = {
+    EnvironmentRecord: {
+        x: 10,
+        y: 20,
+        fn: <function>,
+        MyClass: <class>
+    },
+    outer: <外部环境>
+}</code></pre>
+            
+            <h3>6.2 变量环境（Variable Environment）</h3>
+            <pre><code>// 存储 var 和 function 声明
+{
+    var a = 1;
+    function oldFunc() {}
+}
+
+VariableEnvironment = {
+    EnvironmentRecord: {
+        a: 1,
+        oldFunc: <function>
+    },
+    outer: <外部环境>
+}</code></pre>
+            
+            <h3>6.3 为什么需要两个环境？</h3>
+            <pre><code>// 支持 let/const 的块级作用域
+{
+    let x = 10;    // 词法环境
+    var y = 20;    // 变量环境（函数作用域）
+}
+console.log(x);  // ReferenceError
+console.log(y);  // 20（var 无块级作用域）</code></pre>
+            
+            <h2>七、this 绑定</h2>
+            
+            <h3>7.1 全局上下文的 this</h3>
+            <pre><code>// 浏览器中
+console.log(this);  // Window
+
+// Node.js 中
+console.log(this);  // global（非严格模式）或 undefined（严格模式）</code></pre>
+            
+            <h3>7.2 函数上下文的 this</h3>
+            <pre><code>// 1. 普通函数调用
+function fn() {
+    console.log(this);
+}
+fn();  // 非严格模式: Window，严格模式: undefined
+
+// 2. 对象方法调用
+const obj = {
+    method() {
+        console.log(this);
+    }
+};
+obj.method();  // obj
+
+// 3. 构造函数调用
+function Constructor() {
+    this.value = 10;
+}
+const instance = new Constructor();  // this 指向新对象
+
+// 4. 箭头函数
+const arrow = () => {
+    console.log(this);  // 继承外层 this
+};</code></pre>
+            
+            <h2>八、执行上下文实例分析</h2>
+            
+            <h3>8.1 完整示例</h3>
+            <pre><code>var global = 'Global';
+
+function outer(x) {
+    var outerVar = 'Outer';
+    
+    function inner(y) {
+        var innerVar = 'Inner';
+        console.log(x, y, outerVar, innerVar, global);
+    }
+    
+    inner(20);
+}
+
+outer(10);
+
+// 执行过程：
+// 1. 创建全局执行上下文
+GlobalContext = {
+    VariableObject: {
+        global: undefined,
+        outer: <function>
+    },
+    ScopeChain: [GlobalVO],
+    this: Window
+}
+
+// 2. 执行 outer(10)，创建 outer 执行上下文
+OuterContext = {
+    VariableObject: {
+        arguments: { 0: 10, length: 1 },
+        x: 10,
+        outerVar: undefined,
+        inner: <function>
+    },
+    ScopeChain: [OuterVO, GlobalVO],
+    this: Window
+}
+
+// 3. 执行 inner(20)，创建 inner 执行上下文
+InnerContext = {
+    VariableObject: {
+        arguments: { 0: 20, length: 1 },
+        y: 20,
+        innerVar: undefined
+    },
+    ScopeChain: [InnerVO, OuterVO, GlobalVO],
+    this: Window
+}</code></pre>
+            
+            <h2>九、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>理解提升</strong>：var/function 提升，let/const 暂时性死区</li>
+                    <li><strong>避免污染全局</strong>：使用 IIFE 或模块化</li>
+                    <li><strong>优先 let/const</strong>：避免变量提升带来的问题</li>
+                    <li><strong>注意 this</strong>：箭头函数 vs 普通函数</li>
+                    <li><strong>避免过深嵌套</strong>：影响作用域链查找效率</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-execution-contexts" target="_blank">ECMAScript - Execution Contexts</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/this" target="_blank">MDN - this</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="../advanced/13-webpack.html" class="nav-link prev">上一节：Webpack</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="14-scope-chain.html" class="nav-link next">下一节：作用域链</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：执行栈演示</h3>
+                <div class="code-block">
+                    <pre><code>// 执行栈（调用栈）演示
+console.log('=== 执行栈演示 ===\n');
+
+const stack = [];
+
+function trackExecution(name, action) {
+    if (action === 'enter') {
+        stack.push(name);
+        console.log(`→ 进入 ${name}`);
+        console.log(`  当前栈: [${stack.join(', ')}]`);
+    } else {
+        stack.pop();
+        console.log(`← 退出 ${name}`);
+        console.log(`  当前栈: [${stack.join(', ')}]`);
+    }
+}
+
+function third() {
+    trackExecution('third', 'enter');
+    console.log('  执行 third 函数体');
+    trackExecution('third', 'exit');
+}
+
+function second() {
+    trackExecution('second', 'enter');
+    console.log('  执行 second 函数体');
+    third();
+    trackExecution('second', 'exit');
+}
+
+function first() {
+    trackExecution('first', 'enter');
+    console.log('  执行 first 函数体');
+    second();
+    trackExecution('first', 'exit');
+}
+
+// 初始化全局上下文
+stack.push('Global');
+console.log('初始: [Global]');
+console.log('');
+
+first();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：变量提升</h3>
+                <div class="code-block">
+                    <pre><code>// 变量提升演示
+console.log('=== 变量提升 ===\n');
+
+console.log('1. var 变量提升:');
+console.log('  访问 a:', typeof a);  // undefined
+var a = 10;
+console.log('  赋值后 a:', a);       // 10
+
+console.log('\n2. 函数声明提升:');
+console.log('  类型:', typeof fn);   // function
+console.log('  调用:', fn());        // "Hello"
+
+function fn() {
+    return 'Hello';
+}
+
+console.log('\n3. 函数表达式不提升:');
+console.log('  类型:', typeof fn2);  // undefined
+var fn2 = function() {
+    return 'World';
+};
+console.log('  赋值后:', fn2());     // "World"
+
+console.log('\n4. let/const 暂时性死区:');
+try {
+    console.log(b);  // ReferenceError
+    let b = 20;
+} catch(e) {
+    console.log('  错误:', e.message);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：执行上下文创建</h3>
+                <div class="code-block">
+                    <pre><code>// 执行上下文创建过程
+console.log('=== 执行上下文创建 ===\n');
+
+function createContext(name, params) {
+    console.log(`创建 ${name} 执行上下文:`);
+    
+    const context = {
+        variableObject: {
+            arguments: params || {},
+            variables: {},
+            functions: {}
+        },
+        scopeChain: [],
+        thisBinding: 'Window'
+    };
+    
+    console.log('  1. 变量对象:');
+    console.log('     arguments:', context.variableObject.arguments);
+    console.log('  2. 作用域链:', context.scopeChain);
+    console.log('  3. this 绑定:', context.thisBinding);
+    
+    return context;
+}
+
+console.log('--- 全局上下文 ---');
+const globalCtx = createContext('Global', null);
+
+console.log('\n--- 函数上下文 ---');
+const functionCtx = createContext('Function', {
+    0: 10,
+    1: 20,
+    length: 2
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：提升优先级</h3>
+                <div class="code-block">
+                    <pre><code>// 函数声明与变量声明的优先级
+console.log('=== 提升优先级 ===\n');
+
+console.log('情况1: 函数声明 vs 变量声明');
+console.log('typeof foo:', typeof foo);  // function
+
+function foo() {
+    return 'function';
+}
+var foo = 'variable';
+
+console.log('赋值后 foo:', foo);  // "variable"
+
+console.log('\n情况2: 多个函数声明');
+console.log('bar():', bar());  // "Second"
+
+function bar() {
+    return 'First';
+}
+function bar() {
+    return 'Second';  // 后面的覆盖前面的
+}
+
+console.log('\n情况3: 参数 vs 变量声明');
+function test(x) {
+    console.log('参数 x:', x);     // 10
+    var x;
+    console.log('声明后 x:', x);   // 10（声明被忽略）
+    x = 20;
+    console.log('赋值后 x:', x);   // 20
+}
+test(10);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：词法环境 vs 变量环境</h3>
+                <div class="code-block">
+                    <pre><code>// 词法环境与变量环境
+console.log('=== 词法环境 vs 变量环境 ===\n');
+
+console.log('1. 块级作用域（let/const）:');
+{
+    let blockLet = 'let';
+    const blockConst = 'const';
+    console.log('  块内访问 let:', blockLet);
+    console.log('  块内访问 const:', blockConst);
+}
+try {
+    console.log(blockLet);
+} catch(e) {
+    console.log('  块外访问 let: ReferenceError');
+}
+
+console.log('\n2. 函数作用域（var）:');
+{
+    var blockVar = 'var';
+    console.log('  块内访问 var:', blockVar);
+}
+console.log('  块外访问 var:', blockVar);  // 可以访问
+
+console.log('\n3. 混合使用:');
+function mixed() {
+    var x = 1;      // 变量环境
+    let y = 2;      // 词法环境
+    const z = 3;    // 词法环境
+    
+    if (true) {
+        var x = 10;  // 覆盖外层 x
+        let y = 20;  // 新的块级 y
+        console.log('  块内 x:', x, 'y:', y);
+    }
+    
+    console.log('  块外 x:', x, 'y:', y);
+}
+mixed();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：this 绑定</h3>
+                <div class="code-block">
+                    <pre><code>// this 绑定示例
+console.log('=== this 绑定 ===\n');
+
+console.log('1. 普通函数调用:');
+function normalFunc() {
+    // 非严格模式下是 window，这里是 undefined（模块）
+    return this === undefined ? 'undefined' : 'Window';
+}
+console.log('  this:', normalFunc());
+
+console.log('\n2. 对象方法调用:');
+const obj = {
+    name: 'Object',
+    method() {
+        return this.name;
+    }
+};
+console.log('  this.name:', obj.method());
+
+console.log('\n3. 构造函数调用:');
+function Person(name) {
+    this.name = name;
+    this.getName = function() {
+        return this.name;
+    };
+}
+const person = new Person('Alice');
+console.log('  this.name:', person.getName());
+
+console.log('\n4. 箭头函数:');
+const outer = {
+    name: 'Outer',
+    arrow: () => {
+        // 箭头函数继承外层 this
+        return 'Arrow function inherits outer this';
+    },
+    normal: function() {
+        const arrow = () => this.name;
+        return arrow();
+    }
+};
+console.log('  箭头函数:', outer.arrow());
+console.log('  内部箭头:', outer.normal());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

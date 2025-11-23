@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原型链的底层实现 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>原型链的底层实现</h1>
+            
+            <h2>概述</h2>
+            <p>原型链是 JavaScript 实现继承的核心机制。理解原型链需要深入到 ECMAScript 规范层面，了解对象的内部结构和属性查找算法。</p>
+            
+            <div class="spec">
+                本节深入探讨 ECMAScript 规范中关于原型链的定义，包括内部槽位、属性访问算法、以及引擎的优化策略。
+            </div>
+            
+            <h2>一、原型的本质</h2>
+            
+            <h3>1.1 [[Prototype]] 内部槽位</h3>
+            <p>每个对象都有一个内部槽位（Internal Slot）<code>[[Prototype]]</code>，它是一个指向另一个对象的引用。</p>
+            
+            <div class="spec">
+                <strong>ECMAScript 规范 9.1：</strong>
+                <pre>普通对象的内部槽位：
+[[Prototype]]     - 对象的原型（Object | null）
+[[Extensible]]    - 对象是否可扩展（Boolean）
+[[PrivateElements]] - 私有字段（List）</pre>
+            </div>
+            
+            <h3>1.2 访问原型的方式</h3>
+            <ul>
+                <li><code>__proto__</code>：非标准但广泛支持的访问器属性</li>
+                <li><code>Object.getPrototypeOf(obj)</code>：标准方法（ES5）</li>
+                <li><code>Object.setPrototypeOf(obj, proto)</code>：设置原型（不推荐）</li>
+                <li><code>Reflect.getPrototypeOf(obj)</code>：反射 API（ES6）</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>性能警告：</strong>动态修改对象的原型（使用 setPrototypeOf 或 __proto__）会严重影响性能，因为会破坏引擎的优化。
+            </div>
+            
+            <h2>二、原型链的工作机制</h2>
+            
+            <h3>2.1 属性查找算法</h3>
+            <p>当访问对象的属性时，JavaScript 引擎会按以下步骤查找：</p>
+            
+            <div class="spec">
+                <strong>[[Get]] 内部方法算法（简化版）：</strong>
+                <pre>1. 检查对象自身是否有该属性
+   - 如果有，返回属性值
+2. 如果没有，获取对象的 [[Prototype]]
+   - 如果 [[Prototype]] 是 null，返回 undefined
+   - 否则，递归调用 [[Prototype]][[Get]]
+3. 重复步骤 2，直到找到属性或原型链结束</pre>
+            </div>
+            
+            <h3>2.2 原型链的终点</h3>
+            <p>原型链的终点是 <code>Object.prototype</code>，它的 <code>[[Prototype]]</code> 是 <code>null</code>。</p>
+            
+            <pre><code>对象 → Object.prototype → null
+数组 → Array.prototype → Object.prototype → null
+函数 → Function.prototype → Object.prototype → null</code></pre>
+            
+            <h3>2.3 属性遮蔽（Property Shadowing）</h3>
+            <p>如果对象自身和原型链上都有同名属性，自身属性会"遮蔽"原型上的属性。</p>
+            
+            <h2>三、构造函数与原型</h2>
+            
+            <h3>3.1 constructor 属性</h3>
+            <p>每个函数都有一个 <code>prototype</code> 属性，它是一个对象，包含 <code>constructor</code> 属性指向函数本身。</p>
+            
+            <pre><code>Function.prototype.constructor === Function
+Object.prototype.constructor === Object</code></pre>
+            
+            <h3>3.2 new 操作符的内部实现</h3>
+            <p><code>new Constructor()</code> 的执行步骤：</p>
+            
+            <div class="spec">
+                <strong>[[Construct]] 内部方法：</strong>
+                <pre>1. 创建一个新对象 obj
+2. 设置 obj.[[Prototype]] = Constructor.prototype
+3. 执行构造函数，将 this 绑定到 obj
+4. 如果构造函数返回对象，返回该对象；否则返回 obj</pre>
+            </div>
+            
+            <h3>3.3 instanceof 操作符原理</h3>
+            <p><code>obj instanceof Constructor</code> 检查 <code>Constructor.prototype</code> 是否在 <code>obj</code> 的原型链上。</p>
+            
+            <div class="spec">
+                <strong>instanceof 算法：</strong>
+                <pre>1. 获取 Constructor.prototype
+2. 获取 obj.[[Prototype]]
+3. 循环比较：
+   - 如果相等，返回 true
+   - 如果到达 null，返回 false
+   - 否则，继续沿原型链向上</pre>
+            </div>
+            
+            <h2>四、原型链的高级特性</h2>
+            
+            <h3>4.1 Object.create() 的实现</h3>
+            <p><code>Object.create(proto)</code> 创建一个新对象，其 [[Prototype]] 指向 proto。</p>
+            
+            <h3>4.2 原型方法的继承</h3>
+            <p>原型上的方法被所有实例共享，节省内存：</p>
+            
+            <h3>4.3 原型污染攻击</h3>
+            <div class="warning">
+                <strong>安全问题：</strong>原型污染（Prototype Pollution）是一种安全漏洞，攻击者通过修改 Object.prototype 影响所有对象。
+                
+                <pre><code>// 危险操作！
+Object.prototype.isAdmin = true;
+const user = {};
+console.log(user.isAdmin);  // true（污染）</code></pre>
+                
+                <strong>防护措施：</strong>
+                <ul>
+                    <li>使用 Object.create(null) 创建纯净对象</li>
+                    <li>使用 Object.freeze() 冻结原型</li>
+                    <li>避免使用不安全的对象合并</li>
+                </ul>
+            </div>
+            
+            <h2>五、引擎优化</h2>
+            
+            <h3>5.1 隐藏类（Hidden Classes）</h3>
+            <p>V8 引擎使用隐藏类优化属性访问。对象具有相同的属性和顺序时，共享同一个隐藏类。</p>
+            
+            <div class="info">
+                <strong>优化建议：</strong>
+                <ul>
+                    <li>以相同顺序初始化对象属性</li>
+                    <li>避免动态添加/删除属性</li>
+                    <li>避免创建稀疏数组</li>
+                </ul>
+            </div>
+            
+            <h3>5.2 内联缓存（Inline Caching）</h3>
+            <p>引擎会缓存属性查找的结果，加速后续访问。</p>
+            
+            <h3>5.3 原型链缓存</h3>
+            <p>现代引擎会缓存原型链查找路径，避免重复遍历。</p>
+            
+            <h2>六、原型 vs Class</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>原型继承</th>
+                        <th>Class 语法</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>本质</td>
+                        <td>对象之间的委托关系</td>
+                        <td>语法糖，底层仍是原型</td>
+                    </tr>
+                    <tr>
+                        <td>灵活性</td>
+                        <td>高（可动态修改）</td>
+                        <td>低（更严格）</td>
+                    </tr>
+                    <tr>
+                        <td>可读性</td>
+                        <td>较低</td>
+                        <td>高（类似传统OOP）</td>
+                    </tr>
+                    <tr>
+                        <td>性能</td>
+                        <td>相同</td>
+                        <td>相同</td>
+                    </tr>
+                    <tr>
+                        <td>私有字段</td>
+                        <td>需要闭包模拟</td>
+                        <td>原生支持 #field</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h2>七、实践建议</h2>
+            
+            <div class="tip">
+                <ul>
+                    <li><strong>优先使用 Class：</strong>更清晰的语法和更好的工具支持</li>
+                    <li><strong>理解原型：</strong>即使使用 Class，也要理解底层原型机制</li>
+                    <li><strong>避免修改原型：</strong>不要修改内置对象的原型</li>
+                    <li><strong>使用 Object.create(null)：</strong>创建纯净的字典对象</li>
+                    <li><strong>注意性能：</strong>避免频繁改变对象结构</li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-ordinary-object-internal-methods-and-internal-slots" target="_blank">ECMAScript - Ordinary Object Internal Methods</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-ordinary-and-exotic-objects-behaviours" target="_blank">ECMAScript - Object Behaviors</a></li>
+                <li><a href="https://v8.dev/blog/fast-properties" target="_blank">V8 - Fast Properties</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Inheritance_and_the_prototype_chain" target="_blank">MDN - 继承与原型链</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="15-constructor.html" class="nav-link next">下一节：构造函数与 new 操作符</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <!-- 示例1: 原型链查找 -->
+            <div class="code-example">
+                <h3>示例 1：原型链查找过程</h3>
+                <div class="code-block">
+                    <pre><code>const obj = {
+    ownProp: 'own'
+};
+
+Object.prototype.protoProp = 'proto';
+
+console.log('自身属性:', obj.ownProp);           // 'own'
+console.log('原型属性:', obj.protoProp);          // 'proto'
+console.log('不存在的属性:', obj.nonExistent);    // undefined
+
+// 检查属性来源
+console.log('hasOwnProperty:', obj.hasOwnProperty('ownProp'));     // true
+console.log('hasOwnProperty:', obj.hasOwnProperty('protoProp'));   // false
+
+// 查看原型链
+console.log('对象原型:', Object.getPrototypeOf(obj) === Object.prototype);  // true
+console.log('原型的原型:', Object.getPrototypeOf(Object.prototype));        // null</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例2: 属性遮蔽 -->
+            <div class="code-example">
+                <h3>示例 2：属性遮蔽演示</h3>
+                <div class="code-block">
+                    <pre><code>const parent = {
+    name: 'Parent',
+    greet() {
+        console.log(`Hello from ${this.name}`);
+    }
+};
+
+const child = Object.create(parent);
+child.name = 'Child';  // 遮蔽 parent.name
+
+console.log('child.name:', child.name);          // 'Child'
+console.log('parent.name:', parent.name);        // 'Parent'
+
+child.greet();  // Hello from Child（this 指向 child）
+
+// 删除子对象属性，恢复原型属性
+delete child.name;
+console.log('删除后:', child.name);              // 'Parent'</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例3: 模拟 new 操作符 -->
+            <div class="code-example">
+                <h3>示例 3：实现 new 操作符</h3>
+                <div class="code-block">
+                    <pre><code>function myNew(Constructor, ...args) {
+    // 1. 创建新对象，原型指向构造函数的 prototype
+    const obj = Object.create(Constructor.prototype);
+    
+    // 2. 执行构造函数，绑定 this
+    const result = Constructor.apply(obj, args);
+    
+    // 3. 如果构造函数返回对象，使用该对象；否则返回 obj
+    return result instanceof Object ? result : obj;
+}
+
+// 测试
+function Person(name, age) {
+    this.name = name;
+    this.age = age;
+}
+
+Person.prototype.introduce = function() {
+    console.log(`我是 ${this.name}，${this.age} 岁`);
+};
+
+const p1 = myNew(Person, 'Alice', 25);
+console.log('创建对象:', p1);
+p1.introduce();
+console.log('instanceof:', p1 instanceof Person);  // true</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例4: 实现 instanceof -->
+            <div class="code-example">
+                <h3>示例 4：实现 instanceof</h3>
+                <div class="code-block">
+                    <pre><code>function myInstanceof(obj, Constructor) {
+    // 获取构造函数的 prototype
+    const prototype = Constructor.prototype;
+    
+    // 获取对象的原型
+    let proto = Object.getPrototypeOf(obj);
+    
+    // 循环查找原型链
+    while (proto !== null) {
+        if (proto === prototype) {
+            return true;
+        }
+        proto = Object.getPrototypeOf(proto);
+    }
+    
+    return false;
+}
+
+// 测试
+class Animal {}
+class Dog extends Animal {}
+const dog = new Dog();
+
+console.log('dog instanceof Dog:', myInstanceof(dog, Dog));           // true
+console.log('dog instanceof Animal:', myInstanceof(dog, Animal));     // true
+console.log('dog instanceof Object:', myInstanceof(dog, Object));     // true
+console.log('dog instanceof Array:', myInstanceof(dog, Array));       // false</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例5: 继承链 -->
+            <div class="code-example">
+                <h3>示例 5：完整的继承链</h3>
+                <div class="code-block">
+                    <pre><code>// 查看各种类型的原型链
+const arr = [];
+const func = function() {};
+const obj = {};
+
+console.log('=== 数组的原型链 ===');
+console.log('arr → Array.prototype:', 
+    Object.getPrototypeOf(arr) === Array.prototype);
+console.log('Array.prototype → Object.prototype:', 
+    Object.getPrototypeOf(Array.prototype) === Object.prototype);
+console.log('Object.prototype → null:', 
+    Object.getPrototypeOf(Object.prototype) === null);
+
+console.log('\n=== 函数的原型链 ===');
+console.log('func → Function.prototype:', 
+    Object.getPrototypeOf(func) === Function.prototype);
+console.log('Function.prototype → Object.prototype:', 
+    Object.getPrototypeOf(Function.prototype) === Object.prototype);
+
+console.log('\n=== 特殊情况 ===');
+console.log('Function instanceof Object:', Function instanceof Object);  // true
+console.log('Object instanceof Function:', Object instanceof Function);  // true</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例6: Object.create(null) -->
+            <div class="code-example">
+                <h3>示例 6：纯净对象（无原型）</h3>
+                <div class="code-block">
+                    <pre><code>// 普通对象
+const normalObj = {};
+console.log('普通对象有 toString:', 'toString' in normalObj);  // true
+
+// 纯净对象
+const pureObj = Object.create(null);
+console.log('纯净对象有 toString:', 'toString' in pureObj);    // false
+
+// 纯净对象适合做字典
+const dict = Object.create(null);
+dict.constructor = 'safe';  // 不会冲突
+dict.toString = 'safe';     // 不会冲突
+
+console.log('字典内容:', dict);
+
+// 检查原型
+console.log('普通对象原型:', Object.getPrototypeOf(normalObj));  // Object.prototype
+console.log('纯净对象原型:', Object.getPrototypeOf(pureObj));    // null</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

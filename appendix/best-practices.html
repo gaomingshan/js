@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最佳实践与代码规范 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>最佳实践与代码规范</h1>
+            
+            <h2>一、命名规范</h2>
+            
+            <ul>
+                <li>变量和函数：camelCase</li>
+                <li>类和构造函数：PascalCase</li>
+                <li>常量：UPPER_SNAKE_CASE</li>
+                <li>私有字段：#privateField</li>
+            </ul>
+            
+            <h2>二、代码组织</h2>
+            
+            <ul>
+                <li>一个文件一个类/模块</li>
+                <li>相关功能分组</li>
+                <li>使用 ES6 模块</li>
+                <li>避免全局变量</li>
+            </ul>
+            
+            <h2>三、编码习惯</h2>
+            
+            <ul>
+                <li>使用 const/let，避免 var</li>
+                <li>优先使用箭头函数</li>
+                <li>使用模板字符串</li>
+                <li>使用解构赋值</li>
+                <li>使用可选链和空值合并</li>
+            </ul>
+            
+            <h2>四、性能优化</h2>
+            
+            <ul>
+                <li>避免不必要的重复计算</li>
+                <li>使用 debounce/throttle</li>
+                <li>合理使用缓存</li>
+                <li>避免内存泄漏</li>
+            </ul>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://github.com/airbnb/javascript" target="_blank">Airbnb JavaScript Style Guide</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="design-patterns.html" class="nav-link prev">上一节：设计模式</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="performance.html" class="nav-link next">下一节：性能优化</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例：最佳实践</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 最佳实践 ===\n');
+
+// ✓ 好的写法
+const getUserInfo = (user) => {
+    const { name, age, email } = user;
+    return `${name}, ${age}, ${email}`;
+};
+
+const user = {
+    name: 'Alice',
+    age: 25,
+    email: 'alice@example.com'
+};
+
+console.log(getUserInfo(user));
+
+// 使用可选链
+const city = user?.address?.city ?? 'Unknown';
+console.log('城市:', city);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

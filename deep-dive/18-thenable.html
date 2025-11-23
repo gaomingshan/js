@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thenable 协议 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Thenable 协议</h1>
+            
+            <h2>概述</h2>
+            <p>Thenable 是 Promise/A+ 规范中的核心概念，它定义了一个具有 then 方法的对象或函数。理解 Thenable 对于掌握 Promise 互操作性和实现自定义异步对象至关重要。</p>
+            
+            <h2>一、Thenable 定义</h2>
+            
+            <h3>1.1 什么是 Thenable</h3>
+            <div class="info">
+                <p><strong>Thenable</strong> 是一个定义了 <code>then</code> 方法的对象或函数。</p>
+                <pre><code>// Thenable 接口
+interface Thenable {
+    then(onFulfilled?, onRejected?): any;
+}</code></pre>
+            </div>
+            
+            <h3>1.2 基本示例</h3>
+            <pre><code>// 最简单的 Thenable
+const thenable = {
+    then(onFulfilled) {
+        setTimeout(() => {
+            onFulfilled('Hello');
+        }, 100);
+    }
+};
+
+// Promise 会识别并处理它
+Promise.resolve(thenable).then(value => {
+    console.log(value);  // "Hello"
+});</code></pre>
+            
+            <h3>1.3 Thenable vs Promise</h3>
+            <pre><code>// Promise 是 Thenable
+const promise = new Promise(resolve => resolve(42));
+console.log(typeof promise.then);  // "function"
+
+// 但 Thenable 不一定是 Promise
+const thenable = {
+    then(onFulfilled) {
+        onFulfilled(42);
+    }
+};
+console.log(thenable instanceof Promise);  // false</code></pre>
+            
+            <h2>二、Thenable 检测</h2>
+            
+            <h3>2.1 如何检测 Thenable</h3>
+            <pre><code>// 检测一个值是否是 Thenable
+function isThenable(value) {
+    return (
+        value !== null &&
+        (typeof value === 'object' || typeof value === 'function') &&
+        typeof value.then === 'function'
+    );
+}
+
+// 测试
+console.log(isThenable(Promise.resolve()));     // true
+console.log(isThenable({ then() {} }));         // true
+console.log(isThenable({ then: 'not a fn' })); // false
+console.log(isThenable(null));                  // false
+console.log(isThenable(42));                    // false</code></pre>
+            
+            <h3>2.2 鸭子类型</h3>
+            <pre><code>// Promise 使用鸭子类型检测 Thenable
+// 只要有 then 方法就认为是 Thenable
+
+const fakeThen = {
+    then: 'I am not a function'
+};
+
+Promise.resolve(fakeThen).then(
+    value => console.log('fulfilled:', value),
+    error => console.log('rejected:', error)
+);
+// TypeError: fakeThen.then is not a function</code></pre>
+            
+            <h2>三、Promise Resolution Procedure</h2>
+            
+            <h3>3.1 规范定义</h3>
+            <pre><code>// Promise 解析过程（简化）
+function resolvePromise(promise, x) {
+    // 1. 如果 promise 和 x 是同一个对象，抛出 TypeError
+    if (promise === x) {
+        throw new TypeError('Chaining cycle');
+    }
+    
+    // 2. 如果 x 是 Promise，采用其状态
+    if (x instanceof Promise) {
+        x.then(
+            value => resolve(promise, value),
+            reason => reject(promise, reason)
+        );
+        return;
+    }
+    
+    // 3. 如果 x 是对象或函数
+    if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
+        let then;
+        try {
+            then = x.then;
+        } catch (e) {
+            reject(promise, e);
+            return;
+        }
+        
+        // 4. 如果 then 是函数，调用它
+        if (typeof then === 'function') {
+            let called = false;
+            try {
+                then.call(
+                    x,
+                    value => {
+                        if (called) return;
+                        called = true;
+                        resolvePromise(promise, value);
+                    },
+                    reason => {
+                        if (called) return;
+                        called = true;
+                        reject(promise, reason);
+                    }
+                );
+            } catch (e) {
+                if (!called) {
+                    reject(promise, e);
+                }
+            }
+            return;
+        }
+    }
+    
+    // 5. 否则，直接 resolve
+    resolve(promise, x);
+}</code></pre>
+            
+            <h3>3.2 关键点</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>防止循环引用</strong>：promise 不能 resolve 自己</li>
+                    <li><strong>只调用一次</strong>：onFulfilled/onRejected 只能调用一次</li>
+                    <li><strong>异常安全</strong>：捕获 then 访问和调用中的异常</li>
+                    <li><strong>递归解析</strong>：支持 thenable 返回 thenable</li>
+                </ul>
+            </div>
+            
+            <h2>四、自定义 Thenable</h2>
+            
+            <h3>4.1 简单 Thenable</h3>
+            <pre><code>// 实现一个延迟 Thenable
+class DelayedThenable {
+    constructor(value, delay) {
+        this.value = value;
+        this.delay = delay;
+    }
+    
+    then(onFulfilled, onRejected) {
+        setTimeout(() => {
+            try {
+                const result = onFulfilled(this.value);
+                // 返回新的 thenable 以支持链式调用
+                if (isThenable(result)) {
+                    result.then(onFulfilled, onRejected);
+                }
+            } catch (e) {
+                if (onRejected) onRejected(e);
+            }
+        }, this.delay);
+    }
+}
+
+// 使用
+const delayed = new DelayedThenable('Hello', 1000);
+Promise.resolve(delayed).then(console.log);  // 1秒后输出 "Hello"</code></pre>
+            
+            <h3>4.2 与 Promise 互操作</h3>
+            <pre><code>// 自定义 Thenable 与 Promise 链式调用
+const customThenable = {
+    value: 10,
+    
+    then(onFulfilled) {
+        setTimeout(() => {
+            onFulfilled(this.value * 2);
+        }, 100);
+    }
+};
+
+Promise.resolve(5)
+    .then(x => customThenable)  // 返回 thenable
+    .then(x => {
+        console.log(x);  // 20（不是 10，因为被 resolve）
+        return x + 10;
+    })
+    .then(console.log);  // 30</code></pre>
+            
+            <h3>4.3 Thenable 构造函数</h3>
+            <pre><code>// 使用 Thenable 模式创建对象
+function createThenable(value) {
+    return {
+        then(onFulfilled, onRejected) {
+            try {
+                if (value instanceof Error) {
+                    onRejected(value);
+                } else {
+                    onFulfilled(value);
+                }
+            } catch (e) {
+                onRejected(e);
+            }
+        }
+    };
+}
+
+// 使用
+Promise.resolve(createThenable(42))
+    .then(console.log);  // 42
+
+Promise.resolve(createThenable(new Error('fail')))
+    .catch(console.error);  // Error: fail</code></pre>
+            
+            <h2>五、Thenable 陷阱</h2>
+            
+            <h3>5.1 恶意 Thenable</h3>
+            <pre><code>// 恶意 thenable 可能破坏 Promise 链
+const evilThenable = {
+    then(onFulfilled, onRejected) {
+        onFulfilled(1);
+        onFulfilled(2);  // 违反规范：多次调用
+        onRejected(new Error());  // 违反规范：同时调用两个
+    }
+};
+
+// Promise 实现必须防御这种情况
+Promise.resolve(evilThenable).then(
+    value => console.log('Value:', value),  // 只输出一次
+    error => console.log('Error:', error)   // 不会被调用
+);</code></pre>
+            
+            <h3>5.2 访问 then 的副作用</h3>
+            <pre><code>// 访问 then 属性可能有副作用
+const trickyThenable = {
+    get then() {
+        console.log('访问 then 属性');
+        return function(onFulfilled) {
+            onFulfilled(42);
+        };
+    }
+};
+
+// Promise 只会访问 then 一次（根据规范）
+Promise.resolve(trickyThenable).then(console.log);
+// 输出：访问 then 属性 → 42</code></pre>
+            
+            <h3>5.3 then 抛出异常</h3>
+            <pre><code>// then 访问或调用时抛出异常
+const throwingThenable = {
+    get then() {
+        throw new Error('Cannot access then');
+    }
+};
+
+Promise.resolve(throwingThenable)
+    .then(
+        value => console.log('Fulfilled:', value),
+        error => console.log('Rejected:', error.message)
+    );
+// 输出：Rejected: Cannot access then</code></pre>
+            
+            <h2>六、实际应用</h2>
+            
+            <h3>6.1 jQuery Deferred</h3>
+            <pre><code>// jQuery Deferred 是 thenable
+const deferred = $.Deferred();
+
+// 可以与 Promise 互操作
+Promise.resolve(deferred.promise()).then(value => {
+    console.log(value);
+});
+
+deferred.resolve('Hello from jQuery');</code></pre>
+            
+            <h3>6.2 Async/Await 与 Thenable</h3>
+            <pre><code>// async/await 也支持 thenable
+const thenable = {
+    then(resolve) {
+        setTimeout(() => resolve('Result'), 100);
+    }
+};
+
+async function test() {
+    const result = await thenable;  // 等待 thenable
+    console.log(result);  // "Result"
+}
+
+test();</code></pre>
+            
+            <h3>6.3 自定义异步容器</h3>
+            <pre><code>// 创建自定义异步容器
+class AsyncBox {
+    constructor(value) {
+        this._value = value;
+    }
+    
+    then(onFulfilled) {
+        // 异步解包
+        return new AsyncBox(
+            Promise.resolve(this._value).then(onFulfilled)
+        );
+    }
+    
+    async unwrap() {
+        return await this._value;
+    }
+}
+
+// 使用
+const box = new AsyncBox(42);
+const result = await box.then(x => x * 2);  // AsyncBox
+console.log(await result.unwrap());  // 84</code></pre>
+            
+            <h2>七、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>实现完整的 then</strong>：包含 onFulfilled 和 onRejected</li>
+                    <li><strong>遵守规范</strong>：只调用一次回调，处理异常</li>
+                    <li><strong>返回 Thenable</strong>：支持链式调用</li>
+                    <li><strong>小心副作用</strong>：访问 then 可能有副作用</li>
+                    <li><strong>使用 Promise.resolve</strong>：标准化 thenable</li>
+                    <li><strong>避免恶意 thenable</strong>：验证输入</li>
+                    <li><strong>优先 Promise</strong>：新代码使用原生 Promise</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://promisesaplus.com/" target="_blank">Promise/A+ 规范</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-promise-resolve-functions" target="_blank">ECMAScript - Promise Resolve</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="18-promise-aplus.html" class="nav-link prev">上一节：Promise/A+</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="18-microtask.html" class="nav-link next">下一节：微任务队列</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：基本 Thenable</h3>
+                <div class="code-block">
+                    <pre><code>// 最简单的 Thenable
+console.log('=== 基本 Thenable ===\n');
+
+const simpleThenable = {
+    then(onFulfilled, onRejected) {
+        console.log('  then 方法被调用');
+        setTimeout(() => {
+            console.log('  执行回调');
+            onFulfilled('Hello from Thenable');
+        }, 100);
+    }
+};
+
+console.log('创建 Promise:');
+Promise.resolve(simpleThenable)
+    .then(value => {
+        console.log('  Promise resolved:', value);
+    });
+
+console.log('Promise 已创建\n');
+console.log('说明:');
+console.log('  - Thenable 被 Promise 识别');
+console.log('  - then 方法自动调用');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Thenable 检测</h3>
+                <div class="code-block">
+                    <pre><code>// 检测 Thenable
+console.log('=== Thenable 检测 ===\n');
+
+function isThenable(value) {
+    return (
+        value !== null &&
+        (typeof value === 'object' || typeof value === 'function') &&
+        typeof value.then === 'function'
+    );
+}
+
+const testCases = [
+    { name: 'Promise', value: Promise.resolve(42) },
+    { name: 'Thenable对象', value: { then() {} } },
+    { name: '普通对象', value: { value: 42 } },
+    { name: '函数with then', value: Object.assign(() => {}, { then() {} }) },
+    { name: '数字', value: 42 },
+    { name: 'null', value: null },
+    { name: 'undefined', value: undefined }
+];
+
+testCases.forEach(({ name, value }) => {
+    const result = isThenable(value);
+    console.log(`${name}: ${result ? '✓ 是' : '✗ 否'}`);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：自定义 Thenable</h3>
+                <div class="code-block">
+                    <pre><code>// 实现延迟 Thenable
+console.log('=== 延迟 Thenable ===\n');
+
+class DelayedValue {
+    constructor(value, delay) {
+        this.value = value;
+        this.delay = delay;
+    }
+    
+    then(onFulfilled, onRejected) {
+        console.log(`  延迟 ${this.delay}ms 后返回`);
+        setTimeout(() => {
+            try {
+                onFulfilled(this.value);
+            } catch (e) {
+                if (onRejected) onRejected(e);
+            }
+        }, this.delay);
+    }
+}
+
+console.log('创建延迟值:');
+const delayed = new DelayedValue('Delayed Result', 500);
+
+console.log('开始等待...');
+Promise.resolve(delayed).then(value => {
+    console.log('  收到:', value);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Thenable 链式调用</h3>
+                <div class="code-block">
+                    <pre><code>// Thenable 在 Promise 链中
+console.log('=== Thenable 链式调用 ===\n');
+
+const thenable1 = {
+    then(resolve) {
+        console.log('  thenable1 执行');
+        setTimeout(() => resolve(10), 100);
+    }
+};
+
+const thenable2 = {
+    then(resolve) {
+        console.log('  thenable2 执行');
+        setTimeout(() => resolve(20), 100);
+    }
+};
+
+console.log('开始链式调用:');
+Promise.resolve(5)
+    .then(x => {
+        console.log('  步骤1: x =', x);
+        return thenable1;
+    })
+    .then(x => {
+        console.log('  步骤2: x =', x);
+        return thenable2;
+    })
+    .then(x => {
+        console.log('  步骤3: x =', x);
+        return x + 30;
+    })
+    .then(x => {
+        console.log('  最终结果:', x);
+    });</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：恶意 Thenable</h3>
+                <div class="code-block">
+                    <pre><code>// 展示恶意 Thenable 的防御
+console.log('=== 恶意 Thenable ===\n');
+
+const evilThenable = {
+    then(onFulfilled, onRejected) {
+        console.log('  恶意 then 被调用');
+        
+        // 违反规范：多次调用
+        onFulfilled(1);
+        console.log('  第1次调用 onFulfilled(1)');
+        
+        onFulfilled(2);
+        console.log('  第2次调用 onFulfilled(2)');
+        
+        onRejected(new Error('evil'));
+        console.log('  还调用了 onRejected');
+    }
+};
+
+console.log('Promise 处理:');
+Promise.resolve(evilThenable).then(
+    value => console.log('  Promise resolved:', value),
+    error => console.log('  Promise rejected:', error)
+);
+
+console.log('\n说明:');
+console.log('  Promise 实现会忽略后续调用');
+console.log('  只有第一次调用生效');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：async/await 与 Thenable</h3>
+                <div class="code-block">
+                    <pre><code>// async/await 支持 Thenable
+console.log('=== async/await 与 Thenable ===\n');
+
+const customThenable = {
+    value: 42,
+    
+    then(resolve) {
+        console.log('  Thenable.then 被调用');
+        setTimeout(() => {
+            console.log('  异步返回值');
+            resolve(this.value * 2);
+        }, 200);
+    }
+};
+
+async function test() {
+    console.log('开始 await:');
+    
+    const result = await customThenable;
+    console.log('  await 结果:', result);
+    
+    const doubled = await {
+        then: resolve => setTimeout(() => resolve(result * 2), 100)
+    };
+    console.log('  再次 await:', doubled);
+    
+    return doubled + 10;
+}
+
+test().then(final => {
+    console.log('  最终结果:', final);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

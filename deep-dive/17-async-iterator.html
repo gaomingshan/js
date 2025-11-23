@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步迭代器协议 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>异步迭代器协议</h1>
+            
+            <h2>概述</h2>
+            <p>异步迭代器（Async Iterator）是 ES2018 引入的特性，允许异步地迭代数据。配合 for await...of 语法，可以优雅地处理异步数据流。</p>
+            
+            <h2>一、异步迭代器协议</h2>
+            
+            <h3>1.1 接口定义</h3>
+            <pre><code>// 异步迭代器接口
+interface AsyncIterator {
+    next(): Promise<IteratorResult>;
+}
+
+interface IteratorResult {
+    value: any;
+    done: boolean;
+}
+
+// 示例
+const asyncIterator = {
+    current: 0,
+    last: 3,
+    
+    async next() {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (this.current <= this.last) {
+            return {
+                value: this.current++,
+                done: false
+            };
+        } else {
+            return {
+                value: undefined,
+                done: true
+            };
+        }
+    }
+};
+
+// 手动调用
+asyncIterator.next().then(console.log);  // { value: 0, done: false }</code></pre>
+            
+            <h3>1.2 异步可迭代协议</h3>
+            <pre><code>// 异步可迭代对象必须实现 [Symbol.asyncIterator]
+interface AsyncIterable {
+    [Symbol.asyncIterator](): AsyncIterator;
+}
+
+// 实现异步可迭代对象
+const asyncIterable = {
+    data: [1, 2, 3],
+    
+    [Symbol.asyncIterator]() {
+        let index = 0;
+        const data = this.data;
+        
+        return {
+            async next() {
+                // 模拟异步操作
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                if (index < data.length) {
+                    return { value: data[index++], done: false };
+                } else {
+                    return { value: undefined, done: true };
+                }
+            }
+        };
+    }
+};</code></pre>
+            
+            <h2>二、for await...of 语法</h2>
+            
+            <h3>2.1 基本使用</h3>
+            <pre><code>// for await...of 遍历异步可迭代对象
+async function example() {
+    const asyncIterable = {
+        data: [1, 2, 3],
+        
+        [Symbol.asyncIterator]() {
+            let index = 0;
+            
+            return {
+                async next() {
+                    await new Promise(r => setTimeout(r, 100));
+                    
+                    if (index < this.data.length) {
+                        return { value: this.data[index++], done: false };
+                    }
+                    return { done: true };
+                }
+            };
+        }
+    };
+    
+    for await (const value of asyncIterable) {
+        console.log(value);  // 1, 2, 3（每个间隔 100ms）
+    }
+}
+
+example();</code></pre>
+            
+            <h3>2.2 处理 Promise 数组</h3>
+            <pre><code>// for await...of 可以处理 Promise 数组
+async function processPromises() {
+    const promises = [
+        Promise.resolve(1),
+        Promise.resolve(2),
+        Promise.resolve(3)
+    ];
+    
+    for await (const value of promises) {
+        console.log(value);  // 1, 2, 3
+    }
+}
+
+processPromises();</code></pre>
+            
+            <h2>三、异步生成器</h2>
+            
+            <h3>3.1 async function*</h3>
+            <pre><code>// 异步生成器函数
+async function* asyncGenerator() {
+    yield await Promise.resolve(1);
+    yield await Promise.resolve(2);
+    yield await Promise.resolve(3);
+}
+
+// 使用
+async function use() {
+    for await (const value of asyncGenerator()) {
+        console.log(value);  // 1, 2, 3
+    }
+}
+
+use();</code></pre>
+            
+            <h3>3.2 简化异步迭代器</h3>
+            <pre><code>// 用异步生成器简化实现
+async function* fetchPages(url, maxPages) {
+    for (let page = 1; page <= maxPages; page++) {
+        const response = await fetch(`${url}?page=${page}`);
+        yield await response.json();
+    }
+}
+
+// 使用
+async function loadAllPages() {
+    for await (const pageData of fetchPages('/api/data', 5)) {
+        console.log('页面数据:', pageData);
+    }
+}</code></pre>
+            
+            <h3>3.3 yield* 委托</h3>
+            <pre><code>// 异步生成器也支持 yield*
+async function* inner() {
+    yield await Promise.resolve('a');
+    yield await Promise.resolve('b');
+}
+
+async function* outer() {
+    yield 1;
+    yield* inner();  // 委托给异步生成器
+    yield 2;
+}
+
+async function test() {
+    for await (const value of outer()) {
+        console.log(value);  // 1, 'a', 'b', 2
+    }
+}
+
+test();</code></pre>
+            
+            <h2>四、实际应用</h2>
+            
+            <h3>4.1 读取文件流</h3>
+            <pre><code>// Node.js 读取流
+async function* readLines(stream) {
+    let buffer = '';
+    
+    for await (const chunk of stream) {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // 保留未完成的行
+        
+        for (const line of lines) {
+            yield line;
+        }
+    }
+    
+    if (buffer) {
+        yield buffer;
+    }
+}
+
+// 使用
+const fs = require('fs');
+const stream = fs.createReadStream('file.txt');
+
+for await (const line of readLines(stream)) {
+    console.log(line);
+}</code></pre>
+            
+            <h3>4.2 分页 API</h3>
+            <pre><code>// 自动处理分页的 API 调用
+async function* fetchAllUsers(apiUrl) {
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+        const response = await fetch(`${apiUrl}?page=${page}`);
+        const data = await response.json();
+        
+        for (const user of data.users) {
+            yield user;
+        }
+        
+        hasMore = data.hasMore;
+        page++;
+    }
+}
+
+// 使用
+async function processAllUsers() {
+    for await (const user of fetchAllUsers('/api/users')) {
+        console.log(user.name);
+    }
+}</code></pre>
+            
+            <h3>4.3 事件流</h3>
+            <pre><code>// 将事件转换为异步可迭代对象
+function observeClicks(element) {
+    return {
+        [Symbol.asyncIterator]() {
+            const queue = [];
+            let resolve;
+            
+            element.addEventListener('click', e => {
+                if (resolve) {
+                    resolve({ value: e, done: false });
+                    resolve = null;
+                } else {
+                    queue.push(e);
+                }
+            });
+            
+            return {
+                async next() {
+                    if (queue.length > 0) {
+                        return { value: queue.shift(), done: false };
+                    }
+                    
+                    return new Promise(r => {
+                        resolve = r;
+                    });
+                }
+            };
+        }
+    };
+}
+
+// 使用
+async function handleClicks() {
+    for await (const event of observeClicks(document.body)) {
+        console.log('点击位置:', event.clientX, event.clientY);
+        
+        if (event.clientX > 500) break;  // 条件退出
+    }
+}</code></pre>
+            
+            <h2>五、错误处理</h2>
+            
+            <h3>5.1 try/catch</h3>
+            <pre><code>// 在 for await...of 中处理错误
+async function* mayFail() {
+    yield 1;
+    throw new Error('出错了');
+    yield 2;  // 不会执行
+}
+
+async function handleErrors() {
+    try {
+        for await (const value of mayFail()) {
+            console.log(value);  // 1
+        }
+    } catch (e) {
+        console.error('捕获错误:', e.message);
+    }
+}
+
+handleErrors();</code></pre>
+            
+            <h3>5.2 throw() 方法</h3>
+            <pre><code>// 向异步生成器抛出错误
+async function* resilient() {
+    try {
+        yield 1;
+    } catch (e) {
+        console.log('捕获:', e);
+        yield 'recovered';
+    }
+    yield 2;
+}
+
+async function test() {
+    const gen = resilient();
+    console.log(await gen.next());      // { value: 1, done: false }
+    console.log(await gen.throw('错误')); // 捕获: 错误, { value: 'recovered', done: false }
+    console.log(await gen.next());      // { value: 2, done: false }
+}
+
+test();</code></pre>
+            
+            <h2>六、性能考虑</h2>
+            
+            <h3>6.1 并发控制</h3>
+            <pre><code>// 限制并发数量
+async function* fetchWithConcurrency(urls, concurrency) {
+    const results = [];
+    
+    for (let i = 0; i < urls.length; i += concurrency) {
+        const batch = urls.slice(i, i + concurrency);
+        const promises = batch.map(url => fetch(url));
+        const responses = await Promise.all(promises);
+        
+        for (const response of responses) {
+            yield await response.json();
+        }
+    }
+}
+
+// 使用
+async function loadData() {
+    const urls = Array(10).fill('/api/data');
+    
+    for await (const data of fetchWithConcurrency(urls, 3)) {
+        console.log(data);  // 每次处理 3 个
+    }
+}</code></pre>
+            
+            <h3>6.2 提前终止</h3>
+            <pre><code>// return() 方法清理资源
+async function* withCleanup() {
+    const resource = await openResource();
+    
+    try {
+        yield* resource;
+    } finally {
+        await resource.close();  // 清理
+        console.log('资源已关闭');
+    }
+}
+
+async function use() {
+    for await (const item of withCleanup()) {
+        if (condition) break;  // 触发 finally
+    }
+}</code></pre>
+            
+            <h2>七、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用 for await...of</strong>：简化异步迭代代码</li>
+                    <li><strong>异步生成器</strong>：优先使用 async function*</li>
+                    <li><strong>错误处理</strong>：使用 try/catch 捕获错误</li>
+                    <li><strong>资源清理</strong>：实现 return() 或使用 finally</li>
+                    <li><strong>控制并发</strong>：避免过多并发请求</li>
+                    <li><strong>提前终止</strong>：使用 break 或 return 退出</li>
+                    <li><strong>类型标注</strong>：TypeScript 中明确类型</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-asynciterator-interface" target="_blank">ECMAScript - AsyncIterator</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/for-await...of" target="_blank">MDN - for await...of</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="17-generator.html" class="nav-link prev">上一节：生成器函数</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="18-promise-aplus.html" class="nav-link next">下一节：Promise/A+</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：异步迭代器基础</h3>
+                <div class="code-block">
+                    <pre><code>// 手动实现异步迭代器
+console.log('=== 异步迭代器 ===\n');
+
+const asyncIterable = {
+    data: ['a', 'b', 'c'],
+    
+    [Symbol.asyncIterator]() {
+        let index = 0;
+        const data = this.data;
+        
+        return {
+            async next() {
+                // 模拟异步延迟
+                await new Promise(r => setTimeout(r, 100));
+                
+                if (index < data.length) {
+                    return { value: data[index++], done: false };
+                } else {
+                    return { value: undefined, done: true };
+                }
+            }
+        };
+    }
+};
+
+async function test() {
+    console.log('开始迭代...');
+    
+    for await (const value of asyncIterable) {
+        console.log('  值:', value);
+    }
+    
+    console.log('迭代完成');
+}
+
+test();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：异步生成器</h3>
+                <div class="code-block">
+                    <pre><code>// async function* 语法
+console.log('=== 异步生成器 ===\n');
+
+async function* countDown(from) {
+    console.log('倒计时开始:', from);
+    
+    while (from > 0) {
+        await new Promise(r => setTimeout(r, 500));
+        yield from--;
+    }
+    
+    console.log('倒计时结束');
+}
+
+async function runCountdown() {
+    console.log('准备倒计时...');
+    
+    for await (const num of countDown(3)) {
+        console.log('  数字:', num);
+    }
+    
+    console.log('完成！');
+}
+
+runCountdown();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：模拟分页 API</h3>
+                <div class="code-block">
+                    <pre><code>// 自动处理分页的异步生成器
+console.log('=== 分页 API ===\n');
+
+// 模拟 API 数据
+const mockAPI = {
+    data: Array(15).fill(0).map((_, i) => ({ id: i + 1, name: `Item ${i + 1}` })),
+    
+    async fetch(page, pageSize) {
+        await new Promise(r => setTimeout(r, 200));
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const items = this.data.slice(start, end);
+        
+        return {
+            items,
+            hasMore: end < this.data.length,
+            page
+        };
+    }
+};
+
+async function* fetchAllItems(pageSize = 5) {
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+        console.log(`  请求第 ${page} 页...`);
+        const result = await mockAPI.fetch(page, pageSize);
+        
+        for (const item of result.items) {
+            yield item;
+        }
+        
+        hasMore = result.hasMore;
+        page++;
+    }
+}
+
+async function loadAll() {
+    console.log('开始加载所有数据...\n');
+    
+    let count = 0;
+    for await (const item of fetchAllItems()) {
+        console.log(`  ${item.id}: ${item.name}`);
+        count++;
+    }
+    
+    console.log(`\n总共加载 ${count} 项`);
+}
+
+loadAll();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Promise 数组</h3>
+                <div class="code-block">
+                    <pre><code>// for await...of 处理 Promise 数组
+console.log('=== Promise 数组 ===\n');
+
+function createDelayedPromise(value, delay) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            console.log(`  Promise ${value} resolved`);
+            resolve(value);
+        }, delay);
+    });
+}
+
+async function processPromises() {
+    const promises = [
+        createDelayedPromise(1, 300),
+        createDelayedPromise(2, 100),
+        createDelayedPromise(3, 200)
+    ];
+    
+    console.log('开始处理 Promise 数组...\n');
+    
+    for await (const value of promises) {
+        console.log('  处理值:', value);
+    }
+    
+    console.log('\n完成！');
+    console.log('注意: 按顺序等待，不是并发');
+}
+
+processPromises();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：错误处理</h3>
+                <div class="code-block">
+                    <pre><code>// 异步迭代中的错误处理
+console.log('=== 错误处理 ===\n');
+
+async function* mayFail() {
+    yield 1;
+    await new Promise(r => setTimeout(r, 100));
+    
+    yield 2;
+    await new Promise(r => setTimeout(r, 100));
+    
+    throw new Error('模拟错误');
+    yield 3;  // 不会执行
+}
+
+async function handleErrors() {
+    try {
+        console.log('开始迭代...');
+        
+        for await (const value of mayFail()) {
+            console.log('  值:', value);
+        }
+        
+        console.log('正常结束');
+    } catch (e) {
+        console.log('\n捕获错误:', e.message);
+    } finally {
+        console.log('清理完成');
+    }
+}
+
+handleErrors();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：提前终止</h3>
+                <div class="code-block">
+                    <pre><code>// 提前终止异步迭代
+console.log('=== 提前终止 ===\n');
+
+async function* infiniteStream() {
+    let count = 1;
+    
+    try {
+        while (true) {
+            console.log(`  生成 ${count}`);
+            await new Promise(r => setTimeout(r, 200));
+            yield count++;
+        }
+    } finally {
+        console.log('  清理资源（finally）');
+    }
+}
+
+async function consumeStream() {
+    console.log('开始消费流...\n');
+    
+    for await (const value of infiniteStream()) {
+        console.log(`  接收: ${value}`);
+        
+        if (value >= 3) {
+            console.log('  达到条件，提前退出');
+            break;  // 触发 finally
+        }
+    }
+    
+    console.log('\n流已关闭');
+}
+
+consumeStream();</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symbol 深入 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Symbol 深入</h1>
+            
+            <h2>概述</h2>
+            <p>Symbol 是 ES6 引入的原始数据类型，用于创建唯一的标识符。它是 JavaScript 元编程的重要基础。</p>
+            
+            <h2>一、Symbol 基础</h2>
+            
+            <h3>1.1 创建 Symbol</h3>
+            <pre><code>// 创建唯一 Symbol
+const sym1 = Symbol();
+const sym2 = Symbol();
+console.log(sym1 === sym2);  // false（每个都是唯一的）
+
+// 带描述的 Symbol
+const sym = Symbol('mySymbol');
+console.log(sym.description);  // "mySymbol"
+
+// Symbol 不能使用 new
+const sym = new Symbol();  // ❌ TypeError</code></pre>
+            
+            <h3>1.2 Symbol 注册表</h3>
+            <pre><code>// Symbol.for() 创建全局 Symbol
+const sym1 = Symbol.for('app.id');
+const sym2 = Symbol.for('app.id');
+console.log(sym1 === sym2);  // true（相同的）
+
+// Symbol.keyFor() 获取 key
+const key = Symbol.keyFor(sym1);
+console.log(key);  // "app.id"
+
+// 局部 Symbol 返回 undefined
+const local = Symbol('local');
+console.log(Symbol.keyFor(local));  // undefined</code></pre>
+            
+            <h2>二、Well-Known Symbols</h2>
+            
+            <h3>2.1 Symbol.iterator</h3>
+            <pre><code>// 定义迭代行为
+const range = {
+    from: 1,
+    to: 5,
+    
+    [Symbol.iterator]() {
+        let current = this.from;
+        const last = this.to;
+        
+        return {
+            next() {
+                if (current <= last) {
+                    return { value: current++, done: false };
+                }
+                return { done: true };
+            }
+        };
+    }
+};
+
+for (const num of range) {
+    console.log(num);  // 1, 2, 3, 4, 5
+}</code></pre>
+            
+            <h3>2.2 Symbol.toStringTag</h3>
+            <pre><code>// 自定义 toString 输出
+class MyClass {
+    get [Symbol.toStringTag]() {
+        return 'MyClass';
+    }
+}
+
+const obj = new MyClass();
+console.log(obj.toString());  // "[object MyClass]"
+
+// 内置对象的 toStringTag
+console.log(Object.prototype.toString.call(new Map()));
+// "[object Map]"</code></pre>
+            
+            <h3>2.3 Symbol.toPrimitive</h3>
+            <pre><code>// 自定义类型转换
+const obj = {
+    [Symbol.toPrimitive](hint) {
+        if (hint === 'number') {
+            return 42;
+        }
+        if (hint === 'string') {
+            return 'hello';
+        }
+        return true;
+    }
+};
+
+console.log(+obj);      // 42
+console.log(`${obj}`);  // "hello"
+console.log(obj + '');  // "true"</code></pre>
+            
+            <h3>2.4 其他 Well-Known Symbols</h3>
+            <pre><code>// Symbol.hasInstance - instanceof 行为
+class MyArray {
+    static [Symbol.hasInstance](instance) {
+        return Array.isArray(instance);
+    }
+}
+
+console.log([] instanceof MyArray);  // true
+
+// Symbol.isConcatSpreadable - concat 行为
+const arr = [1, 2];
+arr[Symbol.isConcatSpreadable] = false;
+console.log([0].concat(arr));  // [0, [1, 2]]
+
+// Symbol.species - 派生对象的构造函数
+class MyArray extends Array {
+    static get [Symbol.species]() {
+        return Array;
+    }
+}
+
+const arr = new MyArray(1, 2, 3);
+const mapped = arr.map(x => x * 2);
+console.log(mapped instanceof MyArray);  // false
+console.log(mapped instanceof Array);    // true</code></pre>
+            
+            <h2>三、Symbol 作为属性键</h2>
+            
+            <h3>3.1 私有属性</h3>
+            <pre><code>// 使用 Symbol 创建"私有"属性
+const _private = Symbol('private');
+
+class MyClass {
+    constructor() {
+        this[_private] = 'private data';
+        this.public = 'public data';
+    }
+    
+    getPrivate() {
+        return this[_private];
+    }
+}
+
+const obj = new MyClass();
+console.log(obj.public);        // "public data"
+console.log(obj[_private]);     // undefined（访问不到）
+console.log(obj.getPrivate());  // "private data"
+
+// 但可以通过 Object.getOwnPropertySymbols() 访问
+const symbols = Object.getOwnPropertySymbols(obj);
+console.log(obj[symbols[0]]);   // "private data"</code></pre>
+            
+            <h3>3.2 避免命名冲突</h3>
+            <pre><code>// Symbol 属性不会冲突
+const id = Symbol('id');
+
+const user = {
+    name: 'Alice',
+    [id]: 123
+};
+
+// 其他代码添加 id 属性
+user.id = 456;
+
+console.log(user.id);    // 456
+console.log(user[id]);   // 123（不冲突）</code></pre>
+            
+            <h2>四、Symbol 的特性</h2>
+            
+            <h3>4.1 不可枚举</h3>
+            <pre><code>const sym = Symbol('test');
+const obj = {
+    normal: 1,
+    [sym]: 2
+};
+
+// for...in 不包含 Symbol
+for (const key in obj) {
+    console.log(key);  // 只输出 "normal"
+}
+
+// Object.keys() 不包含 Symbol
+console.log(Object.keys(obj));  // ["normal"]
+
+// JSON.stringify() 忽略 Symbol
+console.log(JSON.stringify(obj));  // {"normal":1}
+
+// 获取 Symbol 属性
+console.log(Object.getOwnPropertySymbols(obj));  // [Symbol(test)]
+
+// 获取所有属性（包括 Symbol）
+console.log(Reflect.ownKeys(obj));  // ["normal", Symbol(test)]</code></pre>
+            
+            <h3>4.2 类型转换</h3>
+            <pre><code>const sym = Symbol('test');
+
+// 不能转为数字
+console.log(+sym);  // ❌ TypeError
+
+// 不能自动转为字符串
+console.log('symbol: ' + sym);  // ❌ TypeError
+
+// 可以显式转换
+console.log(String(sym));        // "Symbol(test)"
+console.log(sym.toString());     // "Symbol(test)"
+
+// 可以转为布尔值
+console.log(Boolean(sym));  // true
+console.log(!sym);          // false</code></pre>
+            
+            <h2>五、实际应用</h2>
+            
+            <h3>5.1 元数据存储</h3>
+            <pre><code>// 为对象添加元数据
+const metadata = Symbol('metadata');
+
+function addMetadata(obj, data) {
+    obj[metadata] = data;
+}
+
+function getMetadata(obj) {
+    return obj[metadata];
+}
+
+const user = { name: 'Alice' };
+addMetadata(user, { created: Date.now() });
+console.log(getMetadata(user));</code></pre>
+            
+            <h3>5.2 单例模式</h3>
+            <pre><code>// 使用 Symbol 实现单例
+const instance = Symbol('instance');
+
+class Database {
+    constructor() {
+        if (Database[instance]) {
+            return Database[instance];
+        }
+        
+        // 初始化
+        this.connection = 'connected';
+        Database[instance] = this;
+    }
+}
+
+const db1 = new Database();
+const db2 = new Database();
+console.log(db1 === db2);  // true</code></pre>
+            
+            <h3>5.3 常量定义</h3>
+            <pre><code>// 使用 Symbol 定义唯一常量
+const Colors = {
+    RED: Symbol('red'),
+    GREEN: Symbol('green'),
+    BLUE: Symbol('blue')
+};
+
+function setColor(color) {
+    switch (color) {
+        case Colors.RED:
+            return '#FF0000';
+        case Colors.GREEN:
+            return '#00FF00';
+        case Colors.BLUE:
+            return '#0000FF';
+    }
+}
+
+console.log(setColor(Colors.RED));  // "#FF0000"</code></pre>
+            
+            <h2>六、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用描述</strong>：便于调试</li>
+                    <li><strong>全局 Symbol</strong>：跨模块共享用 Symbol.for()</li>
+                    <li><strong>Well-Known Symbols</strong>：自定义对象行为</li>
+                    <li><strong>元数据存储</strong>：避免命名冲突</li>
+                    <li><strong>不作为真正的私有</strong>：可以被反射 API 访问</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-symbol-objects" target="_blank">ECMAScript - Symbol Objects</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol" target="_blank">MDN - Symbol</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="24-dynamic-import.html" class="nav-link prev">上一节：动态导入机制</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="25-bigint.html" class="nav-link next">下一节：BigInt 详解</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Symbol 基础</h3>
+                <div class="code-block">
+                    <pre><code>// Symbol 基础
+console.log('=== Symbol 基础 ===\n');
+
+const sym1 = Symbol();
+const sym2 = Symbol();
+console.log('sym1 === sym2:', sym1 === sym2);
+
+const sym = Symbol('mySymbol');
+console.log('description:', sym.description);
+
+const global1 = Symbol.for('app.id');
+const global2 = Symbol.for('app.id');
+console.log('global1 === global2:', global1 === global2);
+
+const key = Symbol.keyFor(global1);
+console.log('key:', key);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Symbol.iterator</h3>
+                <div class="code-block">
+                    <pre><code>// 自定义迭代器
+console.log('=== Symbol.iterator ===\n');
+
+const range = {
+    from: 1,
+    to: 5,
+    
+    [Symbol.iterator]() {
+        let current = this.from;
+        const last = this.to;
+        
+        return {
+            next() {
+                if (current <= last) {
+                    return { value: current++, done: false };
+                }
+                return { done: true };
+            }
+        };
+    }
+};
+
+console.log('遍历 range:');
+for (const num of range) {
+    console.log('  ' + num);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Symbol.toPrimitive</h3>
+                <div class="code-block">
+                    <pre><code>// 自定义类型转换
+console.log('=== Symbol.toPrimitive ===\n');
+
+const obj = {
+    value: 42,
+    
+    [Symbol.toPrimitive](hint) {
+        console.log('  hint:', hint);
+        
+        if (hint === 'number') {
+            return this.value;
+        }
+        if (hint === 'string') {
+            return `Value: ${this.value}`;
+        }
+        return this.value;
+    }
+};
+
+console.log('转数字:', +obj);
+console.log('转字符串:', `${obj}`);
+console.log('默认:', obj + 1);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Symbol 作为属性键</h3>
+                <div class="code-block">
+                    <pre><code>// Symbol 属性
+console.log('=== Symbol 属性 ===\n');
+
+const id = Symbol('id');
+const user = {
+    name: 'Alice',
+    [id]: 123
+};
+
+console.log('name:', user.name);
+console.log('[id]:', user[id]);
+
+console.log('\nObject.keys():', Object.keys(user));
+console.log('Object.getOwnPropertySymbols():',
+    Object.getOwnPropertySymbols(user).map(s => s.description));
+
+console.log('\nJSON.stringify():', JSON.stringify(user));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：Well-Known Symbols</h3>
+                <div class="code-block">
+                    <pre><code>// Well-Known Symbols
+console.log('=== Well-Known Symbols ===\n');
+
+class MyClass {
+    get [Symbol.toStringTag]() {
+        return 'MyClass';
+    }
+}
+
+const obj = new MyClass();
+console.log('toString():', obj.toString());
+
+const arr = [1, 2];
+arr[Symbol.isConcatSpreadable] = false;
+console.log('\nconcat with false:', [0].concat(arr));
+
+arr[Symbol.isConcatSpreadable] = true;
+console.log('concat with true:', [0].concat(arr));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实际应用</h3>
+                <div class="code-block">
+                    <pre><code>// Symbol 实际应用
+console.log('=== 实际应用 ===\n');
+
+// 常量定义
+const Status = {
+    PENDING: Symbol('pending'),
+    FULFILLED: Symbol('fulfilled'),
+    REJECTED: Symbol('rejected')
+};
+
+console.log('状态常量:');
+console.log('  PENDING:', Status.PENDING.description);
+console.log('  FULFILLED:', Status.FULFILLED.description);
+
+// 元数据
+const metadata = Symbol('metadata');
+
+function tag(obj, data) {
+    obj[metadata] = data;
+    return obj;
+}
+
+const user = tag({ name: 'Alice' }, { 
+    created: '2024-01-01' 
+});
+
+console.log('\n元数据:', user[metadata]);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

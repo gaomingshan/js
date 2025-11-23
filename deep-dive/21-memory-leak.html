@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内存泄漏分析与排查 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>内存泄漏分析与排查</h1>
+            
+            <h2>概述</h2>
+            <p>内存泄漏是指程序中已分配的内存无法被释放或回收，导致可用内存逐渐减少。了解常见的内存泄漏场景和排查方法，对于开发高质量应用至关重要。</p>
+            
+            <h2>一、常见内存泄漏场景</h2>
+            
+            <h3>1.1 意外的全局变量</h3>
+            <pre><code>// 忘记声明变量导致全局变量
+function leak() {
+    name = 'Alice';  // ❌ 创建了全局变量 window.name
+}
+
+leak();
+console.log(window.name);  // "Alice"（永远不会被回收）
+
+// 修复：使用严格模式和正确声明
+'use strict';
+function fixed() {
+    let name = 'Alice';  // ✓ 局部变量
+}
+
+// 或
+function fixed2() {
+    const name = 'Alice';  // ✓ 局部常量
+}</code></pre>
+            
+            <h3>1.2 未清理的定时器</h3>
+            <pre><code>// 定时器引用的变量无法回收
+function leak() {
+    const data = new Array(10000).fill('x');
+    
+    setInterval(() => {
+        console.log(data.length);  // 持续引用 data
+    }, 1000);
+    
+    // 定时器永远不会停止，data 永远不会被回收
+}
+
+// 修复：清理定时器
+function fixed() {
+    const data = new Array(10000).fill('x');
+    
+    const timer = setInterval(() => {
+        console.log(data.length);
+    }, 1000);
+    
+    // 适当时机清理
+    setTimeout(() => {
+        clearInterval(timer);  // ✓ 清理定时器
+    }, 10000);
+}</code></pre>
+            
+            <h3>1.3 未移除的事件监听器</h3>
+            <pre><code>// 事件监听器持有引用
+function leak() {
+    const element = document.getElementById('button');
+    const data = new Array(10000).fill('x');
+    
+    element.addEventListener('click', function() {
+        console.log(data.length);  // 闭包引用 data
+    });
+    
+    // element 被移除后，监听器仍在内存中
+    element.remove();
+}
+
+// 修复：移除监听器
+function fixed() {
+    const element = document.getElementById('button');
+    const data = new Array(10000).fill('x');
+    
+    function handler() {
+        console.log(data.length);
+    }
+    
+    element.addEventListener('click', handler);
+    
+    // 清理
+    element.removeEventListener('click', handler);  // ✓
+    element.remove();
+}</code></pre>
+            
+            <h3>1.4 DOM 引用</h3>
+            <pre><code>// 保持对已删除 DOM 的引用
+const elements = {
+    button: document.getElementById('button')
+};
+
+// 从 DOM 中删除
+document.body.removeChild(elements.button);
+
+// 但 elements.button 仍然引用该 DOM 节点
+// 导致整个 DOM 子树无法回收
+
+// 修复：清除引用
+elements.button = null;  // ✓</code></pre>
+            
+            <h3>1.5 闭包引用</h3>
+            <pre><code>// 闭包保持对大对象的引用
+function leak() {
+    const largeData = new Array(10000).fill('x');
+    const smallData = 'y';
+    
+    return function() {
+        return smallData;  // 只使用 smallData
+    };
+    
+    // 但闭包会保持整个作用域，包括 largeData
+}
+
+// 修复：最小化闭包作用域
+function fixed() {
+    const largeData = new Array(10000).fill('x');
+    const smallData = 'y';
+    
+    // 处理 largeData...
+    
+    // 解除引用
+    largeData = null;
+    
+    return function() {
+        return smallData;  // ✓ largeData 已被回收
+    };
+}</code></pre>
+            
+            <h3>1.6 循环引用（老版本 IE）</h3>
+            <pre><code>// 在老版本 IE 中，DOM 和 JS 对象循环引用导致泄漏
+function leak() {
+    const element = document.getElementById('div');
+    const obj = {};
+    
+    element.customData = obj;  // DOM 引用 JS
+    obj.element = element;     // JS 引用 DOM
+    
+    // 在老版本 IE 中无法回收
+}
+
+// 现代浏览器已经解决，但仍建议避免</code></pre>
+            
+            <h2>二、排查工具</h2>
+            
+            <h3>2.1 Chrome DevTools</h3>
+            <pre><code>// 1. Memory Profiler（内存分析器）
+
+// Heap Snapshot（堆快照）
+// - 记录当前时刻的内存状态
+// - 查看对象数量和大小
+// - 对比多个快照找出增长的对象
+
+// Allocation Timeline（分配时间线）
+// - 实时记录内存分配
+// - 找出频繁分配的对象
+// - 查看对象的保留路径
+
+// Allocation Sampling（分配采样）
+// - 低开销的采样
+// - 找出内存热点
+
+// 2. Performance Monitor（性能监视器）
+// - 实时查看 JS 堆大小
+// - DOM 节点数量
+// - 监听器数量
+
+// 3. Task Manager（任务管理器）
+// - Shift + Esc 打开
+// - 查看各标签页内存使用</code></pre>
+            
+            <h3>2.2 排查步骤</h3>
+            <pre><code>// 步骤 1：重现问题
+// - 确定导致内存增长的操作
+// - 重复执行该操作
+
+// 步骤 2：记录堆快照
+// 1. 操作前记录快照 A
+// 2. 执行操作
+// 3. 操作后记录快照 B
+// 4. 再次执行操作
+// 5. 再次记录快照 C
+
+// 步骤 3：对比快照
+// - 查看 B 和 A 的差异
+// - 查看 C 和 B 的差异
+// - 找出持续增长的对象
+
+// 步骤 4：查看保留路径
+// - 选择增长的对象
+// - 查看 "Retainers"（保留者）
+// - 找出是什么引用了该对象
+
+// 步骤 5：定位代码
+// - 根据保留路径找到代码位置
+// - 分析为什么没有被回收</code></pre>
+            
+            <h2>三、实际案例</h2>
+            
+            <h3>3.1 案例1：定时器泄漏</h3>
+            <pre><code>// 问题代码
+class Component {
+    constructor() {
+        this.data = new Array(10000).fill('x');
+        
+        setInterval(() => {
+            this.render();
+        }, 1000);
+    }
+    
+    render() {
+        console.log(this.data.length);
+    }
+    
+    destroy() {
+        // ❌ 忘记清理定时器
+    }
+}
+
+// 每次创建 Component 都泄漏内存
+for (let i = 0; i < 10; i++) {
+    new Component();
+}
+
+// 修复代码
+class ComponentFixed {
+    constructor() {
+        this.data = new Array(10000).fill('x');
+        
+        this.timer = setInterval(() => {
+            this.render();
+        }, 1000);
+    }
+    
+    render() {
+        console.log(this.data.length);
+    }
+    
+    destroy() {
+        clearInterval(this.timer);  // ✓ 清理定时器
+        this.data = null;            // ✓ 解除引用
+    }
+}</code></pre>
+            
+            <h3>3.2 案例2：事件监听器泄漏</h3>
+            <pre><code>// 问题代码
+class ListView {
+    constructor(items) {
+        this.items = items;
+        this.handlers = [];
+        this.render();
+    }
+    
+    render() {
+        this.items.forEach((item, index) => {
+            const element = document.createElement('div');
+            
+            // ❌ 每次 render 都添加新的监听器
+            element.addEventListener('click', () => {
+                this.handleClick(index);
+            });
+            
+            document.body.appendChild(element);
+        });
+    }
+    
+    handleClick(index) {
+        console.log('Clicked:', index);
+    }
+}
+
+// 修复代码
+class ListViewFixed {
+    constructor(items) {
+        this.items = items;
+        this.handlers = new Map();
+        this.render();
+    }
+    
+    render() {
+        this.items.forEach((item, index) => {
+            const element = document.createElement('div');
+            
+            const handler = () => this.handleClick(index);
+            this.handlers.set(element, handler);
+            
+            element.addEventListener('click', handler);
+            document.body.appendChild(element);
+        });
+    }
+    
+    destroy() {
+        // ✓ 清理所有监听器
+        this.handlers.forEach((handler, element) => {
+            element.removeEventListener('click', handler);
+            element.remove();
+        });
+        this.handlers.clear();
+    }
+}</code></pre>
+            
+            <h3>3.3 案例3：闭包泄漏</h3>
+            <pre><code>// 问题代码
+function createCache() {
+    const cache = {};
+    
+    return {
+        set(key, value) {
+            cache[key] = value;
+        },
+        get(key) {
+            return cache[key];
+        }
+        // ❌ 没有清理方法
+    };
+}
+
+const userCache = createCache();
+
+// 持续添加数据
+for (let i = 0; i < 10000; i++) {
+    userCache.set(`user_${i}`, {
+        id: i,
+        data: new Array(1000).fill('x')
+    });
+}
+
+// 修复代码
+function createCacheFixed() {
+    const cache = new Map();
+    const maxSize = 1000;
+    
+    return {
+        set(key, value) {
+            // ✓ 限制大小
+            if (cache.size >= maxSize) {
+                const firstKey = cache.keys().next().value;
+                cache.delete(firstKey);
+            }
+            cache.set(key, value);
+        },
+        get(key) {
+            return cache.get(key);
+        },
+        clear() {
+            cache.clear();  // ✓ 提供清理方法
+        }
+    };
+}</code></pre>
+            
+            <h2>四、防止内存泄漏的模式</h2>
+            
+            <h3>4.1 WeakMap 模式</h3>
+            <pre><code>// 使用 WeakMap 存储私有数据
+const privateData = new WeakMap();
+
+class Person {
+    constructor(name) {
+        privateData.set(this, { name });
+    }
+    
+    getName() {
+        return privateData.get(this).name;
+    }
+}
+
+let person = new Person('Alice');
+console.log(person.getName());  // "Alice"
+
+person = null;  // Person 实例和私有数据都可以被回收</code></pre>
+            
+            <h3>4.2 清理函数模式</h3>
+            <pre><code>// 提供清理函数
+class Component {
+    constructor() {
+        this.listeners = [];
+        this.timers = [];
+    }
+    
+    addEventListener(element, event, handler) {
+        element.addEventListener(event, handler);
+        this.listeners.push({ element, event, handler });
+    }
+    
+    setInterval(callback, delay) {
+        const timer = setInterval(callback, delay);
+        this.timers.push(timer);
+        return timer;
+    }
+    
+    destroy() {
+        // 清理所有监听器
+        this.listeners.forEach(({ element, event, handler }) => {
+            element.removeEventListener(event, handler);
+        });
+        
+        // 清理所有定时器
+        this.timers.forEach(timer => {
+            clearInterval(timer);
+        });
+        
+        this.listeners = [];
+        this.timers = [];
+    }
+}</code></pre>
+            
+            <h3>4.3 LRU 缓存模式</h3>
+            <pre><code>// 限制缓存大小的 LRU 缓存
+class LRUCache {
+    constructor(capacity) {
+        this.capacity = capacity;
+        this.cache = new Map();
+    }
+    
+    get(key) {
+        if (!this.cache.has(key)) return -1;
+        
+        // 更新访问顺序
+        const value = this.cache.get(key);
+        this.cache.delete(key);
+        this.cache.set(key, value);
+        return value;
+    }
+    
+    put(key, value) {
+        // 删除旧值
+        if (this.cache.has(key)) {
+            this.cache.delete(key);
+        }
+        
+        // 检查容量
+        if (this.cache.size >= this.capacity) {
+            // 删除最久未使用的（第一个）
+            const firstKey = this.cache.keys().next().value;
+            this.cache.delete(firstKey);
+        }
+        
+        this.cache.set(key, value);
+    }
+}
+
+const cache = new LRUCache(100);  // 最多100项</code></pre>
+            
+            <h2>五、监控和预警</h2>
+            
+            <h3>5.1 内存监控</h3>
+            <pre><code>// 浏览器环境
+if (performance.memory) {
+    function checkMemory() {
+        const { usedJSHeapSize, totalJSHeapSize, jsHeapSizeLimit } = performance.memory;
+        
+        const usage = usedJSHeapSize / totalJSHeapSize;
+        
+        console.log({
+            used: `${(usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+            total: `${(totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+            limit: `${(jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`,
+            usage: `${(usage * 100).toFixed(2)}%`
+        });
+        
+        if (usage > 0.9) {
+            console.warn('内存使用率过高！');
+        }
+    }
+    
+    setInterval(checkMemory, 5000);
+}
+
+// Node.js 环境
+function checkMemoryNode() {
+    const used = process.memoryUsage();
+    
+    console.log({
+        rss: `${Math.round(used.rss / 1024 / 1024)} MB`,
+        heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)} MB`,
+        heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)} MB`,
+        external: `${Math.round(used.external / 1024 / 1024)} MB`
+    });
+}</code></pre>
+            
+            <h2>六、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用严格模式</strong>：避免意外全局变量</li>
+                    <li><strong>及时清理</strong>：定时器、监听器、引用</li>
+                    <li><strong>提供清理方法</strong>：组件销毁时清理资源</li>
+                    <li><strong>使用 WeakMap</strong>：自动回收键对象</li>
+                    <li><strong>限制缓存大小</strong>：使用 LRU 等策略</li>
+                    <li><strong>定期监控</strong>：使用工具检查内存</li>
+                    <li><strong>代码审查</strong>：关注可能泄漏的模式</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://developer.chrome.com/docs/devtools/memory-problems/" target="_blank">Chrome DevTools - Memory Problems</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Memory_Management" target="_blank">MDN - 内存管理</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="21-gc.html" class="nav-link prev">上一节：垃圾回收算法</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="22-v8-internals.html" class="nav-link next">下一节：V8 内部机制</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：意外全局变量</h3>
+                <div class="code-block">
+                    <pre><code>// 意外全局变量导致的泄漏
+console.log('=== 意外全局变量 ===\n');
+
+function leak() {
+    // 忘记 var/let/const
+    leaked = 'This is a leak';
+    console.log('  创建了全局变量');
+}
+
+leak();
+
+console.log('检查全局变量:');
+console.log('  window.leaked =', window.leaked);
+
+console.log('\n修复: 使用严格模式');
+console.log("'use strict';");
+console.log('function fixed() {');
+console.log("  leaked = 'error';  // 抛出错误");
+console.log('}');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：定时器泄漏</h3>
+                <div class="code-block">
+                    <pre><code>// 定时器导致的内存泄漏
+console.log('=== 定时器泄漏 ===\n');
+
+let timerId = null;
+
+function leakTimer() {
+    const data = new Array(100).fill('x');
+    console.log('创建定时器，引用大数组');
+    
+    timerId = setInterval(() => {
+        console.log('  数组长度:', data.length);
+    }, 1000);
+}
+
+console.log('启动定时器:');
+leakTimer();
+
+setTimeout(() => {
+    console.log('\n2秒后清理:');
+    clearInterval(timerId);
+    console.log('  定时器已清理');
+    console.log('  data 可以被回收');
+}, 2000);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：闭包泄漏</h3>
+                <div class="code-block">
+                    <pre><code>// 闭包引用大对象
+console.log('=== 闭包泄漏 ===\n');
+
+console.log('1. 泄漏版本:');
+function leakyClosure() {
+    const largeData = new Array(1000).fill('x');
+    const small = 'y';
+    
+    return function() {
+        return small;  // 只用 small
+    };
+    // 但整个作用域（包括 largeData）被保留
+}
+
+const fn1 = leakyClosure();
+console.log('  返回函数，但 largeData 仍在内存中');
+
+console.log('\n2. 修复版本:');
+function fixedClosure() {
+    let largeData = new Array(1000).fill('x');
+    const small = 'y';
+    
+    // 处理 largeData...
+    console.log('  处理 largeData...');
+    
+    largeData = null;  // 解除引用
+    
+    return function() {
+        return small;
+    };
+}
+
+const fn2 = fixedClosure();
+console.log('  largeData 已释放');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：WeakMap 防泄漏</h3>
+                <div class="code-block">
+                    <pre><code>// 使用 WeakMap 避免泄漏
+console.log('=== WeakMap 防泄漏 ===\n');
+
+const privateData = new WeakMap();
+
+class User {
+    constructor(name) {
+        privateData.set(this, {
+            name,
+            secret: 'private data'
+        });
+        console.log(`  创建用户: ${name}`);
+    }
+    
+    getName() {
+        return privateData.get(this).name;
+    }
+}
+
+console.log('创建用户:');
+let user = new User('Alice');
+console.log('  user.getName():', user.getName());
+
+console.log('\n解除引用:');
+user = null;
+console.log('  user = null');
+console.log('  User 实例和私有数据都可被 GC');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：LRU 缓存</h3>
+                <div class="code-block">
+                    <pre><code>// LRU 缓存限制内存
+console.log('=== LRU 缓存 ===\n');
+
+class LRUCache {
+    constructor(capacity) {
+        this.capacity = capacity;
+        this.cache = new Map();
+    }
+    
+    get(key) {
+        if (!this.cache.has(key)) return null;
+        
+        const value = this.cache.get(key);
+        this.cache.delete(key);
+        this.cache.set(key, value);
+        return value;
+    }
+    
+    put(key, value) {
+        if (this.cache.has(key)) {
+            this.cache.delete(key);
+        }
+        
+        if (this.cache.size >= this.capacity) {
+            const first = this.cache.keys().next().value;
+            this.cache.delete(first);
+            console.log(`  删除最旧的: ${first}`);
+        }
+        
+        this.cache.set(key, value);
+    }
+}
+
+const cache = new LRUCache(3);
+
+console.log('添加数据:');
+cache.put('a', 1);
+cache.put('b', 2);
+cache.put('c', 3);
+console.log('  a, b, c');
+
+cache.put('d', 4);  // a 被删除
+console.log('  添加 d（容量已满）');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：内存监控</h3>
+                <div class="code-block">
+                    <pre><code>// 监控内存使用
+console.log('=== 内存监控 ===\n');
+
+if (performance.memory) {
+    function checkMemory() {
+        const {
+            usedJSHeapSize,
+            totalJSHeapSize,
+            jsHeapSizeLimit
+        } = performance.memory;
+        
+        const usage = (usedJSHeapSize / totalJSHeapSize * 100).toFixed(2);
+        
+        console.log('内存状态:');
+        console.log(`  已使用: ${(usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`  总大小: ${(totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`  使用率: ${usage}%`);
+        
+        if (usage > 90) {
+            console.warn('  ⚠️ 内存使用率过高！');
+        }
+    }
+    
+    checkMemory();
+} else {
+    console.log('performance.memory 不可用');
+    console.log('（仅在 Chrome 中可用）');
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

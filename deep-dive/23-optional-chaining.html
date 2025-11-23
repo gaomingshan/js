@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可选链与空值合并 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>可选链与空值合并</h1>
+            
+            <h2>概述</h2>
+            <p>可选链（?.）和空值合并（??）是 ES2020 引入的新特性，简化了处理 null/undefined 的代码。</p>
+            
+            <h2>一、可选链</h2>
+            
+            <h3>1.1 基本用法</h3>
+            <pre><code>// 传统方式
+if (user && user.profile && user.profile.name) {
+    console.log(user.profile.name);
+}
+
+// 可选链
+console.log(user?.profile?.name);</code></pre>
+            
+            <h3>1.2 三种形式</h3>
+            <pre><code>obj?.prop        // 属性访问
+obj?.[expr]      // 计算属性
+func?.()         // 函数调用</code></pre>
+            
+            <h2>二、空值合并</h2>
+            
+            <h3>2.1 与 || 的区别</h3>
+            <pre><code>// || 把 0、''、false 当作 falsy
+const count = 0;
+const v1 = count || 10;  // 10（错误）
+
+// ?? 只检查 null/undefined
+const v2 = count ?? 10;  // 0（正确）</code></pre>
+            
+            <h3>2.2 配合使用</h3>
+            <pre><code>const theme = user?.profile?.theme ?? 'light';</code></pre>
+            
+            <h2>三、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>优先使用可选链</strong></li>
+                    <li><strong>配合空值合并提供默认值</strong></li>
+                    <li><strong>避免过度使用</strong></li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/proposal-optional-chaining/" target="_blank">TC39 - Optional Chaining</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="23-template-literals.html" class="nav-link prev">上一节：模板字符串</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="24-module-resolution.html" class="nav-link next">下一节：模块解析算法</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：可选链</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 可选链 ===\n');
+
+const user = { profile: { name: 'Alice' } };
+
+console.log(user?.profile?.name);
+console.log(user?.email);
+
+const nullUser = null;
+console.log(nullUser?.profile?.name);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：空值合并</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 空值合并 ===\n');
+
+const count = 0;
+console.log('count || 10:', count || 10);
+console.log('count ?? 10:', count ?? 10);
+
+const str = '';
+console.log('str || "default":', str || 'default');
+console.log('str ?? "default":', str ?? 'default');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

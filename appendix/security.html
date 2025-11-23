@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全防护实践 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>安全防护实践</h1>
+            
+            <h2>一、常见安全问题</h2>
+            
+            <h3>XSS（跨站脚本攻击）</h3>
+            <pre><code>// ❌ 危险
+element.innerHTML = userInput;
+
+// ✓ 安全
+element.textContent = userInput;</code></pre>
+            
+            <h3>CSRF（跨站请求伪造）</h3>
+            <ul>
+                <li>使用 CSRF Token</li>
+                <li>验证 Referer</li>
+                <li>SameSite Cookie</li>
+            </ul>
+            
+            <h3>SQL 注入</h3>
+            <ul>
+                <li>使用参数化查询</li>
+                <li>避免拼接 SQL</li>
+            </ul>
+            
+            <h2>二、安全措施</h2>
+            
+            <ul>
+                <li>输入验证和清理</li>
+                <li>输出编码</li>
+                <li>使用 HTTPS</li>
+                <li>Content Security Policy</li>
+                <li>定期更新依赖</li>
+            </ul>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://owasp.org/www-project-top-ten/" target="_blank">OWASP Top 10</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="performance.html" class="nav-link prev">上一节：性能优化</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="debugging.html" class="nav-link next">下一节：调试技巧</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例：XSS 防护</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== XSS 防护 ===\n');
+
+function escapeHTML(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+const userInput = '<script>alert("XSS")</script>';
+console.log('原始输入:', userInput);
+console.log('转义后:', escapeHTML(userInput));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

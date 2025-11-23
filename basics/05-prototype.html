@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原型与原型链 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>原型与原型链</h1>
+            
+            <h2>概述</h2>
+            <p>原型是 JavaScript 实现继承的核心机制。每个对象都有一个原型对象，从中继承属性和方法。</p>
+            
+            <h2>一、理解原型</h2>
+            
+            <h3>1.1 三个关键概念</h3>
+            <ul>
+                <li><strong>prototype</strong>：函数的原型对象</li>
+                <li><strong>__proto__</strong>：对象的原型引用（非标准）</li>
+                <li><strong>constructor</strong>：指向构造函数</li>
+            </ul>
+            
+            <h3>1.2 关系图</h3>
+            <pre><code>构造函数.prototype → 原型对象
+实例.__proto__ → 构造函数.prototype
+原型对象.constructor → 构造函数</code></pre>
+            
+            <h2>二、原型链</h2>
+            
+            <h3>2.1 什么是原型链</h3>
+            <p>对象通过 __proto__ 连接起来的链式结构就是原型链。</p>
+            
+            <pre><code>实例 → 构造函数.prototype → Object.prototype → null</code></pre>
+            
+            <h3>2.2 属性查找</h3>
+            <p>访问对象属性时，沿着原型链向上查找，直到找到或到达 null。</p>
+            
+            <h2>三、创建对象的方式</h2>
+            
+            <h3>3.1 字面量</h3>
+            <pre><code>const obj = { name: 'Alice' };</code></pre>
+            
+            <h3>3.2 构造函数</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+const p = new Person('Bob');</code></pre>
+            
+            <h3>3.3 Object.create()</h3>
+            <pre><code>const proto = { greet() { return 'Hello'; } };
+const obj = Object.create(proto);</code></pre>
+            
+            <h2>四、原型方法</h2>
+            
+            <h3>4.1 设置原型</h3>
+            <ul>
+                <li><code>Object.create(proto)</code></li>
+                <li><code>Object.setPrototypeOf(obj, proto)</code>（不推荐）</li>
+            </ul>
+            
+            <h3>4.2 获取原型</h3>
+            <ul>
+                <li><code>Object.getPrototypeOf(obj)</code></li>
+                <li><code>obj.__proto__</code>（非标准）</li>
+            </ul>
+            
+            <h3>4.3 检测</h3>
+            <ul>
+                <li><code>obj.hasOwnProperty(key)</code></li>
+                <li><code>key in obj</code></li>
+                <li><code>obj instanceof Constructor</code></li>
+            </ul>
+            
+            <div class="tip">
+                在原型上定义方法可以节省内存，因为所有实例共享同一个方法。
+            </div>
+            
+            <div class="nav-links">
+                <a href="04-function-advanced.html" class="nav-link prev">上一节：高阶函数与柯里化</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="05-class.html" class="nav-link next">下一节：Class 语法</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：原型关系</h3>
+                <div class="code-block">
+                    <pre><code>function Person(name) {
+    this.name = name;
+}
+
+Person.prototype.greet = function() {
+    return `Hello, I'm ${this.name}`;
+};
+
+const alice = new Person('Alice');
+
+console.log('alice.name:', alice.name);
+console.log('alice.greet():', alice.greet());
+
+// 原型关系
+console.log('alice.__proto__ === Person.prototype:', 
+    alice.__proto__ === Person.prototype);
+console.log('Person.prototype.constructor === Person:', 
+    Person.prototype.constructor === Person);
+console.log('alice的原型:', Object.getPrototypeOf(alice));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：原型链查找</h3>
+                <div class="code-block">
+                    <pre><code>const obj = {
+    a: 1
+};
+
+console.log('obj.a:', obj.a);  // 自身属性
+console.log('obj.toString:', typeof obj.toString);  // 原型方法
+
+// 检查属性来源
+console.log('hasOwnProperty("a"):', obj.hasOwnProperty('a'));  // true
+console.log('hasOwnProperty("toString"):', 
+    obj.hasOwnProperty('toString'));  // false
+
+// in 操作符检查整个原型链
+console.log('"a" in obj:', 'a' in obj);  // true
+console.log('"toString" in obj:', 'toString' in obj);  // true
+
+// 原型链
+console.log('原型链:');
+console.log('1. obj');
+console.log('2. Object.prototype');
+console.log('3. null');
+console.log('Object.getPrototypeOf(Object.prototype):', 
+    Object.getPrototypeOf(Object.prototype));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Object.create()</h3>
+                <div class="code-block">
+                    <pre><code>const animal = {
+    type: 'Animal',
+    speak() {
+        console.log(`${this.name} makes a sound`);
+    }
+};
+
+const dog = Object.create(animal);
+dog.name = 'Dog';
+dog.bark = function() {
+    console.log('Woof!');
+};
+
+console.log('dog.type:', dog.type);  // 继承自 animal
+dog.speak();  // 继承的方法
+dog.bark();   // 自己的方法
+
+// 检查原型
+console.log('dog的原型是 animal:', 
+    Object.getPrototypeOf(dog) === animal);
+
+// 创建纯净对象（无原型）
+const pureObj = Object.create(null);
+console.log('pureObj.toString:', pureObj.toString);  // undefined</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：共享原型方法</h3>
+                <div class="code-block">
+                    <pre><code>function User(name) {
+    this.name = name;
+}
+
+// 在原型上定义方法（所有实例共享）
+User.prototype.sayHi = function() {
+    console.log(`Hi, I'm ${this.name}`);
+};
+
+const user1 = new User('Alice');
+const user2 = new User('Bob');
+
+user1.sayHi();
+user2.sayHi();
+
+// 验证方法是同一个
+console.log('共享方法:', user1.sayHi === user2.sayHi);  // true
+
+// 对比：实例方法（每个实例都有副本）
+function User2(name) {
+    this.name = name;
+    this.sayHi = function() {
+        console.log(`Hi, I'm ${this.name}`);
+    };
+}
+
+const u1 = new User2('Alice');
+const u2 = new User2('Bob');
+console.log('实例方法不共享:', u1.sayHi === u2.sayHi);  // false</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：原型继承</h3>
+                <div class="code-block">
+                    <pre><code>// 父类
+function Animal(name) {
+    this.name = name;
+}
+
+Animal.prototype.eat = function() {
+    console.log(`${this.name} is eating`);
+};
+
+// 子类
+function Dog(name, breed) {
+    Animal.call(this, name);  // 调用父类构造函数
+    this.breed = breed;
+}
+
+// 设置原型继承
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.constructor = Dog;
+
+// 添加子类方法
+Dog.prototype.bark = function() {
+    console.log(`${this.name} barks!`);
+};
+
+const myDog = new Dog('Buddy', 'Golden Retriever');
+
+console.log('name:', myDog.name);
+console.log('breed:', myDog.breed);
+myDog.eat();   // 继承自 Animal
+myDog.bark();  // 自己的方法
+
+console.log('instanceof Animal:', myDog instanceof Animal);
+console.log('instanceof Dog:', myDog instanceof Dog);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

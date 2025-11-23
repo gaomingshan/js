@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器对象模型 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>浏览器对象模型（BOM）</h1>
+            
+            <h2>概述</h2>
+            <p>BOM（Browser Object Model）提供了与浏览器交互的接口，包括 window、location、navigator、history 等对象。</p>
+            
+            <h2>一、window 对象</h2>
+            
+            <h3>1.1 全局对象</h3>
+            <p>window 是浏览器的全局对象，所有全局变量和函数都是它的属性：</p>
+            
+            <pre><code>// 全局变量是 window 的属性
+var globalVar = 'value';
+console.log(window.globalVar);  // 'value'
+
+// 全局函数是 window 的方法
+function globalFunc() {}
+console.log(window.globalFunc);  // function</code></pre>
+            
+            <h3>1.2 window 尺寸</h3>
+            <pre><code>// 浏览器窗口尺寸（包括滚动条）
+window.innerWidth;
+window.innerHeight;
+
+// 浏览器窗口外部尺寸
+window.outerWidth;
+window.outerHeight;
+
+// 屏幕尺寸
+window.screen.width;
+window.screen.height;
+
+// 可用屏幕尺寸（排除任务栏）
+window.screen.availWidth;
+window.screen.availHeight;</code></pre>
+            
+            <h3>1.3 窗口位置</h3>
+            <pre><code>// 窗口相对于屏幕的位置
+window.screenX;
+window.screenY;
+
+// 页面滚动位置
+window.scrollX;  // 或 window.pageXOffset
+window.scrollY;  // 或 window.pageYOffset</code></pre>
+            
+            <h3>1.4 窗口方法</h3>
+            <pre><code>// 打开新窗口
+window.open('url', 'name', 'width=800,height=600');
+
+// 关闭窗口
+window.close();
+
+// 滚动
+window.scrollTo(0, 100);
+window.scrollBy(0, 50);
+
+// 提示框
+window.alert('提示');
+window.confirm('确认吗？');
+window.prompt('请输入：', '默认值');</code></pre>
+            
+            <h2>二、location 对象</h2>
+            
+            <h3>2.1 URL 信息</h3>
+            <pre><code>// 完整 URL
+location.href = 'https://example.com:8080/path?q=js#hash';
+
+// 协议
+location.protocol;  // 'https:'
+
+// 主机名
+location.hostname;  // 'example.com'
+
+// 端口
+location.port;      // '8080'
+
+// 路径
+location.pathname;  // '/path'
+
+// 查询字符串
+location.search;    // '?q=js'
+
+// 哈希
+location.hash;      // '#hash'</code></pre>
+            
+            <h3>2.2 页面导航</h3>
+            <pre><code>// 跳转到新页面
+location.href = 'https://example.com';
+location.assign('https://example.com');
+
+// 替换当前页面（不生成历史记录）
+location.replace('https://example.com');
+
+// 刷新页面
+location.reload();       // 可能从缓存加载
+location.reload(true);   // 强制从服务器加载</code></pre>
+            
+            <h3>2.3 URLSearchParams</h3>
+            <pre><code>// 解析查询字符串
+const params = new URLSearchParams(location.search);
+
+params.get('q');           // 获取参数
+params.has('q');           // 检查是否存在
+params.getAll('tag');      // 获取所有值
+params.set('q', 'js');     // 设置参数
+params.delete('q');        // 删除参数
+
+// 遍历
+for (const [key, value] of params) {
+    console.log(key, value);
+}</code></pre>
+            
+            <h2>三、navigator 对象</h2>
+            
+            <h3>3.1 浏览器信息</h3>
+            <pre><code>// 用户代理字符串
+navigator.userAgent;
+
+// 浏览器名称
+navigator.appName;
+
+// 浏览器版本
+navigator.appVersion;
+
+// 平台
+navigator.platform;  // 'Win32', 'MacIntel' 等
+
+// 语言
+navigator.language;     // 'zh-CN'
+navigator.languages;    // ['zh-CN', 'zh', 'en']</code></pre>
+            
+            <h3>3.2 在线状态</h3>
+            <pre><code>// 检测是否在线
+navigator.onLine;  // true/false
+
+// 监听在线状态变化
+window.addEventListener('online', () => {
+    console.log('网络连接');
+});
+
+window.addEventListener('offline', () => {
+    console.log('网络断开');
+});</code></pre>
+            
+            <h3>3.3 地理位置</h3>
+            <pre><code>// 获取地理位置
+navigator.geolocation.getCurrentPosition(
+    position => {
+        console.log('纬度:', position.coords.latitude);
+        console.log('经度:', position.coords.longitude);
+    },
+    error => {
+        console.error('获取位置失败:', error);
+    }
+);</code></pre>
+            
+            <h2>四、history 对象</h2>
+            
+            <h3>4.1 历史导航</h3>
+            <pre><code>// 后退
+history.back();
+history.go(-1);
+
+// 前进
+history.forward();
+history.go(1);
+
+// 跳转到指定历史记录
+history.go(2);   // 前进2页
+history.go(-2);  // 后退2页
+
+// 历史记录数量
+history.length;</code></pre>
+            
+            <h3>4.2 History API</h3>
+            <pre><code>// 添加历史记录（不刷新页面）
+history.pushState(
+    { page: 1 },      // state 对象
+    'title',          // 标题（大部分浏览器忽略）
+    '/page1'          // URL
+);
+
+// 替换当前历史记录
+history.replaceState({ page: 2 }, '', '/page2');
+
+// 监听历史记录变化
+window.addEventListener('popstate', (e) => {
+    console.log('state:', e.state);
+});</code></pre>
+            
+            <h2>五、screen 对象</h2>
+            
+            <h3>5.1 屏幕信息</h3>
+            <pre><code>// 屏幕尺寸
+screen.width;
+screen.height;
+
+// 可用尺寸（排除任务栏）
+screen.availWidth;
+screen.availHeight;
+
+// 颜色深度
+screen.colorDepth;  // 24
+
+// 像素深度
+screen.pixelDepth;  // 24</code></pre>
+            
+            <h2>六、定时器</h2>
+            
+            <h3>6.1 setTimeout / setInterval</h3>
+            <pre><code>// 延时执行
+const timerId = setTimeout(() => {
+    console.log('1秒后执行');
+}, 1000);
+
+// 取消定时器
+clearTimeout(timerId);
+
+// 定时执行
+const intervalId = setInterval(() => {
+    console.log('每秒执行');
+}, 1000);
+
+// 取消定时执行
+clearInterval(intervalId);</code></pre>
+            
+            <h3>6.2 requestAnimationFrame</h3>
+            <pre><code>// 动画帧
+function animate() {
+    // 动画逻辑
+    requestAnimationFrame(animate);
+}
+
+const animationId = requestAnimationFrame(animate);
+
+// 取消动画帧
+cancelAnimationFrame(animationId);</code></pre>
+            
+            <h2>七、实用技巧</h2>
+            
+            <h3>7.1 检测浏览器</h3>
+            <pre><code>const ua = navigator.userAgent;
+
+const isChrome = /Chrome/.test(ua);
+const isFirefox = /Firefox/.test(ua);
+const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+const isEdge = /Edg/.test(ua);</code></pre>
+            
+            <h3>7.2 检测移动设备</h3>
+            <pre><code>const isMobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+
+// 或使用 matchMedia
+const isMobile = window.matchMedia('(max-width: 768px)').matches;</code></pre>
+            
+            <h3>7.3 平滑滚动</h3>
+            <pre><code>// 滚动到顶部
+window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+});
+
+// 滚动到元素
+element.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+});</code></pre>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>避免污染全局</strong>：使用模块化或立即执行函数</li>
+                    <li><strong>特性检测</strong>：使用特性检测而非浏览器检测</li>
+                    <li><strong>History API</strong>：SPA 应用使用 History API</li>
+                    <li><strong>清理定时器</strong>：组件销毁时清理定时器</li>
+                    <li><strong>使用 RAF</strong>：动画使用 requestAnimationFrame</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://html.spec.whatwg.org/#window" target="_blank">HTML Standard - Window</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Window" target="_blank">MDN - Window</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="10-events.html" class="nav-link prev">上一节：事件系统</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="11-storage.html" class="nav-link next">下一节：本地存储</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：window 对象</h3>
+                <div class="code-block">
+                    <pre><code>// 窗口尺寸
+console.log('=== 窗口尺寸 ===');
+console.log('innerWidth:', window.innerWidth);
+console.log('innerHeight:', window.innerHeight);
+console.log('outerWidth:', window.outerWidth);
+console.log('outerHeight:', window.outerHeight);
+
+// 屏幕尺寸
+console.log('\n=== 屏幕尺寸 ===');
+console.log('screen.width:', window.screen.width);
+console.log('screen.height:', window.screen.height);
+console.log('availWidth:', window.screen.availWidth);
+console.log('availHeight:', window.screen.availHeight);
+
+// 滚动位置
+console.log('\n=== 滚动位置 ===');
+console.log('scrollX:', window.scrollX);
+console.log('scrollY:', window.scrollY);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：location 对象</h3>
+                <div class="code-block">
+                    <pre><code>// 当前 URL 信息
+console.log('=== location 对象 ===');
+console.log('href:', location.href);
+console.log('protocol:', location.protocol);
+console.log('hostname:', location.hostname);
+console.log('port:', location.port || '(默认)');
+console.log('pathname:', location.pathname);
+console.log('search:', location.search || '(无)');
+console.log('hash:', location.hash || '(无)');
+
+// URLSearchParams 示例
+console.log('\n=== URLSearchParams ===');
+const params = new URLSearchParams('?name=js&version=es6&tag=async&tag=promise');
+
+console.log('get("name"):', params.get('name'));
+console.log('has("version"):', params.has('version'));
+console.log('getAll("tag"):', params.getAll('tag'));
+
+console.log('\n遍历参数:');
+for (const [key, value] of params) {
+    console.log(`  ${key}: ${value}`);
+}</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：navigator 对象</h3>
+                <div class="code-block">
+                    <pre><code>// 浏览器信息
+console.log('=== navigator 对象 ===');
+console.log('userAgent:', navigator.userAgent);
+console.log('platform:', navigator.platform);
+console.log('language:', navigator.language);
+console.log('languages:', navigator.languages);
+
+// 在线状态
+console.log('\n=== 在线状态 ===');
+console.log('onLine:', navigator.onLine);
+
+// 检测浏览器类型
+const ua = navigator.userAgent;
+console.log('\n=== 浏览器检测 ===');
+console.log('Chrome:', /Chrome/.test(ua) && !/Edg/.test(ua));
+console.log('Firefox:', /Firefox/.test(ua));
+console.log('Safari:', /Safari/.test(ua) && !/Chrome/.test(ua));
+console.log('Edge:', /Edg/.test(ua));
+
+// 检测设备类型
+console.log('\n=== 设备检测 ===');
+const isMobile = /Android|iPhone|iPad|iPod/.test(ua);
+console.log('移动设备:', isMobile);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：history 对象</h3>
+                <div class="code-block">
+                    <pre><code>// history 对象
+console.log('=== history 对象 ===');
+console.log('length:', history.length);
+
+// History API 示例（不会实际执行跳转）
+console.log('\nHistory API 方法:');
+console.log('  history.pushState(state, title, url)');
+console.log('  - 添加新的历史记录');
+console.log('  - 不刷新页面');
+console.log('  - 改变 URL');
+
+console.log('\n  history.replaceState(state, title, url)');
+console.log('  - 替换当前历史记录');
+console.log('  - 不刷新页面');
+
+console.log('\n  history.back() / forward() / go(n)');
+console.log('  - 历史记录导航');
+
+console.log('\n监听历史记录变化:');
+console.log('  window.addEventListener("popstate", handler);');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：定时器</h3>
+                <div class="code-block">
+                    <pre><code>// setTimeout 示例
+console.log('=== setTimeout ===');
+console.log('开始');
+
+const timer1 = setTimeout(() => {
+    console.log('1秒后执行');
+}, 1000);
+
+console.log('timerId:', timer1);
+
+// setInterval 示例
+console.log('\n=== setInterval ===');
+let count = 0;
+const timer2 = setInterval(() => {
+    count++;
+    console.log(`执行第 ${count} 次`);
+    if (count >= 3) {
+        clearInterval(timer2);
+        console.log('停止定时器');
+    }
+}, 500);
+
+// 清理定时器示例
+console.log('\n清理定时器:');
+console.log('  clearTimeout(timerId)');
+console.log('  clearInterval(intervalId)');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用工具函数</h3>
+                <div class="code-block">
+                    <pre><code>// 检测浏览器和设备
+function getBrowserInfo() {
+    const ua = navigator.userAgent;
+    
+    return {
+        isChrome: /Chrome/.test(ua) && !/Edg/.test(ua),
+        isFirefox: /Firefox/.test(ua),
+        isSafari: /Safari/.test(ua) && !/Chrome/.test(ua),
+        isEdge: /Edg/.test(ua),
+        isMobile: /Android|iPhone|iPad|iPod/.test(ua),
+        isIOS: /iPhone|iPad|iPod/.test(ua),
+        isAndroid: /Android/.test(ua)
+    };
+}
+
+const info = getBrowserInfo();
+console.log('浏览器和设备信息:');
+Object.entries(info).forEach(([key, value]) => {
+    if (value) console.log(`  ${key}: ${value}`);
+});
+
+// URL 参数工具
+function getQueryParams() {
+    const params = {};
+    const searchParams = new URLSearchParams(location.search);
+    for (const [key, value] of searchParams) {
+        params[key] = value;
+    }
+    return params;
+}
+
+console.log('\n当前 URL 参数:', getQueryParams());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

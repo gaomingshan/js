@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>构造函数与 new 操作符 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>构造函数与 new 操作符</h1>
+            
+            <h2>概述</h2>
+            <p>构造函数是 JavaScript 中创建对象的重要方式。理解 new 操作符的工作原理是掌握面向对象编程和原型继承的基础。</p>
+            
+            <h2>一、构造函数基础</h2>
+            
+            <h3>1.1 什么是构造函数</h3>
+            <pre><code>// 构造函数是一个普通函数
+// 约定：首字母大写
+function Person(name, age) {
+    this.name = name;
+    this.age = age;
+    this.sayHello = function() {
+        console.log('Hello, I am ' + this.name);
+    };
+}
+
+// 使用 new 调用
+const person = new Person('Alice', 25);
+console.log(person.name);  // "Alice"
+person.sayHello();         // "Hello, I am Alice"</code></pre>
+            
+            <h3>1.2 构造函数 vs 普通函数</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+
+// 作为构造函数调用
+const p1 = new Person('Alice');
+console.log(p1.name);        // "Alice"
+console.log(p1 instanceof Person);  // true
+
+// 作为普通函数调用
+const p2 = Person('Bob');
+console.log(p2);             // undefined
+console.log(window.name);    // "Bob"（非严格模式下污染全局）</code></pre>
+            
+            <h2>二、new 操作符的工作原理</h2>
+            
+            <h3>2.1 四个步骤</h3>
+            <pre><code>// new Person('Alice') 的执行过程：
+
+// 1. 创建一个新的空对象
+const obj = {};
+
+// 2. 将新对象的 __proto__ 指向构造函数的 prototype
+obj.__proto__ = Person.prototype;
+
+// 3. 将构造函数的 this 绑定到新对象，执行构造函数
+const result = Person.call(obj, 'Alice');
+
+// 4. 如果构造函数返回对象，则返回该对象；否则返回新对象
+return typeof result === 'object' && result !== null ? result : obj;</code></pre>
+            
+            <h3>2.2 手动实现 new</h3>
+            <pre><code>function myNew(constructor, ...args) {
+    // 1. 创建新对象，原型指向构造函数的 prototype
+    const obj = Object.create(constructor.prototype);
+    
+    // 2. 执行构造函数
+    const result = constructor.apply(obj, args);
+    
+    // 3. 返回对象
+    return result instanceof Object ? result : obj;
+}
+
+// 使用
+function Person(name) {
+    this.name = name;
+}
+
+const p = myNew(Person, 'Alice');
+console.log(p.name);  // "Alice"
+console.log(p instanceof Person);  // true</code></pre>
+            
+            <h2>三、构造函数的返回值</h2>
+            
+            <h3>3.1 默认返回 this</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+    // 隐式返回 this
+}
+
+const p = new Person('Alice');
+console.log(p.name);  // "Alice"</code></pre>
+            
+            <h3>3.2 返回对象</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+    
+    // 显式返回对象
+    return {
+        name: 'Custom',
+        age: 30
+    };
+}
+
+const p = new Person('Alice');
+console.log(p.name);  // "Custom"（返回值覆盖 this）
+console.log(p.age);   // 30</code></pre>
+            
+            <h3>3.3 返回基本类型</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+    
+    // 返回基本类型，被忽略
+    return 'string';
+}
+
+const p = new Person('Alice');
+console.log(p.name);  // "Alice"（忽略返回值，返回 this）</code></pre>
+            
+            <h2>四、constructor 属性</h2>
+            
+            <h3>4.1 constructor 指向</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+
+const p = new Person('Alice');
+
+console.log(p.constructor === Person);  // true
+console.log(p.constructor === Person.prototype.constructor);  // true
+
+// constructor 来自原型链
+console.log(p.hasOwnProperty('constructor'));  // false
+console.log(Person.prototype.hasOwnProperty('constructor'));  // true</code></pre>
+            
+            <h3>4.2 constructor 的作用</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+
+const p1 = new Person('Alice');
+
+// 使用 constructor 创建同类型对象
+const p2 = new p1.constructor('Bob');
+console.log(p2.name);  // "Bob"
+console.log(p2 instanceof Person);  // true</code></pre>
+            
+            <h3>4.3 修改 prototype 后的问题</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+
+// 覆盖 prototype
+Person.prototype = {
+    sayHello() {
+        console.log('Hello');
+    }
+};
+
+const p = new Person('Alice');
+console.log(p.constructor === Person);  // false（丢失 constructor）
+console.log(p.constructor === Object);  // true
+
+// 修复：手动添加 constructor
+Person.prototype = {
+    constructor: Person,  // 修复
+    sayHello() {
+        console.log('Hello');
+    }
+};</code></pre>
+            
+            <h2>五、instanceof 操作符</h2>
+            
+            <h3>5.1 工作原理</h3>
+            <pre><code>// obj instanceof Constructor
+// 检查 Constructor.prototype 是否在 obj 的原型链上
+
+function Person() {}
+const p = new Person();
+
+console.log(p instanceof Person);  // true
+console.log(p instanceof Object);  // true（所有对象都继承自 Object）
+
+// 原理
+function myInstanceof(obj, Constructor) {
+    let proto = Object.getPrototypeOf(obj);
+    
+    while (proto) {
+        if (proto === Constructor.prototype) {
+            return true;
+        }
+        proto = Object.getPrototypeOf(proto);
+    }
+    
+    return false;
+}</code></pre>
+            
+            <h3>5.2 instanceof 的陷阱</h3>
+            <pre><code>function Person() {}
+const p = new Person();
+
+console.log(p instanceof Person);  // true
+
+// 修改 prototype
+Person.prototype = {};
+console.log(p instanceof Person);  // false（原型链被切断）
+
+// 跨 iframe
+const iframe = document.createElement('iframe');
+document.body.appendChild(iframe);
+const iframeArray = iframe.contentWindow.Array;
+
+const arr = new iframeArray();
+console.log(arr instanceof Array);        // false
+console.log(arr instanceof iframeArray);  // true</code></pre>
+            
+            <h2>六、构造函数的问题</h2>
+            
+            <h3>6.1 方法重复创建</h3>
+            <pre><code>// 问题：每个实例都创建新的方法
+function Person(name) {
+    this.name = name;
+    this.sayHello = function() {  // 每次都创建新函数
+        console.log('Hello, ' + this.name);
+    };
+}
+
+const p1 = new Person('Alice');
+const p2 = new Person('Bob');
+
+console.log(p1.sayHello === p2.sayHello);  // false（不同的函数对象）
+
+// 解决：使用原型
+function PersonFixed(name) {
+    this.name = name;
+}
+
+PersonFixed.prototype.sayHello = function() {
+    console.log('Hello, ' + this.name);
+};
+
+const p3 = new PersonFixed('Alice');
+const p4 = new PersonFixed('Bob');
+
+console.log(p3.sayHello === p4.sayHello);  // true（共享方法）</code></pre>
+            
+            <h3>6.2 忘记 new</h3>
+            <pre><code>function Person(name) {
+    this.name = name;
+}
+
+// 忘记 new
+const p = Person('Alice');
+console.log(p);            // undefined
+console.log(window.name);  // "Alice"（污染全局）
+
+// 解决方案1：检查 this
+function PersonSafe(name) {
+    if (!(this instanceof PersonSafe)) {
+        return new PersonSafe(name);
+    }
+    this.name = name;
+}
+
+// 解决方案2：使用 new.target（ES6）
+function PersonES6(name) {
+    if (!new.target) {
+        return new PersonES6(name);
+    }
+    this.name = name;
+}
+
+// 解决方案3：使用 class（最佳）
+class PersonClass {
+    constructor(name) {
+        this.name = name;
+    }
+}
+// class 必须用 new 调用</code></pre>
+            
+            <h2>七、ES6 class 对比</h2>
+            
+            <h3>7.1 构造函数 vs class</h3>
+            <pre><code>// ES5 构造函数
+function Person(name) {
+    this.name = name;
+}
+
+Person.prototype.sayHello = function() {
+    console.log('Hello, ' + this.name);
+};
+
+// ES6 class
+class PersonClass {
+    constructor(name) {
+        this.name = name;
+    }
+    
+    sayHello() {
+        console.log('Hello, ' + this.name);
+    }
+}
+
+// 本质相同
+console.log(typeof Person);       // "function"
+console.log(typeof PersonClass);  // "function"</code></pre>
+            
+            <h3>7.2 class 的优势</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>语法简洁</strong>：更清晰的面向对象语法</li>
+                    <li><strong>必须 new</strong>：防止忘记 new</li>
+                    <li><strong>方法不可枚举</strong>：prototype 方法自动不可枚举</li>
+                    <li><strong>严格模式</strong>：class 内部自动严格模式</li>
+                    <li><strong>继承简单</strong>：extends 关键字</li>
+                </ul>
+            </div>
+            
+            <h2>八、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>首字母大写</strong>：构造函数约定大写开头</li>
+                    <li><strong>方法放原型</strong>：避免重复创建方法</li>
+                    <li><strong>检查 new</strong>：防止忘记 new 调用</li>
+                    <li><strong>优先 class</strong>：ES6+ 项目使用 class</li>
+                    <li><strong>避免返回值</strong>：构造函数不要显式返回对象</li>
+                    <li><strong>理解原型链</strong>：掌握 prototype 和 __proto__</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-new-operator" target="_blank">ECMAScript - new Operator</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/new" target="_blank">MDN - new 运算符</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="15-prototype-chain.html" class="nav-link prev">上一节：原型链实现</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="15-inheritance.html" class="nav-link next">下一节：继承模式</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：new 操作符模拟</h3>
+                <div class="code-block">
+                    <pre><code>// 手动实现 new 操作符
+console.log('=== 模拟 new 操作符 ===\n');
+
+function myNew(Constructor, ...args) {
+    console.log('1. 创建新对象');
+    const obj = Object.create(Constructor.prototype);
+    console.log('   obj.__proto__ === Constructor.prototype:', 
+        Object.getPrototypeOf(obj) === Constructor.prototype);
+    
+    console.log('\n2. 执行构造函数');
+    const result = Constructor.apply(obj, args);
+    console.log('   构造函数返回值:', result);
+    
+    console.log('\n3. 返回对象');
+    const returnValue = result instanceof Object ? result : obj;
+    console.log('   最终返回:', returnValue);
+    
+    return returnValue;
+}
+
+function Person(name, age) {
+    this.name = name;
+    this.age = age;
+}
+
+Person.prototype.greet = function() {
+    return `Hello, I'm ${this.name}`;
+};
+
+console.log('\n测试:');
+const p = myNew(Person, 'Alice', 25);
+console.log('p.name:', p.name);
+console.log('p.age:', p.age);
+console.log('p.greet():', p.greet());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：构造函数返回值</h3>
+                <div class="code-block">
+                    <pre><code>// 构造函数返回值的影响
+console.log('=== 构造函数返回值 ===\n');
+
+console.log('1. 默认返回（无 return）:');
+function Person1(name) {
+    this.name = name;
+}
+const p1 = new Person1('Alice');
+console.log('  p1:', p1);
+console.log('  p1.name:', p1.name);
+
+console.log('\n2. 返回基本类型（被忽略）:');
+function Person2(name) {
+    this.name = name;
+    return 'string';
+}
+const p2 = new Person2('Bob');
+console.log('  p2:', p2);
+console.log('  p2.name:', p2.name);
+
+console.log('\n3. 返回对象（覆盖 this）:');
+function Person3(name) {
+    this.name = name;
+    return {
+        name: 'Override',
+        custom: true
+    };
+}
+const p3 = new Person3('Charlie');
+console.log('  p3:', p3);
+console.log('  p3.name:', p3.name);
+console.log('  p3.custom:', p3.custom);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：constructor 属性</h3>
+                <div class="code-block">
+                    <pre><code>// constructor 属性详解
+console.log('=== constructor 属性 ===\n');
+
+function Person(name) {
+    this.name = name;
+}
+
+const p = new Person('Alice');
+
+console.log('1. constructor 指向:');
+console.log('  p.constructor === Person:', 
+    p.constructor === Person);
+console.log('  p.constructor === Person.prototype.constructor:', 
+    p.constructor === Person.prototype.constructor);
+
+console.log('\n2. constructor 来自原型链:');
+console.log('  p.hasOwnProperty("constructor"):', 
+    p.hasOwnProperty('constructor'));
+console.log('  Person.prototype.hasOwnProperty("constructor"):', 
+    Person.prototype.hasOwnProperty('constructor'));
+
+console.log('\n3. 使用 constructor 创建实例:');
+const p2 = new p.constructor('Bob');
+console.log('  p2.name:', p2.name);
+console.log('  p2 instanceof Person:', p2 instanceof Person);
+
+console.log('\n4. 覆盖 prototype 的问题:');
+function Animal() {}
+Animal.prototype = {
+    eat() { return 'eating'; }
+};
+const a = new Animal();
+console.log('  a.constructor === Animal:', a.constructor === Animal);
+console.log('  a.constructor === Object:', a.constructor === Object);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：instanceof 实现</h3>
+                <div class="code-block">
+                    <pre><code>// 手动实现 instanceof
+console.log('=== instanceof 实现 ===\n');
+
+function myInstanceof(obj, Constructor) {
+    // 获取对象的原型
+    let proto = Object.getPrototypeOf(obj);
+    
+    // 遍历原型链
+    while (proto) {
+        console.log('  检查原型:', 
+            proto === Constructor.prototype ? '✓ 匹配' : '✗ 不匹配');
+        
+        if (proto === Constructor.prototype) {
+            return true;
+        }
+        proto = Object.getPrototypeOf(proto);
+    }
+    
+    return false;
+}
+
+function Person() {}
+function Animal() {}
+
+const p = new Person();
+
+console.log('测试 p instanceof Person:');
+console.log('结果:', myInstanceof(p, Person));
+
+console.log('\n测试 p instanceof Animal:');
+console.log('结果:', myInstanceof(p, Animal));
+
+console.log('\n测试 p instanceof Object:');
+console.log('结果:', myInstanceof(p, Object));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：防止忘记 new</h3>
+                <div class="code-block">
+                    <pre><code>// 防止忘记 new 的几种方法
+console.log('=== 防止忘记 new ===\n');
+
+console.log('方法1: instanceof 检查');
+function Person1(name) {
+    if (!(this instanceof Person1)) {
+        console.log('  检测到未使用 new，自动修正');
+        return new Person1(name);
+    }
+    this.name = name;
+}
+
+const p1a = new Person1('Alice');
+const p1b = Person1('Bob');  // 忘记 new
+console.log('  p1a.name:', p1a.name);
+console.log('  p1b.name:', p1b.name);
+
+console.log('\n方法2: new.target（ES6）');
+function Person2(name) {
+    if (!new.target) {
+        console.log('  new.target 为 undefined，自动修正');
+        return new Person2(name);
+    }
+    this.name = name;
+}
+
+const p2a = new Person2('Charlie');
+const p2b = Person2('Dave');  // 忘记 new
+console.log('  p2a.name:', p2a.name);
+console.log('  p2b.name:', p2b.name);
+
+console.log('\n方法3: 使用 class（最佳）');
+class Person3 {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+const p3 = new Person3('Eve');
+console.log('  p3.name:', p3.name);
+console.log('  class 必须用 new 调用，否则报错');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：方法共享问题</h3>
+                <div class="code-block">
+                    <pre><code>// 构造函数中方法的共享问题
+console.log('=== 方法共享 ===\n');
+
+console.log('问题: 每个实例创建新方法');
+function PersonBad(name) {
+    this.name = name;
+    this.greet = function() {
+        return 'Hello, ' + this.name;
+    };
+}
+
+const pb1 = new PersonBad('Alice');
+const pb2 = new PersonBad('Bob');
+console.log('  pb1.greet === pb2.greet:', 
+    pb1.greet === pb2.greet);  // false
+console.log('  每个实例都有独立的 greet 方法');
+
+console.log('\n解决: 方法放在原型上');
+function PersonGood(name) {
+    this.name = name;
+}
+
+PersonGood.prototype.greet = function() {
+    return 'Hello, ' + this.name;
+};
+
+const pg1 = new PersonGood('Charlie');
+const pg2 = new PersonGood('Dave');
+console.log('  pg1.greet === pg2.greet:', 
+    pg1.greet === pg2.greet);  // true
+console.log('  所有实例共享同一个方法');
+
+console.log('\n优势:');
+console.log('  ✓ 节省内存');
+console.log('  ✓ 方法只创建一次');
+console.log('  ✓ 所有实例共享');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

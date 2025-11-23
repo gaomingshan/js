@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharedArrayBuffer - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>SharedArrayBuffer</h1>
+            
+            <h2>概述</h2>
+            <p>SharedArrayBuffer 允许在多个 Worker 之间共享内存，实现真正的并行计算。</p>
+            
+            <h2>一、基础用法</h2>
+            
+            <pre><code>// 创建共享内存
+const sab = new SharedArrayBuffer(1024);
+
+// 在多个 Worker 中共享
+const worker = new Worker('worker.js');
+worker.postMessage({ buffer: sab });</code></pre>
+            
+            <h2>二、与 TypedArray 配合</h2>
+            
+            <pre><code>const sab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 100);
+const view = new Int32Array(sab);
+
+view[0] = 42;  // 所有 Worker 都能看到</code></pre>
+            
+            <h2>三、安全性考虑</h2>
+            
+            <div class="tip">
+                <p>⚠️ SharedArrayBuffer 需要特定的安全头：</p>
+                <ul>
+                    <li>Cross-Origin-Opener-Policy: same-origin</li>
+                    <li>Cross-Origin-Embedder-Policy: require-corp</li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer" target="_blank">MDN - SharedArrayBuffer</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="25-private-fields.html" class="nav-link prev">上一节：私有字段实现</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="26-atomics.html" class="nav-link next">下一节：Atomics API</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例：SharedArrayBuffer 基础</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== SharedArrayBuffer ===\n');
+
+// 创建共享内存（4字节 * 10 = 40字节）
+const sab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 10);
+console.log('字节长度:', sab.byteLength);
+
+// 创建视图
+const view = new Int32Array(sab);
+view[0] = 42;
+view[1] = 100;
+
+console.log('view[0]:', view[0]);
+console.log('view[1]:', view[1]);
+
+console.log('\n注意: 实际使用需在 Worker 间共享');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

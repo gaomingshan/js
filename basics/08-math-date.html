@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math 与 Date - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Math 与 Date</h1>
+            
+            <h2>概述</h2>
+            <p>Math 对象提供数学运算功能，Date 对象用于处理日期和时间。这两个内置对象是 JavaScript 开发中的常用工具。</p>
+            
+            <h2>一、Math 对象</h2>
+            
+            <h3>1.1 Math 常量</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>常量</th>
+                        <th>说明</th>
+                        <th>值</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Math.PI</code></td>
+                        <td>圆周率</td>
+                        <td>3.141592653589793</td>
+                    </tr>
+                    <tr>
+                        <td><code>Math.E</code></td>
+                        <td>自然对数的底</td>
+                        <td>2.718281828459045</td>
+                    </tr>
+                    <tr>
+                        <td><code>Math.LN2</code></td>
+                        <td>2的自然对数</td>
+                        <td>0.6931471805599453</td>
+                    </tr>
+                    <tr>
+                        <td><code>Math.LN10</code></td>
+                        <td>10的自然对数</td>
+                        <td>2.302585092994046</td>
+                    </tr>
+                    <tr>
+                        <td><code>Math.SQRT2</code></td>
+                        <td>2的平方根</td>
+                        <td>1.4142135623730951</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>1.2 取整方法</h3>
+            <pre><code>Math.floor(4.7);    // 4（向下取整）
+Math.ceil(4.1);     // 5（向上取整）
+Math.round(4.5);    // 5（四舍五入）
+Math.trunc(4.9);    // 4（截断小数）</code></pre>
+            
+            <h3>1.3 最大值和最小值</h3>
+            <pre><code>Math.max(1, 2, 3, 4, 5);        // 5
+Math.min(1, 2, 3, 4, 5);        // 1
+
+// 数组求最大最小值
+const arr = [1, 2, 3, 4, 5];
+Math.max(...arr);               // 5
+Math.min(...arr);               // 1</code></pre>
+            
+            <h3>1.4 绝对值和符号</h3>
+            <pre><code>Math.abs(-5);       // 5
+Math.sign(-5);      // -1（负数返回-1）
+Math.sign(0);       // 0
+Math.sign(5);       // 1（正数返回1）</code></pre>
+            
+            <h3>1.5 幂运算</h3>
+            <pre><code>Math.pow(2, 3);     // 8（2的3次方）
+Math.sqrt(16);      // 4（平方根）
+Math.cbrt(27);      // 3（立方根）
+
+// ES2016 幂运算符
+2 ** 3;             // 8</code></pre>
+            
+            <h3>1.6 随机数</h3>
+            <pre><code>// 返回 [0, 1) 之间的随机数
+Math.random();
+
+// 生成 [min, max) 之间的随机整数
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// 生成 [min, max] 之间的随机整数
+function randomIntInclusive(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}</code></pre>
+            
+            <h3>1.7 三角函数</h3>
+            <pre><code>Math.sin(Math.PI / 2);   // 1
+Math.cos(0);             // 1
+Math.tan(Math.PI / 4);   // 1
+
+Math.asin(1);            // π/2
+Math.acos(1);            // 0
+Math.atan(1);            // π/4</code></pre>
+            
+            <h3>1.8 对数函数</h3>
+            <pre><code>Math.log(Math.E);        // 1（自然对数）
+Math.log10(100);         // 2（以10为底）
+Math.log2(8);            // 3（以2为底）</code></pre>
+            
+            <h2>二、Date 对象</h2>
+            
+            <h3>2.1 创建 Date 对象</h3>
+            <pre><code>// 当前时间
+const now = new Date();
+
+// 从时间戳
+const date1 = new Date(1640000000000);
+
+// 从字符串
+const date2 = new Date('2024-01-15');
+const date3 = new Date('2024-01-15T10:30:00');
+
+// 从年月日
+const date4 = new Date(2024, 0, 15);  // 月份从0开始
+const date5 = new Date(2024, 0, 15, 10, 30, 0);</code></pre>
+            
+            <h3>2.2 获取日期时间</h3>
+            <pre><code>const date = new Date('2024-01-15T10:30:45');
+
+date.getFullYear();      // 2024
+date.getMonth();         // 0（0-11）
+date.getDate();          // 15（1-31）
+date.getDay();           // 1（0-6，0是周日）
+
+date.getHours();         // 10（0-23）
+date.getMinutes();       // 30（0-59）
+date.getSeconds();       // 45（0-59）
+date.getMilliseconds();  // 0（0-999）
+
+date.getTime();          // 时间戳（毫秒）</code></pre>
+            
+            <h3>2.3 设置日期时间</h3>
+            <pre><code>const date = new Date();
+
+date.setFullYear(2024);
+date.setMonth(0);        // 0是1月
+date.setDate(15);
+date.setHours(10);
+date.setMinutes(30);
+date.setSeconds(45);</code></pre>
+            
+            <h3>2.4 UTC 时间</h3>
+            <pre><code>const date = new Date();
+
+date.getUTCFullYear();
+date.getUTCMonth();
+date.getUTCDate();
+date.getUTCHours();
+
+// 时区偏移（分钟）
+date.getTimezoneOffset(); // 中国是 -480</code></pre>
+            
+            <h3>2.5 日期格式化</h3>
+            <pre><code>const date = new Date('2024-01-15T10:30:45');
+
+// ISO 格式
+date.toISOString();          // "2024-01-15T02:30:45.000Z"
+
+// 本地格式
+date.toLocaleDateString();   // "2024/1/15"
+date.toLocaleTimeString();   // "10:30:45"
+date.toLocaleString();       // "2024/1/15 10:30:45"
+
+// 字符串格式
+date.toString();             // 完整字符串
+date.toDateString();         // 日期部分
+date.toTimeString();         // 时间部分</code></pre>
+            
+            <h3>2.6 日期计算</h3>
+            <pre><code>const date = new Date('2024-01-15');
+
+// 加减天数
+date.setDate(date.getDate() + 7);  // 加7天
+date.setDate(date.getDate() - 7);  // 减7天
+
+// 加减月份
+date.setMonth(date.getMonth() + 1); // 加1个月
+
+// 计算时间差
+const date1 = new Date('2024-01-01');
+const date2 = new Date('2024-01-15');
+const diff = date2 - date1;  // 毫秒差
+const days = diff / (1000 * 60 * 60 * 24); // 天数</code></pre>
+            
+            <h3>2.7 静态方法</h3>
+            <pre><code>// 当前时间戳
+Date.now();
+
+// 从字符串解析
+Date.parse('2024-01-15');  // 时间戳
+
+// 从参数创建时间戳
+Date.UTC(2024, 0, 15, 10, 30, 0);</code></pre>
+            
+            <h2>三、实用技巧</h2>
+            
+            <h3>3.1 判断闰年</h3>
+            <pre><code>function isLeapYear(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+}
+
+// 或使用 Date
+function isLeapYear(year) {
+    return new Date(year, 1, 29).getDate() === 29;
+}</code></pre>
+            
+            <h3>3.2 获取月份天数</h3>
+            <pre><code>function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+getDaysInMonth(2024, 1);  // 29（2024年2月）</code></pre>
+            
+            <h3>3.3 格式化日期</h3>
+            <pre><code>function formatDate(date, format) {
+    const map = {
+        'YYYY': date.getFullYear(),
+        'MM': String(date.getMonth() + 1).padStart(2, '0'),
+        'DD': String(date.getDate()).padStart(2, '0'),
+        'HH': String(date.getHours()).padStart(2, '0'),
+        'mm': String(date.getMinutes()).padStart(2, '0'),
+        'ss': String(date.getSeconds()).padStart(2, '0')
+    };
+    
+    return format.replace(/YYYY|MM|DD|HH|mm|ss/g, match => map[match]);
+}
+
+const date = new Date('2024-01-15T10:30:45');
+formatDate(date, 'YYYY-MM-DD HH:mm:ss');
+// "2024-01-15 10:30:45"</code></pre>
+            
+            <h3>3.4 相对时间</h3>
+            <pre><code>function timeAgo(date) {
+    const seconds = Math.floor((Date.now() - date) / 1000);
+    
+    if (seconds < 60) return `${seconds}秒前`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`;
+    return `${Math.floor(seconds / 86400)}天前`;
+}</code></pre>
+            
+            <h2>四、最佳实践</h2>
+            
+            <div class="tip">
+                <strong>Math 对象：</strong>
+                <ul>
+                    <li>使用 Math.random() 生成随机数时注意范围</li>
+                    <li>浮点数运算注意精度问题</li>
+                    <li>Math 对象的所有方法都是静态的</li>
+                </ul>
+                
+                <strong>Date 对象：</strong>
+                <ul>
+                    <li>月份从 0 开始（0-11）</li>
+                    <li>使用 Date.now() 获取时间戳性能更好</li>
+                    <li>避免使用字符串解析日期（不同浏览器行为不一致）</li>
+                    <li>处理时区时优先使用 UTC 方法</li>
+                    <li>考虑使用日期库（如 date-fns、Day.js）处理复杂场景</li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-math-object" target="_blank">ECMAScript - Math Object</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-date-objects" target="_blank">ECMAScript - Date Objects</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Math" target="_blank">MDN - Math</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Date" target="_blank">MDN - Date</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="07-regex.html" class="nav-link prev">上一节：正则表达式</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="08-set-map.html" class="nav-link next">下一节：Set 与 Map</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Math 基础方法</h3>
+                <div class="code-block">
+                    <pre><code>// 常量
+console.log('Math.PI:', Math.PI);
+console.log('Math.E:', Math.E);
+
+// 取整
+console.log('\n取整:');
+console.log('floor(4.7):', Math.floor(4.7));
+console.log('ceil(4.1):', Math.ceil(4.1));
+console.log('round(4.5):', Math.round(4.5));
+console.log('trunc(4.9):', Math.trunc(4.9));
+
+// 最大最小值
+console.log('\nmax(1,2,3,4,5):', Math.max(1, 2, 3, 4, 5));
+console.log('min(1,2,3,4,5):', Math.min(1, 2, 3, 4, 5));
+
+// 数组
+const arr = [3, 1, 4, 1, 5, 9];
+console.log('array max:', Math.max(...arr));
+console.log('array min:', Math.min(...arr));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：Math 幂运算和随机数</h3>
+                <div class="code-block">
+                    <pre><code>// 幂运算
+console.log('pow(2, 3):', Math.pow(2, 3));
+console.log('2 ** 3:', 2 ** 3);
+console.log('sqrt(16):', Math.sqrt(16));
+console.log('cbrt(27):', Math.cbrt(27));
+
+// 随机数
+console.log('\nrandom():', Math.random());
+
+// 生成 1-10 的随机整数
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+console.log('\n随机整数 [1,10]:');
+for (let i = 0; i < 5; i++) {
+    console.log('  ', randomInt(1, 10));
+}
+
+// 随机打乱数组
+function shuffle(arr) {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}
+console.log('\nshuffle:', shuffle([1, 2, 3, 4, 5]));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：Date 创建和获取</h3>
+                <div class="code-block">
+                    <pre><code>// 创建 Date
+const now = new Date();
+console.log('now:', now);
+
+const date = new Date('2024-01-15T10:30:45');
+console.log('\ndate:', date);
+
+// 获取日期时间
+console.log('\ngetFullYear:', date.getFullYear());
+console.log('getMonth:', date.getMonth(), '(0-11)');
+console.log('getDate:', date.getDate());
+console.log('getDay:', date.getDay(), '(0=周日)');
+
+console.log('\ngetHours:', date.getHours());
+console.log('getMinutes:', date.getMinutes());
+console.log('getSeconds:', date.getSeconds());
+
+console.log('\ngetTime:', date.getTime());
+console.log('Date.now():', Date.now());</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：Date 格式化</h3>
+                <div class="code-block">
+                    <pre><code>const date = new Date('2024-01-15T10:30:45');
+
+// ISO 格式
+console.log('toISOString:', date.toISOString());
+
+// 本地格式
+console.log('\ntoLocaleDateString:', date.toLocaleDateString('zh-CN'));
+console.log('toLocaleTimeString:', date.toLocaleTimeString('zh-CN'));
+console.log('toLocaleString:', date.toLocaleString('zh-CN'));
+
+// 字符串格式
+console.log('\ntoString:', date.toString());
+console.log('toDateString:', date.toDateString());
+console.log('toTimeString:', date.toTimeString());
+
+// 自定义格式化
+function formatDate(date, format) {
+    const map = {
+        'YYYY': date.getFullYear(),
+        'MM': String(date.getMonth() + 1).padStart(2, '0'),
+        'DD': String(date.getDate()).padStart(2, '0'),
+        'HH': String(date.getHours()).padStart(2, '0'),
+        'mm': String(date.getMinutes()).padStart(2, '0'),
+        'ss': String(date.getSeconds()).padStart(2, '0')
+    };
+    return format.replace(/YYYY|MM|DD|HH|mm|ss/g, m => map[m]);
+}
+
+console.log('\n自定义格式:');
+console.log(formatDate(date, 'YYYY-MM-DD'));
+console.log(formatDate(date, 'YYYY/MM/DD HH:mm:ss'));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：Date 计算</h3>
+                <div class="code-block">
+                    <pre><code>// 日期计算
+const date = new Date('2024-01-15');
+console.log('原始日期:', date.toLocaleDateString('zh-CN'));
+
+// 加7天
+date.setDate(date.getDate() + 7);
+console.log('加7天:', date.toLocaleDateString('zh-CN'));
+
+// 减7天
+date.setDate(date.getDate() - 7);
+console.log('减7天:', date.toLocaleDateString('zh-CN'));
+
+// 时间差
+const date1 = new Date('2024-01-01');
+const date2 = new Date('2024-01-15');
+const diff = date2 - date1;
+const days = diff / (1000 * 60 * 60 * 24);
+console.log('\n时间差:', days, '天');
+
+// 获取月份天数
+function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+}
+console.log('\n2024年2月天数:', getDaysInMonth(2024, 1));
+console.log('2023年2月天数:', getDaysInMonth(2023, 1));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 判断闰年
+function isLeapYear(year) {
+    return new Date(year, 1, 29).getDate() === 29;
+}
+console.log('2024是闰年?', isLeapYear(2024));
+console.log('2023是闰年?', isLeapYear(2023));
+
+// 相对时间
+function timeAgo(date) {
+    const seconds = Math.floor((Date.now() - date) / 1000);
+    if (seconds < 60) return `${seconds}秒前`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`;
+    return `${Math.floor(seconds / 86400)}天前`;
+}
+
+const past1 = new Date(Date.now() - 30 * 1000);
+const past2 = new Date(Date.now() - 5 * 60 * 1000);
+const past3 = new Date(Date.now() - 2 * 60 * 60 * 1000);
+console.log('\n相对时间:');
+console.log('30秒前:', timeAgo(past1));
+console.log('5分钟前:', timeAgo(past2));
+console.log('2小时前:', timeAgo(past3));
+
+// 工作日判断
+function isWeekday(date) {
+    const day = date.getDay();
+    return day !== 0 && day !== 6;
+}
+console.log('\n今天是工作日?', isWeekday(new Date()));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

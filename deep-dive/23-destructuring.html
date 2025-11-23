@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解构赋值的底层实现 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>解构赋值的底层实现</h1>
+            
+            <h2>概述</h2>
+            <p>解构赋值（Destructuring Assignment）是 ES6 引入的语法糖，它允许从数组或对象中提取值，赋给变量。理解其底层实现有助于写出更高效的代码。</p>
+            
+            <div class="spec">
+                <strong>ECMAScript 规范：</strong>
+                解构赋值是一种赋值模式（Assignment Pattern），它使用迭代器协议（数组）或属性访问（对象）来提取值。
+            </div>
+            
+            <h2>一、数组解构</h2>
+            
+            <h3>1.1 基本原理</h3>
+            <p>数组解构使用迭代器协议（Iterator Protocol）逐个获取值：</p>
+            
+            <div class="spec">
+                <strong>底层实现逻辑：</strong>
+                <pre>const [a, b, c] = iterable;
+
+// 等价于：
+const iterator = iterable[Symbol.iterator]();
+const a = iterator.next().value;
+const b = iterator.next().value;
+const c = iterator.next().value;</pre>
+            </div>
+            
+            <h3>1.2 解构任何可迭代对象</h3>
+            <p>因为使用迭代器协议，所以可以解构任何可迭代对象：</p>
+            
+            <ul>
+                <li>数组：<code>[a, b] = [1, 2]</code></li>
+                <li>字符串：<code>[a, b] = 'ab'</code></li>
+                <li>Set：<code>[a, b] = new Set([1, 2])</code></li>
+                <li>Map：<code>[a, b] = new Map([[1, 2]])</code></li>
+                <li>生成器：<code>[a, b] = generator()</code></li>
+            </ul>
+            
+            <h3>1.3 跳过元素</h3>
+            <p>使用逗号跳过不需要的元素：</p>
+            
+            <pre><code>const [a, , c] = [1, 2, 3];
+// a = 1, c = 3（跳过 2）</code></pre>
+            
+            <h3>1.4 剩余元素（Rest Elements）</h3>
+            <div class="spec">
+                <strong>规范要求：</strong>
+                剩余元素必须是最后一个元素，它会收集所有剩余的值到一个新数组。
+                
+                <pre>const [a, ...rest] = [1, 2, 3, 4];
+// a = 1, rest = [2, 3, 4]
+
+// 底层实现：
+// 1. 取第一个值
+// 2. 将剩余所有值收集到新数组</pre>
+            </div>
+            
+            <h3>1.5 默认值</h3>
+            <p>只有当对应值为 <code>undefined</code> 时，默认值才会生效：</p>
+            
+            <div class="spec">
+                <strong>默认值求值时机：</strong>
+                默认值是惰性求值的，只有在需要时才会计算。
+                
+                <pre>const [a = expensive()] = [undefined];
+// expensive() 会被调用
+
+const [b = expensive()] = [null];
+// expensive() 不会被调用，因为 null !== undefined</pre>
+            </div>
+            
+            <h2>二、对象解构</h2>
+            
+            <h3>2.1 基本原理</h3>
+            <p>对象解构使用属性访问操作符：</p>
+            
+            <div class="spec">
+                <strong>底层实现逻辑：</strong>
+                <pre>const { a, b, c } = obj;
+
+// 等价于：
+const a = obj.a;
+const b = obj.b;
+const c = obj.c;</pre>
+            </div>
+            
+            <h3>2.2 属性重命名</h3>
+            <pre><code>const { name: userName } = { name: 'Alice' };
+// userName = 'Alice'
+
+// 等价于：
+const userName = obj.name;</code></pre>
+            
+            <h3>2.3 嵌套解构</h3>
+            <p>可以解构嵌套的对象和数组：</p>
+            
+            <div class="warning">
+                <strong>注意：</strong>嵌套解构时，如果中间层为 <code>null</code> 或 <code>undefined</code>，会抛出 TypeError。
+            </div>
+            
+            <h3>2.4 计算属性名</h3>
+            <p>可以使用计算属性名进行解构：</p>
+            
+            <pre><code>const key = 'name';
+const { [key]: value } = { name: 'Alice' };
+// value = 'Alice'</code></pre>
+            
+            <h3>2.5 剩余属性（Rest Properties）</h3>
+            <div class="spec">
+                <strong>ES2018 特性：</strong>
+                剩余属性会创建一个新对象，包含所有未被解构的属性。
+                
+                <pre>const { a, ...rest } = { a: 1, b: 2, c: 3 };
+// a = 1, rest = { b: 2, c: 3 }
+
+// 底层实现类似于：
+const rest = {};
+for (const key in obj) {
+    if (key !== 'a' && obj.hasOwnProperty(key)) {
+        rest[key] = obj[key];
+    }
+}</pre>
+            </div>
+            
+            <h2>三、解构的高级用法</h2>
+            
+            <h3>3.1 函数参数解构</h3>
+            <p>函数参数可以使用解构，提高可读性：</p>
+            
+            <h3>3.2 交换变量</h3>
+            <p>不需要临时变量即可交换：</p>
+            
+            <pre><code>[a, b] = [b, a];
+
+// 底层实现：
+const temp = [b, a];
+a = temp[0];
+b = temp[1];</code></pre>
+            
+            <h3>3.3 从函数返回多个值</h3>
+            <pre><code>function getCoordinates() {
+    return { x: 10, y: 20 };
+}
+
+const { x, y } = getCoordinates();</code></pre>
+            
+            <h3>3.4 提取对象的部分属性</h3>
+            <p>快速提取需要的属性：</p>
+            
+            <h2>四、性能考虑</h2>
+            
+            <h3>4.1 对象解构的性能</h3>
+            <div class="info">
+                <strong>性能特点：</strong>
+                <ul>
+                    <li>对象解构本质是属性访问，性能接近直接访问</li>
+                    <li>深层嵌套解构会有多次属性访问开销</li>
+                    <li>现代引擎会优化常见模式</li>
+                </ul>
+            </div>
+            
+            <h3>4.2 数组解构的性能</h3>
+            <div class="info">
+                <ul>
+                    <li>数组解构使用迭代器，有一定开销</li>
+                    <li>对于已知长度的数组，直接索引访问更快</li>
+                    <li>但代码可读性更好</li>
+                </ul>
+            </div>
+            
+            <h3>4.3 默认值的性能</h3>
+            <div class="tip">
+                默认值是惰性求值的，只在需要时计算。避免在默认值中放置昂贵的操作。
+            </div>
+            
+            <h2>五、常见陷阱</h2>
+            
+            <h3>5.1 null 和 undefined 的处理</h3>
+            <div class="warning">
+                <strong>陷阱：</strong>
+                <pre><code>const { a } = null;  // TypeError!
+const { b } = undefined;  // TypeError!
+
+// 解决方案：提供默认值
+const { a } = obj || {};
+const { b } = obj ?? {};</code></pre>
+            </div>
+            
+            <h3>5.2 已声明变量的解构</h3>
+            <p>如果变量已声明，需要用括号包裹：</p>
+            
+            <pre><code>let a, b;
+({ a, b } = { a: 1, b: 2 });  // 需要括号！
+
+// 否则会被解析为代码块</code></pre>
+            
+            <h3>5.3 默认值与 null</h3>
+            <div class="warning">
+                <strong>注意：</strong>
+                <pre><code>const { a = 10 } = { a: null };
+// a = null（不是 10！）
+
+// 默认值只对 undefined 生效
+const { b = 10 } = { b: undefined };
+// b = 10</code></pre>
+            </div>
+            
+            <h2>六、规范细节</h2>
+            
+            <div class="spec">
+                <strong>ECMAScript 解构赋值算法（简化）：</strong>
+                
+                <h4>数组解构：</h4>
+                <pre>1. 获取右侧值的迭代器
+2. 对于每个解构目标：
+   a. 调用 iterator.next()
+   b. 如果是剩余元素，收集所有剩余值
+   c. 如果有默认值且 value 为 undefined，使用默认值
+   d. 赋值给目标变量
+3. 如果有剩余元素未处理，调用 iterator.return()</pre>
+                
+                <h4>对象解构：</h4>
+                <pre>1. 将右侧值转换为对象（ToObject）
+2. 对于每个解构属性：
+   a. 获取属性值（[[Get]]）
+   b. 如果有重命名，使用新名称
+   c. 如果有默认值且 value 为 undefined，使用默认值
+   d. 如果是嵌套解构，递归执行
+   e. 赋值给目标变量
+3. 如果有剩余属性，复制未解构的属性</pre>
+            </div>
+            
+            <h2>七、实战技巧</h2>
+            
+            <div class="tip">
+                <strong>最佳实践：</strong>
+                <ul>
+                    <li><strong>函数参数</strong>：用对象解构提高可读性和灵活性</li>
+                    <li><strong>交换变量</strong>：用数组解构简化代码</li>
+                    <li><strong>提取属性</strong>：从大对象中提取需要的属性</li>
+                    <li><strong>默认值</strong>：为可选参数提供默认值</li>
+                    <li><strong>重命名</strong>：避免命名冲突</li>
+                    <li><strong>剩余属性</strong>：过滤对象属性</li>
+                </ul>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://tc39.es/ecma262/#sec-destructuring-assignment" target="_blank">ECMAScript - Destructuring Assignment</a></li>
+                <li><a href="https://tc39.es/ecma262/#sec-runtime-semantics-destructuringassignmentevaluation" target="_blank">ECMAScript - Destructuring Evaluation</a></li>
+                <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment" target="_blank">MDN - 解构赋值</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="23-spread-rest.html" class="nav-link next">下一节：扩展运算符与剩余参数</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <!-- 示例1: 数组解构基础 -->
+            <div class="code-example">
+                <h3>示例 1：数组解构基础</h3>
+                <div class="code-block">
+                    <pre><code>// 基本用法
+const [a, b, c] = [1, 2, 3];
+console.log('a:', a, 'b:', b, 'c:', c);
+
+// 跳过元素
+const [x, , z] = [1, 2, 3];
+console.log('x:', x, 'z:', z);
+
+// 剩余元素
+const [first, ...rest] = [1, 2, 3, 4, 5];
+console.log('first:', first);
+console.log('rest:', rest);
+
+// 默认值
+const [p = 10, q = 20] = [5];
+console.log('p:', p, 'q:', q);
+
+// 交换变量
+let m = 1, n = 2;
+[m, n] = [n, m];
+console.log('交换后 m:', m, 'n:', n);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例2: 对象解构基础 -->
+            <div class="code-example">
+                <h3>示例 2：对象解构基础</h3>
+                <div class="code-block">
+                    <pre><code>const person = {
+    name: 'Alice',
+    age: 25,
+    city: 'Beijing'
+};
+
+// 基本用法
+const { name, age } = person;
+console.log('name:', name, 'age:', age);
+
+// 属性重命名
+const { name: userName, age: userAge } = person;
+console.log('userName:', userName, 'userAge:', userAge);
+
+// 默认值
+const { country = 'China' } = person;
+console.log('country:', country);
+
+// 剩余属性
+const { name: n, ...others } = person;
+console.log('name:', n);
+console.log('others:', others);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例3: 嵌套解构 -->
+            <div class="code-example">
+                <h3>示例 3：嵌套解构</h3>
+                <div class="code-block">
+                    <pre><code>const data = {
+    user: {
+        name: 'Bob',
+        contact: {
+            email: 'bob@example.com',
+            phone: '123456'
+        }
+    },
+    scores: [95, 87, 92]
+};
+
+// 嵌套对象解构
+const {
+    user: {
+        name,
+        contact: { email }
+    },
+    scores: [first, second]
+} = data;
+
+console.log('name:', name);
+console.log('email:', email);
+console.log('first score:', first);
+console.log('second score:', second);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例4: 函数参数解构 -->
+            <div class="code-example">
+                <h3>示例 4：函数参数解构</h3>
+                <div class="code-block">
+                    <pre><code>// 对象参数解构
+function displayUser({ name, age = 18, city = 'Unknown' }) {
+    console.log(`${name}, ${age}岁, 来自${city}`);
+}
+
+displayUser({ name: 'Alice', age: 25, city: 'Beijing' });
+displayUser({ name: 'Bob', city: 'Shanghai' });
+displayUser({ name: 'Charlie' });
+
+// 数组参数解构
+function sum([a, b, c]) {
+    return a + b + c;
+}
+
+console.log('sum:', sum([1, 2, 3]));
+
+// 混合解构
+function processData({ 
+    id, 
+    values: [min, max],
+    options: { strict = false } = {}
+}) {
+    console.log(`ID: ${id}, Range: ${min}-${max}, Strict: ${strict}`);
+}
+
+processData({
+    id: 1,
+    values: [0, 100],
+    options: { strict: true }
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例5: 解构可迭代对象 -->
+            <div class="code-example">
+                <h3>示例 5：解构可迭代对象</h3>
+                <div class="code-block">
+                    <pre><code>// 解构字符串
+const [char1, char2] = 'Hello';
+console.log('字符串解构:', char1, char2);
+
+// 解构 Set
+const [a, b, c] = new Set([1, 2, 3]);
+console.log('Set 解构:', a, b, c);
+
+// 解构 Map
+const [[key1, val1], [key2, val2]] = new Map([
+    ['name', 'Alice'],
+    ['age', 25]
+]);
+console.log('Map 解构:', key1, val1, key2, val2);
+
+// 解构生成器
+function* gen() {
+    yield 1;
+    yield 2;
+    yield 3;
+}
+
+const [x, y, z] = gen();
+console.log('生成器解构:', x, y, z);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <!-- 示例6: 实用技巧 -->
+            <div class="code-example">
+                <h3>示例 6：实用技巧</h3>
+                <div class="code-block">
+                    <pre><code>// 技巧1: 提取 JSON 数据
+const json = {
+    id: 1,
+    title: 'Post',
+    author: { name: 'Alice' },
+    tags: ['js', 'es6']
+};
+
+const { 
+    id, 
+    title, 
+    author: { name: authorName },
+    tags: [firstTag]
+} = json;
+
+console.log('提取数据:', id, title, authorName, firstTag);
+
+// 技巧2: 过滤对象属性
+const user = { id: 1, name: 'Bob', password: '123', role: 'admin' };
+const { password, ...safeUser } = user;
+console.log('安全用户:', safeUser);
+
+// 技巧3: 合并默认配置
+function createConfig(options = {}) {
+    const {
+        host = 'localhost',
+        port = 8080,
+        ssl = false,
+        ...extra
+    } = options;
+    
+    return { host, port, ssl, ...extra };
+}
+
+console.log('配置1:', createConfig());
+console.log('配置2:', createConfig({ host: 'example.com', debug: true }));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>

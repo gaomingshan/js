@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babel 转译原理 - JavaScript 深度学习</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/page.css">
+</head>
+<body>
+    <div class="page-layout">
+        <div class="doc-panel">
+            <h1>Babel 转译原理</h1>
+            
+            <h2>概述</h2>
+            <p>Babel 是一个 JavaScript 编译器，主要用于将 ES6+ 代码转换为向后兼容的 JavaScript 版本，以便在旧版本浏览器或环境中运行。</p>
+            
+            <h2>一、Babel 基础</h2>
+            
+            <h3>1.1 什么是 Babel</h3>
+            <div class="info">
+                <p>Babel 的核心功能：</p>
+                <ul>
+                    <li><strong>语法转换</strong>：ES6+ → ES5</li>
+                    <li><strong>Polyfill</strong>：添加目标环境缺失的功能</li>
+                    <li><strong>源码转换</strong>：JSX、TypeScript 等</li>
+                    <li><strong>代码优化</strong>：压缩、去除死代码</li>
+                </ul>
+            </div>
+            
+            <h3>1.2 转换示例</h3>
+            <pre><code>// ES6+ 代码（输入）
+const greet = (name = 'World') => {
+    return `Hello, ${name}!`;
+};
+
+class User {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+// ES5 代码（输出）
+var greet = function greet() {
+    var name = arguments.length > 0 && arguments[0] !== undefined 
+        ? arguments[0] : 'World';
+    return 'Hello, ' + name + '!';
+};
+
+var User = function User(name) {
+    this.name = name;
+};</code></pre>
+            
+            <h2>二、编译流程</h2>
+            
+            <h3>2.1 三个阶段</h3>
+            <pre><code>源代码
+  ↓
+1. 解析（Parse）
+  ├─ 词法分析（Lexical Analysis）
+  └─ 语法分析（Syntactic Analysis）
+  ↓
+2. 转换（Transform）
+  └─ AST 转换
+  ↓
+3. 生成（Generate）
+  └─ 生成目标代码</code></pre>
+            
+            <h3>2.2 解析阶段</h3>
+            <pre><code>// 1. 词法分析：代码 → Tokens
+const sum = 1 + 2;
+
+// Tokens:
+[
+    { type: 'Keyword', value: 'const' },
+    { type: 'Identifier', value: 'sum' },
+    { type: 'Punctuator', value: '=' },
+    { type: 'Numeric', value: '1' },
+    { type: 'Punctuator', value: '+' },
+    { type: 'Numeric', value: '2' },
+    { type: 'Punctuator', value: ';' }
+]
+
+// 2. 语法分析：Tokens → AST
+{
+    type: 'VariableDeclaration',
+    kind: 'const',
+    declarations: [{
+        type: 'VariableDeclarator',
+        id: { type: 'Identifier', name: 'sum' },
+        init: {
+            type: 'BinaryExpression',
+            operator: '+',
+            left: { type: 'Literal', value: 1 },
+            right: { type: 'Literal', value: 2 }
+        }
+    }]
+}</code></pre>
+            
+            <h3>2.3 AST（抽象语法树）</h3>
+            <pre><code>// 代码
+const x = 1;
+
+// AST 结构
+{
+    "type": "Program",
+    "body": [{
+        "type": "VariableDeclaration",
+        "kind": "const",
+        "declarations": [{
+            "type": "VariableDeclarator",
+            "id": {
+                "type": "Identifier",
+                "name": "x"
+            },
+            "init": {
+                "type": "Literal",
+                "value": 1
+            }
+        }]
+    }]
+}</code></pre>
+            
+            <h2>三、核心概念</h2>
+            
+            <h3>3.1 插件（Plugins）</h3>
+            <pre><code>// .babelrc
+{
+    "plugins": [
+        "@babel/plugin-transform-arrow-functions",
+        "@babel/plugin-transform-classes",
+        "@babel/plugin-transform-template-literals"
+    ]
+}
+
+// 每个插件处理特定的语法转换</code></pre>
+            
+            <h3>3.2 预设（Presets）</h3>
+            <pre><code>// 预设是一组插件的集合
+{
+    "presets": [
+        ["@babel/preset-env", {
+            "targets": {
+                "chrome": "58",
+                "ie": "11"
+            }
+        }]
+    ]
+}
+
+// @babel/preset-env 包含所有 ES6+ 转换插件</code></pre>
+            
+            <h3>3.3 Polyfill</h3>
+            <pre><code>// Polyfill 添加缺失的功能
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
+
+// 或使用 useBuiltIns
+{
+    "presets": [
+        ["@babel/preset-env", {
+            "useBuiltIns": "usage",  // 按需引入
+            "corejs": 3
+        }]
+    ]
+}</code></pre>
+            
+            <h2>四、常用插件</h2>
+            
+            <h3>4.1 语法转换插件</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>插件</th>
+                        <th>功能</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@babel/plugin-transform-arrow-functions</td>
+                        <td>箭头函数转换</td>
+                    </tr>
+                    <tr>
+                        <td>@babel/plugin-transform-classes</td>
+                        <td>类语法转换</td>
+                    </tr>
+                    <tr>
+                        <td>@babel/plugin-transform-destructuring</td>
+                        <td>解构赋值转换</td>
+                    </tr>
+                    <tr>
+                        <td>@babel/plugin-transform-spread</td>
+                        <td>扩展运算符转换</td>
+                    </tr>
+                    <tr>
+                        <td>@babel/plugin-transform-async-to-generator</td>
+                        <td>async/await 转换</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>4.2 提案插件</h3>
+            <pre><code>// Stage 0-3 提案特性
+{
+    "plugins": [
+        "@babel/plugin-proposal-optional-chaining",      // a?.b
+        "@babel/plugin-proposal-nullish-coalescing-operator", // a ?? b
+        "@babel/plugin-proposal-class-properties",       // class 字段
+        "@babel/plugin-proposal-private-methods"         // 私有方法
+    ]
+}</code></pre>
+            
+            <h2>五、配置文件</h2>
+            
+            <h3>5.1 .babelrc / babel.config.js</h3>
+            <pre><code>// .babelrc（JSON）
+{
+    "presets": [
+        ["@babel/preset-env", {
+            "targets": "> 0.25%, not dead",
+            "useBuiltIns": "usage",
+            "corejs": 3
+        }],
+        "@babel/preset-react"
+    ],
+    "plugins": [
+        "@babel/plugin-proposal-class-properties"
+    ]
+}
+
+// babel.config.js（推荐）
+module.exports = {
+    presets: [
+        ['@babel/preset-env', {
+            targets: {
+                node: 'current',
+                browsers: ['last 2 versions']
+            }
+        }]
+    ],
+    plugins: []
+};</code></pre>
+            
+            <h3>5.2 环境配置</h3>
+            <pre><code>module.exports = {
+    presets: ['@babel/preset-env'],
+    env: {
+        development: {
+            plugins: ['react-refresh/babel']
+        },
+        production: {
+            plugins: [
+                'transform-remove-console',
+                'transform-remove-debugger'
+            ]
+        },
+        test: {
+            presets: [
+                ['@babel/preset-env', { targets: { node: 'current' } }]
+            ]
+        }
+    }
+};</code></pre>
+            
+            <h2>六、实用场景</h2>
+            
+            <h3>6.1 箭头函数转换</h3>
+            <pre><code>// 输入
+const add = (a, b) => a + b;
+const greet = name => `Hello, ${name}`;
+
+// 输出
+var add = function add(a, b) {
+    return a + b;
+};
+var greet = function greet(name) {
+    return 'Hello, ' + name;
+};</code></pre>
+            
+            <h3>6.2 类转换</h3>
+            <pre><code>// 输入
+class Animal {
+    constructor(name) {
+        this.name = name;
+    }
+    
+    speak() {
+        console.log(this.name + ' makes a sound');
+    }
+}
+
+// 输出（简化版）
+var Animal = function() {
+    function Animal(name) {
+        this.name = name;
+    }
+    
+    Animal.prototype.speak = function speak() {
+        console.log(this.name + ' makes a sound');
+    };
+    
+    return Animal;
+}();</code></pre>
+            
+            <h3>6.3 async/await 转换</h3>
+            <pre><code>// 输入
+async function fetchData() {
+    const response = await fetch('/api/data');
+    return response.json();
+}
+
+// 输出（使用 regenerator）
+function _asyncToGenerator(fn) { /* ... */ }
+
+var fetchData = _asyncToGenerator(
+    regeneratorRuntime.mark(function _callee() {
+        var response;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+                switch (_context.prev = _context.next) {
+                    case 0:
+                        _context.next = 2;
+                        return fetch('/api/data');
+                    case 2:
+                        response = _context.sent;
+                        return _context.abrupt('return', response.json());
+                    case 4:
+                    case 'end':
+                        return _context.stop();
+                }
+            }
+        }, _callee);
+    })
+);</code></pre>
+            
+            <h2>七、自定义插件</h2>
+            
+            <h3>7.1 插件结构</h3>
+            <pre><code>// 简单的插件示例
+module.exports = function(babel) {
+    const { types: t } = babel;
+    
+    return {
+        name: 'my-plugin',
+        visitor: {
+            // 访问所有标识符
+            Identifier(path) {
+                // 将 foo 替换为 bar
+                if (path.node.name === 'foo') {
+                    path.node.name = 'bar';
+                }
+            }
+        }
+    };
+};</code></pre>
+            
+            <h3>7.2 Visitor 模式</h3>
+            <pre><code>module.exports = function({ types: t }) {
+    return {
+        visitor: {
+            // 访问函数声明
+            FunctionDeclaration(path) {
+                console.log('Found function:', path.node.id.name);
+            },
+            
+            // 访问箭头函数
+            ArrowFunctionExpression(path) {
+                // 转换为普通函数
+            },
+            
+            // 访问二元表达式
+            BinaryExpression(path) {
+                if (path.node.operator === '+') {
+                    // 处理加法运算
+                }
+            }
+        }
+    };
+};</code></pre>
+            
+            <h2>八、性能优化</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>精确配置 targets</strong>：只转换必要的代码</li>
+                    <li><strong>使用 cacheDirectory</strong>：启用缓存</li>
+                    <li><strong>按需加载 Polyfill</strong>：useBuiltIns: 'usage'</li>
+                    <li><strong>减少插件数量</strong>：使用 preset 代替单个插件</li>
+                    <li><strong>exclude/include</strong>：排除 node_modules</li>
+                </ol>
+            </div>
+            
+            <h2>九、最佳实践</h2>
+            
+            <div class="tip">
+                <ol>
+                    <li><strong>使用 babel.config.js</strong>：更灵活的配置</li>
+                    <li><strong>preset-env</strong>：自动根据目标环境转换</li>
+                    <li><strong>browserslist</strong>：统一浏览器配置</li>
+                    <li><strong>source maps</strong>：生成 source map</li>
+                    <li><strong>按需引入</strong>：babel-plugin-import</li>
+                </ol>
+            </div>
+            
+            <h2>参考资料</h2>
+            <ul>
+                <li><a href="https://babeljs.io/" target="_blank">Babel 官网</a></li>
+                <li><a href="https://github.com/jamiebuilds/babel-handbook" target="_blank">Babel 插件手册</a></li>
+                <li><a href="https://astexplorer.net/" target="_blank">AST Explorer</a></li>
+            </ul>
+            
+            <div class="nav-links">
+                <a href="12-commonjs.html" class="nav-link prev">上一节：CommonJS</a>
+                <a href="../index.html" class="nav-link home">返回首页</a>
+                <a href="13-webpack.html" class="nav-link next">下一节：Webpack</a>
+            </div>
+        </div>
+        
+        <div class="code-panel">
+            <h2 style="color: #60a5fa; margin-bottom: 1.5rem;">💻 交互式代码示例</h2>
+            
+            <div class="code-example">
+                <h3>示例 1：Babel 转换演示</h3>
+                <div class="code-block">
+                    <pre><code>// 演示 ES6+ 到 ES5 的转换
+console.log('=== Babel 转换演示 ===\n');
+
+console.log('输入（ES6+）:');
+const es6Code = `
+const greet = (name = 'World') => {
+    return \`Hello, \${name}!\`;
+};
+`;
+console.log(es6Code);
+
+console.log('输出（ES5）:');
+const es5Code = `
+var greet = function greet() {
+    var name = arguments.length > 0 && arguments[0] !== undefined 
+        ? arguments[0] : 'World';
+    return 'Hello, ' + name + '!';
+};
+`;
+console.log(es5Code);
+
+console.log('转换特性:');
+console.log('  - 箭头函数 → 普通函数');
+console.log('  - 默认参数 → arguments 检查');
+console.log('  - 模板字符串 → 字符串拼接');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 2：编译流程</h3>
+                <div class="code-block">
+                    <pre><code>// 模拟 Babel 编译流程
+console.log('=== Babel 编译流程 ===\n');
+
+const sourceCode = 'const x = 1 + 2;';
+
+console.log('1. 源代码:');
+console.log('  ', sourceCode);
+
+console.log('\n2. 词法分析（Lexical Analysis）:');
+const tokens = [
+    { type: 'Keyword', value: 'const' },
+    { type: 'Identifier', value: 'x' },
+    { type: 'Punctuator', value: '=' },
+    { type: 'Numeric', value: '1' },
+    { type: 'Punctuator', value: '+' },
+    { type: 'Numeric', value: '2' }
+];
+tokens.forEach(token => {
+    console.log(`   ${token.type}: "${token.value}"`);
+});
+
+console.log('\n3. 语法分析（Syntactic Analysis）:');
+console.log('   生成 AST（抽象语法树）');
+console.log('   VariableDeclaration');
+console.log('   └─ VariableDeclarator');
+console.log('      ├─ id: Identifier(x)');
+console.log('      └─ init: BinaryExpression(+)');
+console.log('         ├─ left: Literal(1)');
+console.log('         └─ right: Literal(2)');
+
+console.log('\n4. 转换（Transform）:');
+console.log('   应用插件转换 AST');
+
+console.log('\n5. 生成（Generate）:');
+console.log('   var x = 1 + 2;');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 3：AST 结构</h3>
+                <div class="code-block">
+                    <pre><code>// 展示 AST 结构
+console.log('=== AST 结构示例 ===\n');
+
+const code = 'const sum = (a, b) => a + b;';
+console.log('源代码:', code);
+
+console.log('\nAST 结构:');
+const ast = {
+    type: 'Program',
+    body: [{
+        type: 'VariableDeclaration',
+        kind: 'const',
+        declarations: [{
+            type: 'VariableDeclarator',
+            id: { type: 'Identifier', name: 'sum' },
+            init: {
+                type: 'ArrowFunctionExpression',
+                params: [
+                    { type: 'Identifier', name: 'a' },
+                    { type: 'Identifier', name: 'b' }
+                ],
+                body: {
+                    type: 'BinaryExpression',
+                    operator: '+',
+                    left: { type: 'Identifier', name: 'a' },
+                    right: { type: 'Identifier', name: 'b' }
+                }
+            }
+        }]
+    }]
+};
+
+console.log(JSON.stringify(ast, null, 2));</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 4：常用转换</h3>
+                <div class="code-block">
+                    <pre><code>// 常见的 ES6+ 到 ES5 转换
+console.log('=== 常用转换示例 ===\n');
+
+const transformations = [
+    {
+        feature: '箭头函数',
+        input: 'const add = (a, b) => a + b',
+        output: 'var add = function(a, b) { return a + b; }'
+    },
+    {
+        feature: '模板字符串',
+        input: '`Hello, ${name}!`',
+        output: '"Hello, " + name + "!"'
+    },
+    {
+        feature: '解构赋值',
+        input: 'const { x, y } = obj',
+        output: 'var x = obj.x, y = obj.y;'
+    },
+    {
+        feature: '扩展运算符',
+        input: 'const arr = [...arr1, ...arr2]',
+        output: 'var arr = arr1.concat(arr2)'
+    },
+    {
+        feature: 'let/const',
+        input: 'let x = 1; const y = 2;',
+        output: 'var x = 1; var y = 2;'
+    }
+];
+
+transformations.forEach(({ feature, input, output }) => {
+    console.log(`${feature}:`);
+    console.log(`  输入:  ${input}`);
+    console.log(`  输出:  ${output}\n`);
+});</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 5：配置示例</h3>
+                <div class="code-block">
+                    <pre><code>// Babel 配置示例
+console.log('=== Babel 配置 ===\n');
+
+const babelConfig = {
+    presets: [
+        ['@babel/preset-env', {
+            targets: {
+                chrome: '58',
+                ie: '11',
+                firefox: '60',
+                safari: '11'
+            },
+            useBuiltIns: 'usage',
+            corejs: 3
+        }],
+        '@babel/preset-react',
+        '@babel/preset-typescript'
+    ],
+    plugins: [
+        '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-nullish-coalescing-operator',
+        ['@babel/plugin-transform-runtime', {
+            corejs: 3,
+            helpers: true,
+            regenerator: true
+        }]
+    ],
+    env: {
+        development: {
+            plugins: ['react-refresh/babel']
+        },
+        production: {
+            plugins: [
+                'transform-remove-console',
+                'transform-remove-debugger'
+            ]
+        }
+    }
+};
+
+console.log('配置说明:');
+console.log('1. @babel/preset-env');
+console.log('   - 自动根据目标环境转换');
+console.log('   - 按需引入 polyfill\n');
+
+console.log('2. 常用插件');
+console.log('   - class-properties: 类字段');
+console.log('   - optional-chaining: 可选链');
+console.log('   - nullish-coalescing: 空值合并\n');
+
+console.log('3. 环境配置');
+console.log('   - development: 开发工具');
+console.log('   - production: 代码优化');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 6：自定义插件概念</h3>
+                <div class="code-block">
+                    <pre><code>// 演示自定义插件的概念
+console.log('=== 自定义插件概念 ===\n');
+
+console.log('插件结构:');
+console.log(`
+module.exports = function(babel) {
+    const { types: t } = babel;
+    
+    return {
+        name: 'my-plugin',
+        visitor: {
+            // 访问器方法
+            Identifier(path) {
+                // 处理标识符
+            },
+            FunctionDeclaration(path) {
+                // 处理函数声明
+            }
+        }
+    };
+};
+`);
+
+console.log('Visitor 模式:');
+console.log('  - 遍历 AST 的每个节点');
+console.log('  - 在特定节点类型执行操作');
+console.log('  - 可以修改、替换、删除节点\n');
+
+console.log('示例：替换标识符');
+console.log('  输入: const foo = 1;');
+console.log('  转换: foo → bar');
+console.log('  输出: const bar = 1;');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../assets/js/common.js"></script>
+</body>
+</html>
