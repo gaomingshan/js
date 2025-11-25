@@ -156,10 +156,20 @@ throw new ValidationError('Invalid input');</code></pre>
 }</code></pre>
             
             <h3>5.3 错误包装</h3>
-            <pre><code>try {
+            <pre><code>// 使用 cause 保留原始错误（ES2022）
+try {
     // 底层操作
 } catch (error) {
-    throw new Error(`操作失败: ${error.message}`);
+    throw new Error(`操作失败: ${error.message}`, { cause: error });
+}
+
+// 访问原始错误
+try {
+    // ...
+} catch (wrappedError) {
+    console.log(wrappedError.message);        // 新错误消息
+    console.log(wrappedError.cause);          // 原始错误
+    console.log(wrappedError.cause.stack);    // 原始堆栈
 }</code></pre>
             
             <h2>六、异步错误处理</h2>
@@ -476,7 +486,7 @@ console.log('=== 解析 JSON ===');
 console.log(parseJSON('{"name": "Alice"}'));
 console.log(parseJSON('{invalid json}'));
 
-// 错误包装
+// 错误包装（保留原始错误）
 console.log('\n=== 错误包装 ===');
 function fetchUserData(userId) {
     try {
@@ -489,14 +499,17 @@ function fetchUserData(userId) {
         }
         return { id: userId, name: 'User' + userId };
     } catch (error) {
-        throw new Error(`获取用户数据失败 (ID: ${userId}): ${error.message}`);
+        // 使用 cause 保留原始错误
+        throw new Error(`获取用户数据失败 (ID: ${userId})`, { cause: error });
     }
 }
 
 try {
     fetchUserData(-1);
 } catch (error) {
-    console.log('捕获到错误:', error.message);
+    console.log('包装后的错误:', error.message);
+    console.log('原始错误:', error.cause.message);
+    console.log('原始错误对象:', error.cause);
 }</code></pre>
                 </div>
                 <button class="run-btn">▶ 运行代码</button>
