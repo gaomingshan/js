@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原型与原型链 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/05-prototype.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 原型与原型链 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: prototype vs __proto__ -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">原型基础</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Person</span>.<span class="property">prototype</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">constructor</span> <span class="operator">===</span> Person<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, false
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> false, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> false, false
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型关系图：</h4>
+                    
+                    <pre>Person（构造函数）
+  ↓ prototype
+Person.prototype（原型对象）
+  ↑ __proto__        ↓ constructor
+person（实例）      Person（构造函数）</pre>
+                    
+                    <p><strong>关键概念：</strong></p>
+                    <ul>
+                        <li><code>prototype</code>：函数的原型对象（只有函数有）</li>
+                        <li><code>__proto__</code>：对象的原型指针（所有对象都有）</li>
+                        <li><code>constructor</code>：原型对象指回构造函数</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>person.__proto__ → 实例的原型指向构造函数的prototype
+Person.prototype → 构造函数的原型对象
+所以：person.__proto__ === Person.prototype → true
+
+Person.prototype.constructor → 原型对象的constructor属性
+指向创建它的构造函数Person
+所以：Person.prototype.constructor === Person → true</pre>
+                    
+                    <h4>完整关系：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 实例的__proto__指向构造函数的prototype</span>
+person.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Person</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+
+<span class="comment">// 2. 原型的constructor指向构造函数</span>
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">constructor</span> <span class="operator">===</span> Person  <span class="comment">// true</span>
+
+<span class="comment">// 3. 函数也是对象，也有__proto__</span>
+<span class="property">Person</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Function</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+
+<span class="comment">// 4. 原型链的顶端</span>
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Object</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="keyword">null</span>  <span class="comment">// true（终点）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型基础</span>
+            </div>
+        </div>
+
+        <!-- Q2: 原型链查找 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">原型链查找</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">age</span> <span class="operator">=</span> <span class="number">25</span>;
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+person.<span class="property">age</span> <span class="operator">=</span> <span class="number">30</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">age</span><span class="bracket">)</span>;
+<span class="keyword">delete</span> person.<span class="property">age</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">age</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'Alice', 30, 25
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Alice', 30, undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'Alice', 25, 25
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'Alice', 30, 30
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型链属性查找机制：</h4>
+                    
+                    <p><strong>查找顺序：</strong></p>
+                    <pre>1. 查找对象自身属性
+2. 找不到，沿__proto__向上查找原型
+3. 一直找到Object.prototype
+4. 仍找不到，返回undefined</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>person.name → 自身属性 → 'Alice'
+
+person.age → 先找自身，找到30（屏蔽原型的age）
+
+delete person.age → 删除自身的age
+person.age → 自身没有，查找原型 → 25</pre>
+                    
+                    <h4>属性屏蔽（Property Shadowing）：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Animal</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="property">Animal</span>.<span class="property">prototype</span>.<span class="property">type</span> <span class="operator">=</span> <span class="string">'animal'</span>;
+
+<span class="keyword">const</span> dog <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Animal</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>dog.<span class="property">type</span><span class="bracket">)</span>;  <span class="comment">// 'animal'（原型属性）</span>
+
+dog.<span class="property">type</span> <span class="operator">=</span> <span class="string">'dog'</span>;  <span class="comment">// 在实例上创建同名属性</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>dog.<span class="property">type</span><span class="bracket">)</span>;  <span class="comment">// 'dog'（自身属性屏蔽原型）</span>
+
+<span class="keyword">delete</span> dog.<span class="property">type</span>;  <span class="comment">// 删除自身属性</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>dog.<span class="property">type</span><span class="bracket">)</span>;  <span class="comment">// 'animal'（恢复访问原型）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型链查找</span>
+            </div>
+        </div>
+
+        <!-- Q3: hasOwnProperty -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">hasOwnProperty</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> <span class="string">'Alice'</span>;
+<span class="bracket">}</span>
+
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">age</span> <span class="operator">=</span> <span class="number">25</span>;
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'name'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'age'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'age'</span> <span class="keyword">in</span> person<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> true, false, false
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> false, false, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>hasOwnProperty vs in 运算符：</h4>
+                    
+                    <p><strong>hasOwnProperty()：</strong></p>
+                    <ul>
+                        <li>只检查对象自身属性</li>
+                        <li>不检查原型链</li>
+                        <li>返回布尔值</li>
+                    </ul>
+                    
+                    <p><strong>in 运算符：</strong></p>
+                    <ul>
+                        <li>检查对象自身 + 原型链</li>
+                        <li>只要能访问到就返回true</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>person.hasOwnProperty('name') → true（自身属性）
+person.hasOwnProperty('age') → false（原型属性）
+'age' in person → true（原型链上能找到）</pre>
+                    
+                    <h4>安全使用hasOwnProperty：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 可能被覆盖的情况</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">hasOwnProperty</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">false</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 错误：调用的是被覆盖的方法</span>
+obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'name'</span><span class="bracket">)</span>;  <span class="comment">// false</span>
+
+<span class="comment">// 正确：直接调用Object.prototype上的方法</span>
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">hasOwnProperty</span>.<span class="function">call</span><span class="bracket">(</span>obj, <span class="string">'name'</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+
+<span class="comment">// ES2022: Object.hasOwn()</span>
+<span class="property">Object</span>.<span class="function">hasOwn</span><span class="bracket">(</span>obj, <span class="string">'name'</span><span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：hasOwnProperty</span>
+            </div>
+        </div>
+
+        <!-- Q4: instanceof -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">instanceof</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person <span class="keyword">instanceof</span> Person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person <span class="keyword">instanceof</span> Object<span class="bracket">)</span>;
+
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">const</span> person2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person <span class="keyword">instanceof</span> Person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person2 <span class="keyword">instanceof</span> Person<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, true, false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true, true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> true, false, false, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> false, true, false, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>instanceof 原理：</h4>
+                    
+                    <p><strong>工作机制：</strong></p>
+                    <pre>检查构造函数的prototype是否在对象的原型链上</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>person instanceof Person → true
+person.__proto__ === Person.prototype ✓
+
+person instanceof Object → true
+person.__proto__.__proto__ === Object.prototype ✓
+
+Person.prototype = {} → 修改prototype指向
+person instanceof Person → false
+person的__proto__仍指向旧原型，而Person.prototype已改变
+
+person2 instanceof Person → true
+person2.__proto__指向新prototype</pre>
+                    
+                    <h4>手动实现instanceof：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myInstanceof</span><span class="bracket">(</span>obj, constructor<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 获取对象的原型</span>
+    <span class="keyword">let</span> proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span>;
+    
+    <span class="comment">// 沿原型链查找</span>
+    <span class="keyword">while</span> <span class="bracket">(</span>proto<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>proto <span class="operator">===</span> constructor.<span class="property">prototype</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        <span class="bracket">}</span>
+        proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>proto<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：instanceof</span>
+            </div>
+        </div>
+
+        <!-- Q5: Object.create -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">Object.create</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> proto <span class="operator">=</span> <span class="bracket">{</span> <span class="property">x</span><span class="operator">:</span> <span class="number">10</span> <span class="bracket">}</span>;
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>proto<span class="bracket">)</span>;
+
+obj.<span class="property">y</span> <span class="operator">=</span> <span class="number">20</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">x</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">y</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'x'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'y'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 10, 20, false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 10, 20, true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined, 20, false, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 10, 20, true, false
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Object.create()：</h4>
+                    
+                    <p><strong>作用：</strong></p>
+                    <pre>创建一个新对象，将指定对象作为新对象的原型</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Object.create(proto) → obj.__proto__ === proto
+
+obj.x → 原型上的属性 → 10
+obj.y → 自身属性 → 20
+obj.hasOwnProperty('x') → false（x在原型上）
+obj.hasOwnProperty('y') → true（y在自身）</pre>
+                    
+                    <h4>Object.create的应用：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 创建纯净对象（无原型）</span>
+<span class="keyword">const</span> pureObj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>pureObj.<span class="property">toString</span><span class="bracket">)</span>;  <span class="comment">// undefined（没有Object.prototype）</span>
+
+<span class="comment">// 2. 实现继承</span>
+<span class="keyword">function</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="property">Parent</span>.<span class="property">prototype</span><span class="bracket">)</span>;
+<span class="property">Child</span>.<span class="property">prototype</span>.<span class="property">constructor</span> <span class="operator">=</span> Child;
+
+<span class="comment">// 3. 带属性描述符创建对象</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>proto, <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="bracket">{</span>
+        <span class="property">value</span><span class="operator">:</span> <span class="string">'Alice'</span>,
+        <span class="property">writable</span><span class="operator">:</span> <span class="keyword">true</span>,
+        <span class="property">enumerable</span><span class="operator">:</span> <span class="keyword">true</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Object.create</span>
+            </div>
+        </div>
+
+        <!-- Q6: 原型链终点 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">原型链终点</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">__proto__</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Function</span>.<span class="property">prototype</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Object</span>.<span class="property">prototype</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Object</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Function</span>.<span class="property">prototype</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> null, true, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> {}, true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> null, false, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> null, true, false
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>JavaScript原型链完整图谱：</h4>
+                    
+                    <pre>对象 → 构造函数.prototype → Object.prototype → null
+
+函数 → Function.prototype → Object.prototype → null
+
+Object（构造函数） → Function.prototype → Object.prototype → null
+
+Function（构造函数） → Function.prototype → Object.prototype → null</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Object.prototype.__proto__ → null（原型链终点）
+
+Function.prototype.__proto__ === Object.prototype → true
+（函数原型继承自Object.prototype）
+
+Object.__proto__ === Function.prototype → true
+（Object是函数，所有函数的__proto__都指向Function.prototype）</pre>
+                    
+                    <h4>特殊关系：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. Function是自己的实例</span>
+<span class="property">Function</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Function</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+
+<span class="comment">// 2. Object也是Function的实例</span>
+<span class="property">Object</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Function</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+
+<span class="comment">// 3. Function.prototype是对象</span>
+<span class="property">Function</span>.<span class="property">prototype</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="property">Object</span>.<span class="property">prototype</span>  <span class="comment">// true</span>
+
+<span class="comment">// 4. 终点</span>
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">__proto__</span> <span class="operator">===</span> <span class="keyword">null</span>  <span class="comment">// true</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型链终点</span>
+            </div>
+        </div>
+
+        <!-- Q7: 原型方法修改 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">原型方法</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">greet</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'Hello'</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> person1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">greet</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'Hi'</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> person2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Bob'</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person1.<span class="function">greet</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person2.<span class="function">greet</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'Hi', 'Hi'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Hello', 'Hi'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'Hello', 'Hello'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> TypeError
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型方法的动态性：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>实例通过__proto__访问原型方法</li>
+                        <li>修改原型方法，所有实例都会受影响</li>
+                        <li>查找是动态的，运行时才确定</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>person1创建时，Person.prototype.greet = 'Hello'
+但person1没有存储greet的副本
+
+修改Person.prototype.greet = 'Hi'
+person1和person2都通过__proto__访问同一个原型
+
+调用时查找：
+person1.greet() → Person.prototype.greet() → 'Hi'
+person2.greet() → Person.prototype.greet() → 'Hi'</pre>
+                    
+                    <h4>对比：实例方法 vs 原型方法</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 原型方法（共享）</span>
+<span class="keyword">function</span> <span class="function">Person1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="property">Person1</span>.<span class="property">prototype</span>.<span class="property">say</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'Hello'</span>; <span class="bracket">}</span>;
+
+<span class="comment">// 实例方法（独立）</span>
+<span class="keyword">function</span> <span class="function">Person2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">say</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'Hello'</span>; <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 内存占用</span>
+<span class="keyword">const</span> arr1 <span class="operator">=</span> <span class="property">Array</span><span class="bracket">(</span><span class="number">1000</span><span class="bracket">)</span>.<span class="function">fill</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">map</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">new</span> <span class="function">Person1</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 1个say方法</span>
+<span class="keyword">const</span> arr2 <span class="operator">=</span> <span class="property">Array</span><span class="bracket">(</span><span class="number">1000</span><span class="bracket">)</span>.<span class="function">fill</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">map</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">new</span> <span class="function">Person2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 1000个say方法</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型方法</span>
+            </div>
+        </div>
+
+        <!-- Q8: Object.getPrototypeOf vs __proto__ -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">原型访问</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="operator">===</span> obj.<span class="property">__proto__</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Object</span>.<span class="function">setPrototypeOf</span><span class="bracket">(</span>obj, <span class="keyword">null</span><span class="bracket">)</span> <span class="operator">===</span> obj<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">__proto__</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, true, undefined
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true, null
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> false, true, undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> true, false, null
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>原型访问与修改的标准方法：</h4>
+                    
+                    <p><strong>获取原型：</strong></p>
+                    <ul>
+                        <li><code>Object.getPrototypeOf(obj)</code> - 推荐</li>
+                        <li><code>obj.__proto__</code> - 非标准但广泛支持</li>
+                    </ul>
+                    
+                    <p><strong>设置原型：</strong></p>
+                    <ul>
+                        <li><code>Object.setPrototypeOf(obj, proto)</code> - 推荐</li>
+                        <li><code>obj.__proto__ = proto</code> - 非标准</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Object.getPrototypeOf(obj) === obj.__proto__ → true
+（两种方式获取相同的原型）
+
+Object.setPrototypeOf(obj, null) → 返回obj本身
+（setPrototypeOf返回第一个参数）
+
+obj.__proto__ → null
+（原型已被设置为null）</pre>
+                    
+                    <h4>__proto__ 的问题：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. __proto__不是标准，只是事实标准</span>
+<span class="comment">// 2. 性能问题：修改原型链很慢</span>
+<span class="comment">// 3. 可以被覆盖</span>
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;
+obj.<span class="property">__proto__</span> <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;  <span class="comment">// 不生效，因为没有Object.prototype</span>
+
+<span class="comment">// 推荐写法</span>
+<span class="property">Object</span>.<span class="function">setPrototypeOf</span><span class="bracket">(</span>obj, <span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>;  <span class="comment">// 有效</span>
+<span class="keyword">const</span> proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span>;  <span class="comment">// 推荐</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型访问</span>
+            </div>
+        </div>
+
+        <!-- Q9: 原型污染 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">原型污染</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码会产生什么问题？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj1 <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">const</span> obj2 <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">polluted</span> <span class="operator">=</span> <span class="string">'I am polluted'</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj1.<span class="property">polluted</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj2.<span class="property">polluted</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>.<span class="property">polluted</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 原型污染：所有对象都会受影响
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 只有obj1和obj2受影响
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> TypeError
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 没有影响，undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型污染攻击：</h4>
+                    
+                    <p><strong>危害：</strong></p>
+                    <ul>
+                        <li>修改Object.prototype影响所有对象</li>
+                        <li>可能导致安全漏洞</li>
+                        <li>难以追踪和调试</li>
+                    </ul>
+                    
+                    <p><strong>输出：</strong></p>
+                    <pre>obj1.polluted → 'I am polluted'
+obj2.polluted → 'I am polluted'
+({}).polluted → 'I am polluted'
+
+所有对象都继承了这个被污染的属性！</pre>
+                    
+                    <h4>防护措施：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 使用Object.create(null)创建纯净对象</span>
+<span class="keyword">const</span> safeObj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;
+safeObj.<span class="property">polluted</span>  <span class="comment">// undefined（没有原型链）</span>
+
+<span class="comment">// 2. 冻结原型</span>
+<span class="property">Object</span>.<span class="function">freeze</span><span class="bracket">(</span><span class="property">Object</span>.<span class="property">prototype</span><span class="bracket">)</span>;
+
+<span class="comment">// 3. 使用hasOwnProperty检查</span>
+<span class="keyword">if</span> <span class="bracket">(</span>obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'prop'</span><span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 只处理自有属性</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 4. 使用Map代替Object</span>
+<span class="keyword">const</span> map <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 5. 输入验证</span>
+<span class="keyword">function</span> <span class="function">merge</span><span class="bracket">(</span>target, source<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> key <span class="keyword">in</span> source<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>key <span class="operator">===</span> <span class="string">'__proto__'</span> <span class="operator">||</span> key <span class="operator">===</span> <span class="string">'constructor'</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">continue</span>;  <span class="comment">// 跳过危险属性</span>
+        <span class="bracket">}</span>
+        target<span class="bracket">[</span>key<span class="bracket">]</span> <span class="operator">=</span> source<span class="bracket">[</span>key<span class="bracket">]</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原型污染</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合题 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+    <span class="keyword">return</span> <span class="keyword">this</span>;
+<span class="bracket">}</span>
+
+<span class="property">Foo</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+<span class="property">Foo</span>.<span class="property">prototype</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+<span class="keyword">var</span> <span class="function">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+<span class="keyword">function</span> <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">5</span><span class="bracket">)</span>; <span class="bracket">}</span>
+
+<span class="property">Foo</span>.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">new</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 2, 4, 1, 1, 3
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 2, 5, 1, 1, 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 2, 4, 1, 4, 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 2, 5, 4, 1, 3
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>综合知识点：</h4>
+                    
+                    <p><strong>涉及：</strong></p>
+                    <ul>
+                        <li>函数声明提升</li>
+                        <li>变量提升</li>
+                        <li>this指向</li>
+                        <li>原型链</li>
+                        <li>new运算符</li>
+                    </ul>
+                    
+                    <p><strong>逐步分析：</strong></p>
+                    <pre><span class="comment">// 1. Foo.getName()</span>
+调用Foo函数的静态方法 → 2
+
+<span class="comment">// 2. getName()</span>
+函数声明提升，但被var getName = function(){4}覆盖 → 4
+
+<span class="comment">// 3. Foo().getName()</span>
+Foo()执行：修改全局getName = function(){1}，返回this（window）
+window.getName() → 1
+
+<span class="comment">// 4. getName()</span>
+此时全局getName已被修改 → 1
+
+<span class="comment">// 5. new Foo().getName()</span>
+new Foo()创建实例，实例的getName在原型上 → 3</pre>
+                    
+                    <h4>关键点：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 提升后的代码等价于：</span>
+<span class="keyword">function</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="comment">/* ... */</span> <span class="bracket">}</span>
+<span class="keyword">function</span> <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">5</span><span class="bracket">)</span>; <span class="bracket">}</span>  <span class="comment">// 函数声明提升</span>
+
+<span class="keyword">var</span> getName;  <span class="comment">// 变量声明提升</span>
+
+<span class="property">Foo</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+<span class="property">Foo</span>.<span class="property">prototype</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>; <span class="bracket">}</span>;
+getName <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>; <span class="bracket">}</span>;  <span class="comment">// 覆盖函数声明</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：综合应用</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="05-object-basics.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：对象基础</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/05-prototype.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

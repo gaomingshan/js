@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第24节 - Math与Date对象 - JavaScript面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            background: #f7fafc;
+            padding: 2rem;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-item {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid #667eea;
+        }
+        
+        .quiz-item-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .difficulty {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .difficulty.easy { background: #c6f6d5; color: #22543d; }
+        .difficulty.medium { background: #feebc8; color: #744210; }
+        .difficulty.hard { background: #fed7d7; color: #742a2a; }
+        
+        .tag {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .code-question {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        .code-question pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .code-question code {
+            font-family: inherit;
+        }
+        
+        .keyword { color: #c792ea; }
+        .string { color: #c3e88d; }
+        .number { color: #f78c6c; }
+        .comment { color: #697098; }
+        .function { color: #82aaff; }
+        .operator { color: #89ddff; }
+        .property { color: #ffcb6b; }
+        .bracket { color: #a6accd; }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .option {
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .option.selected {
+            border-color: #667eea;
+            background: #ebf4ff;
+        }
+        
+        .option.correct {
+            border-color: #48bb78;
+            background: #c6f6d5;
+        }
+        
+        .option.wrong {
+            border-color: #f56565;
+            background: #fed7d7;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .answer-section {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .answer-section.show {
+            display: block;
+        }
+        
+        .answer-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .explanation {
+            color: #4a5568;
+            line-height: 1.8;
+        }
+        
+        .explanation h4 {
+            color: #2d3748;
+            margin: 1rem 0 0.5rem 0;
+        }
+        
+        .explanation ul, .explanation ol {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .explanation li {
+            margin: 0.5rem 0;
+        }
+        
+        .explanation code {
+            background: #edf2f7;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #d53f8c;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: #ebf4ff;
+            color: #667eea;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-links a {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📐 第24节 - Math与Date对象</h1>
+            <p>掌握JavaScript内置的数学计算和日期时间处理</p>
+        </div>
+        
+        <div class="content">
+        <!-- Q1: Math取整方法 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">Math取整</span>
+            </div>
+            
+            <div class="question">Q1: 以下四种取整方法的输出分别是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="number">4.7</span><span class="bracket">)</span><span class="bracket">)</span>;    <span class="comment">// ?</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">ceil</span><span class="bracket">(</span><span class="number">4.1</span><span class="bracket">)</span><span class="bracket">)</span>;     <span class="comment">// ?</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">round</span><span class="bracket">(</span><span class="number">4.5</span><span class="bracket">)</span><span class="bracket">)</span>;    <span class="comment">// ?</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">trunc</span><span class="bracket">(</span>-<span class="number">4.9</span><span class="bracket">)</span><span class="bracket">)</span>;   <span class="comment">// ?</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 4, 5, 5, -5
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 4, 5, 5, -4
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 5, 5, 4, -4
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 4, 4, 5, -4
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>Math取整方法详解：</h4>
+                    
+                    <p><strong>1. Math.floor()：向下取整</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="number">4.7</span><span class="bracket">)</span>;   <span class="comment">// 4（向负无穷方向）</span>
+<span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span>-<span class="number">4.7</span><span class="bracket">)</span>;  <span class="comment">// -5</span></code></pre></div>
+                    
+                    <p><strong>2. Math.ceil()：向上取整</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">ceil</span><span class="bracket">(</span><span class="number">4.1</span><span class="bracket">)</span>;    <span class="comment">// 5（向正无穷方向）</span>
+<span class="property">Math</span>.<span class="function">ceil</span><span class="bracket">(</span>-<span class="number">4.1</span><span class="bracket">)</span>;   <span class="comment">// -4</span></code></pre></div>
+                    
+                    <p><strong>3. Math.round()：四舍五入</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">round</span><span class="bracket">(</span><span class="number">4.5</span><span class="bracket">)</span>;   <span class="comment">// 5（.5向上取整）</span>
+<span class="property">Math</span>.<span class="function">round</span><span class="bracket">(</span><span class="number">4.4</span><span class="bracket">)</span>;   <span class="comment">// 4</span>
+<span class="property">Math</span>.<span class="function">round</span><span class="bracket">(</span>-<span class="number">4.5</span><span class="bracket">)</span>;  <span class="comment">// -4（注意：-4.5向上取整是-4）</span></code></pre></div>
+                    
+                    <p><strong>4. Math.trunc()：截断小数（ES6）</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">trunc</span><span class="bracket">(</span><span class="number">4.9</span><span class="bracket">)</span>;    <span class="comment">// 4（直接去掉小数部分）</span>
+<span class="property">Math</span>.<span class="function">trunc</span><span class="bracket">(</span>-<span class="number">4.9</span><span class="bracket">)</span>;   <span class="comment">// -4</span></code></pre></div>
+                    
+                    <p><strong>实用场景：</strong></p>
+                    <ul>
+                        <li><code>floor</code>：分页计算、向下取整的数值处理</li>
+                        <li><code>ceil</code>：向上取整的资源分配</li>
+                        <li><code>round</code>：常规四舍五入</li>
+                        <li><code>trunc</code>：只关心整数部分</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：Math对象</span>
+            </div>
+        </div>
+
+        <!-- Q2: Math随机数 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">随机数生成</span>
+            </div>
+            
+            <div class="question">Q2: 如何生成[10, 20]之间的随机整数（包含10和20）？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> Math.floor(Math.random() * 11) + 10
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> Math.floor(Math.random() * 10) + 10
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> Math.round(Math.random() * 10) + 10
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> Math.ceil(Math.random() * 10) + 10
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Math.random() 详解：</h4>
+                    
+                    <p><strong>基础知识：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span>  <span class="comment">// 返回 [0, 1) 之间的随机小数</span></code></pre></div>
+                    
+                    <p><strong>生成 [min, max) 之间的随机整数：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">randomInt</span><span class="bracket">(</span>min, max<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">*</span> <span class="bracket">(</span>max <span class="operator">-</span> min<span class="bracket">)</span><span class="bracket">)</span> <span class="operator">+</span> min;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>生成 [min, max] 之间的随机整数（包含两端）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">randomIntInclusive</span><span class="bracket">(</span>min, max<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">*</span> <span class="bracket">(</span>max <span class="operator">-</span> min <span class="operator">+</span> <span class="number">1</span><span class="bracket">)</span><span class="bracket">)</span> <span class="operator">+</span> min;
+<span class="bracket">}</span>
+
+<span class="comment">// 对于 [10, 20]</span>
+<span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">*</span> <span class="number">11</span><span class="bracket">)</span> <span class="operator">+</span> <span class="number">10</span>
+<span class="comment">// random() * 11 得到 [0, 11)</span>
+<span class="comment">// floor() 后得到 [0, 10]</span>
+<span class="comment">// +10 后得到 [10, 20]</span></code></pre></div>
+                    
+                    <p><strong>常见应用：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 随机颜色</span>
+<span class="keyword">function</span> <span class="function">randomColor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'#'</span> <span class="operator">+</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">*</span> <span class="number">0xffffff</span><span class="bracket">)</span>.<span class="function">toString</span><span class="bracket">(</span><span class="number">16</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 随机选择数组元素</span>
+<span class="keyword">function</span> <span class="function">randomElement</span><span class="bracket">(</span>arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> arr<span class="bracket">[</span><span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">random</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">*</span> arr.<span class="property">length</span><span class="bracket">)</span><span class="bracket">]</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Math对象</span>
+            </div>
+        </div>
+
+        <!-- Q3: Date创建 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">Date对象</span>
+            </div>
+            
+            <div class="question">Q3: 以下哪种创建Date对象的方式是正确的？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> new Date('2024-01-01')
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> new Date(2024, 0, 1)
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> new Date(1704067200000)
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 以上都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>Date对象的创建方式：</h4>
+                    
+                    <p><strong>1. 无参数：当前时间</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> now <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>2. 时间戳（毫秒）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> date1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="number">1704067200000</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>3. 日期字符串：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> date2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> date3 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024/01/01'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> date4 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'Jan 1, 2024'</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>4. 年月日参数（⚠️ 月份从0开始）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span>year, month, day, hour, minute, second, ms<span class="bracket">)</span>
+
+<span class="keyword">const</span> date5 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="number">2024</span>, <span class="number">0</span>, <span class="number">1</span><span class="bracket">)</span>;           <span class="comment">// 2024年1月1日</span>
+<span class="keyword">const</span> date6 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="number">2024</span>, <span class="number">11</span>, <span class="number">31</span><span class="bracket">)</span>;         <span class="comment">// 2024年12月31日</span>
+<span class="keyword">const</span> date7 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="number">2024</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">12</span>, <span class="number">30</span>, <span class="number">45</span><span class="bracket">)</span>;  <span class="comment">// 含时分秒</span></code></pre></div>
+                    
+                    <p><strong>⚠️ 注意事项：</strong></p>
+                    <ul>
+                        <li>月份从0开始：0=一月，11=十二月</li>
+                        <li>日期从1开始</li>
+                        <li>字符串格式依赖浏览器实现，推荐ISO格式</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 获取当前时间戳</span>
+<span class="function">Date</span>.<span class="function">now</span><span class="bracket">(</span><span class="bracket">)</span>;                    <span class="comment">// 推荐</span>
+<span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">getTime</span><span class="bracket">(</span><span class="bracket">)</span>;         <span class="comment">// 等价但效率低</span>
+<span class="operator">+</span><span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span>;                   <span class="comment">// 简写但不推荐</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Date对象</span>
+            </div>
+        </div>
+
+        <!-- Q4: Date方法 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">Date方法</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> date <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-15T12:30:45'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>date.<span class="function">getDay</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1, 15
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1, 1
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 0, 15
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>Date对象的get方法：</h4>
+                    
+                    <p><strong>易混淆的方法：</strong></p>
+                    <ul>
+                        <li><code>getMonth()</code>：返回月份（0-11），0代表1月</li>
+                        <li><code>getDate()</code>：返回日期（1-31）</li>
+                        <li><code>getDay()</code>：返回星期几（0-6），0代表星期天</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> date <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-15T12:30:45'</span><span class="bracket">)</span>; <span class="comment">// 2024年1月15日，星期一</span>
+
+date.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span>;   <span class="comment">// 2024</span>
+date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span>;       <span class="comment">// 0（一月）</span>
+date.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span>;        <span class="comment">// 15（15号）</span>
+date.<span class="function">getDay</span><span class="bracket">(</span><span class="bracket">)</span>;         <span class="comment">// 1（星期一）</span>
+date.<span class="function">getHours</span><span class="bracket">(</span><span class="bracket">)</span>;       <span class="comment">// 12</span>
+date.<span class="function">getMinutes</span><span class="bracket">(</span><span class="bracket">)</span>;     <span class="comment">// 30</span>
+date.<span class="function">getSeconds</span><span class="bracket">(</span><span class="bracket">)</span>;     <span class="comment">// 45</span></code></pre></div>
+                    
+                    <p><strong>对应的set方法：</strong></p>
+                    <div class="code-question"><pre><code>date.<span class="function">setFullYear</span><span class="bracket">(</span><span class="number">2025</span><span class="bracket">)</span>;
+date.<span class="function">setMonth</span><span class="bracket">(</span><span class="number">11</span><span class="bracket">)</span>;          <span class="comment">// 设置为12月</span>
+date.<span class="function">setDate</span><span class="bracket">(</span><span class="number">25</span><span class="bracket">)</span>;
+date.<span class="function">setHours</span><span class="bracket">(</span><span class="number">18</span>, <span class="number">30</span>, <span class="number">0</span><span class="bracket">)</span>;  <span class="comment">// 设置时、分、秒</span></code></pre></div>
+                    
+                    <p><strong>星期对应关系：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> weekdays <span class="operator">=</span> <span class="bracket">[</span><span class="string">'日'</span>, <span class="string">'一'</span>, <span class="string">'二'</span>, <span class="string">'三'</span>, <span class="string">'四'</span>, <span class="string">'五'</span>, <span class="string">'六'</span><span class="bracket">]</span>;
+<span class="keyword">const</span> dayName <span class="operator">=</span> <span class="string">'星期'</span> <span class="operator">+</span> weekdays<span class="bracket">[</span>date.<span class="function">getDay</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">]</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Date对象</span>
+            </div>
+        </div>
+
+        <!-- Q5: 日期格式化 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">日期格式化</span>
+            </div>
+            
+            <div class="question">Q5: 如何将日期格式化为"2024-01-15 12:30:45"？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用toLocaleString()
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 手动拼接各部分
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 使用Intl.DateTimeFormat
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 以上都可以
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>日期格式化的多种方法：</h4>
+                    
+                    <p><strong>方法1：手动拼接（最常用）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">formatDate</span><span class="bracket">(</span>date<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> year <span class="operator">=</span> date.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> month <span class="operator">=</span> <span class="function">String</span><span class="bracket">(</span>date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">+</span> <span class="number">1</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">2</span>, <span class="string">'0'</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> day <span class="operator">=</span> <span class="function">String</span><span class="bracket">(</span>date.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">2</span>, <span class="string">'0'</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> hours <span class="operator">=</span> <span class="function">String</span><span class="bracket">(</span>date.<span class="function">getHours</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">2</span>, <span class="string">'0'</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> minutes <span class="operator">=</span> <span class="function">String</span><span class="bracket">(</span>date.<span class="function">getMinutes</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">2</span>, <span class="string">'0'</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> seconds <span class="operator">=</span> <span class="function">String</span><span class="bracket">(</span>date.<span class="function">getSeconds</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">2</span>, <span class="string">'0'</span><span class="bracket">)</span>;
+    
+    <span class="keyword">return</span> <span class="string">`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>方法2：toLocaleString()（灵活但不够精确）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> date <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 中文格式</span>
+date.<span class="function">toLocaleString</span><span class="bracket">(</span><span class="string">'zh-CN'</span><span class="bracket">)</span>;  <span class="comment">// '2024/1/15 12:30:45'</span>
+
+<span class="comment">// 自定义选项</span>
+date.<span class="function">toLocaleString</span><span class="bracket">(</span><span class="string">'zh-CN'</span>, <span class="bracket">{</span>
+    year<span class="operator">:</span> <span class="string">'numeric'</span>,
+    month<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    day<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    hour<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    minute<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    second<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    hour12<span class="operator">:</span> <span class="keyword">false</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>方法3：Intl.DateTimeFormat</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> formatter <span class="operator">=</span> <span class="keyword">new</span> <span class="property">Intl</span>.<span class="function">DateTimeFormat</span><span class="bracket">(</span><span class="string">'zh-CN'</span>, <span class="bracket">{</span>
+    year<span class="operator">:</span> <span class="string">'numeric'</span>,
+    month<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    day<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    hour<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    minute<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    second<span class="operator">:</span> <span class="string">'2-digit'</span>,
+    hour12<span class="operator">:</span> <span class="keyword">false</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+formatter.<span class="function">format</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>常用格式化函数：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 简化版</span>
+<span class="keyword">function</span> <span class="function">formatDate</span><span class="bracket">(</span>date, format <span class="operator">=</span> <span class="string">'YYYY-MM-DD HH:mm:ss'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> o <span class="operator">=</span> <span class="bracket">{</span>
+        <span class="string">'Y+'</span><span class="operator">:</span> date.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span>,
+        <span class="string">'M+'</span><span class="operator">:</span> date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">+</span> <span class="number">1</span>,
+        <span class="string">'D+'</span><span class="operator">:</span> date.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span>,
+        <span class="string">'H+'</span><span class="operator">:</span> date.<span class="function">getHours</span><span class="bracket">(</span><span class="bracket">)</span>,
+        <span class="string">'m+'</span><span class="operator">:</span> date.<span class="function">getMinutes</span><span class="bracket">(</span><span class="bracket">)</span>,
+        <span class="string">'s+'</span><span class="operator">:</span> date.<span class="function">getSeconds</span><span class="bracket">(</span><span class="bracket">)</span>
+    <span class="bracket">}</span>;
+    
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> k <span class="keyword">in</span> o<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">new</span> <span class="function">RegExp</span><span class="bracket">(</span><span class="string">'('</span> <span class="operator">+</span> k <span class="operator">+</span> <span class="string">')'</span><span class="bracket">)</span>.<span class="function">test</span><span class="bracket">(</span>format<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+            format <span class="operator">=</span> format.<span class="function">replace</span><span class="bracket">(</span><span class="property">RegExp</span>.<span class="property">$1</span>, 
+                <span class="function">String</span><span class="bracket">(</span>o<span class="bracket">[</span>k<span class="bracket">]</span><span class="bracket">)</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="property">RegExp</span>.<span class="property">$1</span>.<span class="property">length</span>, <span class="string">'0'</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+    <span class="keyword">return</span> format;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Date对象</span>
+            </div>
+        </div>
+
+        <!-- Q6: 日期计算 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">日期计算</span>
+            </div>
+            
+            <div class="question">Q6: 如何计算两个日期之间相差的天数？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> date1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> date2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-15'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> date2.getDate() - date1.getDate()
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> (date2 - date1) / (1000 * 60 * 60 * 24)
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> Math.abs(date2.getTime() - date1.getTime()) / 86400000
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> B和C都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>日期计算详解：</h4>
+                    
+                    <p><strong>基本原理：</strong></p>
+                    <ul>
+                        <li>Date对象可以直接相减，得到毫秒差</li>
+                        <li>1天 = 24小时 = 1440分钟 = 86400秒 = 86400000毫秒</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 计算天数差</span>
+<span class="keyword">function</span> <span class="function">daysBetween</span><span class="bracket">(</span>date1, date2<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> msPerDay <span class="operator">=</span> <span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">24</span>;
+    <span class="keyword">const</span> diffMs <span class="operator">=</span> <span class="property">Math</span>.<span class="function">abs</span><span class="bracket">(</span>date2 <span class="operator">-</span> date1<span class="bracket">)</span>;
+    <span class="keyword">return</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span>diffMs <span class="operator">/</span> msPerDay<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> d1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> d2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-15'</span><span class="bracket">)</span>;
+<span class="function">daysBetween</span><span class="bracket">(</span>d1, d2<span class="bracket">)</span>;  <span class="comment">// 14</span></code></pre></div>
+                    
+                    <p><strong>常用日期计算：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 添加天数</span>
+<span class="keyword">function</span> <span class="function">addDays</span><span class="bracket">(</span>date, days<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span>date<span class="bracket">)</span>;
+    result.<span class="function">setDate</span><span class="bracket">(</span>result.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">+</span> days<span class="bracket">)</span>;
+    <span class="keyword">return</span> result;
+<span class="bracket">}</span>
+
+<span class="comment">// 获取月初/月末</span>
+<span class="keyword">function</span> <span class="function">getMonthStart</span><span class="bracket">(</span>date<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span>date.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span>, date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="number">1</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">getMonthEnd</span><span class="bracket">(</span>date<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span>date.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span>, date.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">+</span> <span class="number">1</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 判断是否同一天</span>
+<span class="keyword">function</span> <span class="function">isSameDay</span><span class="bracket">(</span>date1, date2<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> date1.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">===</span> date2.<span class="function">getFullYear</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">&&</span>
+           date1.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">===</span> date2.<span class="function">getMonth</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">&&</span>
+           date1.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">===</span> date2.<span class="function">getDate</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：日期计算</span>
+            </div>
+        </div>
+
+        <!-- Q7: Math精度问题 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">数值精度</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">max</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Math</span>.<span class="function">min</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0, 0
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> undefined, undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> -Infinity, Infinity
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> NaN, NaN
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>Math.max/min的特殊行为：</h4>
+                    
+                    <p><strong>无参数时的返回值：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Math</span>.<span class="function">max</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// -Infinity（初始值是最小可能值）</span>
+<span class="property">Math</span>.<span class="function">min</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// Infinity（初始值是最大可能值）</span></code></pre></div>
+                    
+                    <p><strong>原理：</strong></p>
+                    <ul>
+                        <li>max从-Infinity开始比较，任何数都比它大</li>
+                        <li>min从Infinity开始比较，任何数都比它小</li>
+                        <li>无参数时返回初始值</li>
+                    </ul>
+                    
+                    <p><strong>处理数组：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+
+<span class="comment">// 方法1：展开运算符</span>
+<span class="property">Math</span>.<span class="function">max</span><span class="bracket">(</span>...<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span><span class="bracket">)</span>;  <span class="comment">// 3</span>
+
+<span class="comment">// 方法2：apply</span>
+<span class="property">Math</span>.<span class="function">max</span>.<span class="function">apply</span><span class="bracket">(</span><span class="keyword">null</span>, arr<span class="bracket">)</span>;
+
+<span class="comment">// 方法3：reduce（大数组更安全）</span>
+arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>max, num<span class="bracket">)</span> <span class="operator">=></span> <span class="property">Math</span>.<span class="function">max</span><span class="bracket">(</span>max, num<span class="bracket">)</span>, <span class="operator">-</span><span class="property">Infinity</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>其他Math常量：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Number</span>.<span class="property">MAX_VALUE</span>;          <span class="comment">// 最大数值</span>
+<span class="property">Number</span>.<span class="property">MIN_VALUE</span>;          <span class="comment">// 最小正数值（接近0）</span>
+<span class="property">Number</span>.<span class="property">MAX_SAFE_INTEGER</span>;   <span class="comment">// 9007199254740991</span>
+<span class="property">Number</span>.<span class="property">MIN_SAFE_INTEGER</span>;   <span class="comment">// -9007199254740991</span>
+<span class="property">Number</span>.<span class="property">POSITIVE_INFINITY</span>;  <span class="comment">// Infinity</span>
+<span class="property">Number</span>.<span class="property">NEGATIVE_INFINITY</span>;  <span class="comment">// -Infinity</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Math对象</span>
+            </div>
+        </div>
+
+        <!-- Q8: 时区问题 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">时区处理</span>
+            </div>
+            
+            <div class="question">Q8: Date对象的时区问题，以下说法正确的是？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> Date对象内部存储UTC时间
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> getHours()返回本地时区的小时
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> getUTCHours()返回UTC时区的小时
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 以上都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>Date对象的时区机制：</h4>
+                    
+                    <p><strong>核心概念：</strong></p>
+                    <ul>
+                        <li>Date内部存储的是UTC时间戳（毫秒数）</li>
+                        <li>get方法返回本地时区时间</li>
+                        <li>getUTC方法返回UTC时间</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> date <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01T12:00:00Z'</span><span class="bracket">)</span>; <span class="comment">// Z表示UTC时间</span>
+
+<span class="comment">// 本地时区方法（假设在北京，UTC+8）</span>
+date.<span class="function">getHours</span><span class="bracket">(</span><span class="bracket">)</span>;        <span class="comment">// 20（12 + 8）</span>
+date.<span class="function">getMinutes</span><span class="bracket">(</span><span class="bracket">)</span>;      <span class="comment">// 0</span>
+
+<span class="comment">// UTC时区方法</span>
+date.<span class="function">getUTCHours</span><span class="bracket">(</span><span class="bracket">)</span>;     <span class="comment">// 12</span>
+date.<span class="function">getUTCMinutes</span><span class="bracket">(</span><span class="bracket">)</span>;   <span class="comment">// 0</span>
+
+<span class="comment">// 获取时区偏移（分钟）</span>
+date.<span class="function">getTimezoneOffset</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// -480（北京比UTC快8小时）</span></code></pre></div>
+                    
+                    <p><strong>时区转换：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ISO字符串（UTC时间）</span>
+date.<span class="function">toISOString</span><span class="bracket">(</span><span class="bracket">)</span>;      <span class="comment">// '2024-01-01T12:00:00.000Z'</span>
+
+<span class="comment">// 本地时间字符串</span>
+date.<span class="function">toString</span><span class="bracket">(</span><span class="bracket">)</span>;         <span class="comment">// 'Mon Jan 01 2024 20:00:00 GMT+0800'</span>
+
+<span class="comment">// UTC字符串</span>
+date.<span class="function">toUTCString</span><span class="bracket">(</span><span class="bracket">)</span>;      <span class="comment">// 'Mon, 01 Jan 2024 12:00:00 GMT'</span></code></pre></div>
+                    
+                    <p><strong>⚠️ 常见陷阱：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 陷阱1：字符串解析依赖时区</span>
+<span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01'</span><span class="bracket">)</span>;           <span class="comment">// UTC时间</span>
+<span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="string">'2024-01-01 00:00:00'</span><span class="bracket">)</span>;  <span class="comment">// 本地时间（不同浏览器可能不同）</span>
+
+<span class="comment">// 陷阱2：Date(2024, 0, 1)是本地时区</span>
+<span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="number">2024</span>, <span class="number">0</span>, <span class="number">1</span><span class="bracket">)</span>;            <span class="comment">// 本地时间2024-01-01 00:00:00</span>
+<span class="keyword">new</span> <span class="function">Date</span>.<span class="function">UTC</span><span class="bracket">(</span><span class="number">2024</span>, <span class="number">0</span>, <span class="number">1</span><span class="bracket">)</span>;         <span class="comment">// UTC时间戳</span></code></pre></div>
+                    
+                    <p><strong>最佳实践：</strong></p>
+                    <ul>
+                        <li>服务器存储和传输使用UTC时间</li>
+                        <li>前端展示时转换为用户本地时间</li>
+                        <li>使用ISO格式字符串传输日期</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：Date对象</span>
+            </div>
+        </div>
+
+        <!-- Q9: Math三角函数 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">三角函数</span>
+            </div>
+            
+            <div class="question">Q9: 如何将角度转换为弧度并计算sin值？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> Math.sin(angle)
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> Math.sin(angle * Math.PI / 180)
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> Math.sin(angle / 180 * Math.PI)
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> B和C都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>Math三角函数详解：</h4>
+                    
+                    <p><strong>基础知识：</strong></p>
+                    <ul>
+                        <li>Math的三角函数使用弧度制，不是角度制</li>
+                        <li>1弧度 = 180/π 度</li>
+                        <li>1度 = π/180 弧度</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 角度转弧度</span>
+<span class="keyword">function</span> <span class="function">toRadians</span><span class="bracket">(</span>degrees<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> degrees <span class="operator">*</span> <span class="property">Math</span>.<span class="property">PI</span> <span class="operator">/</span> <span class="number">180</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 弧度转角度</span>
+<span class="keyword">function</span> <span class="function">toDegrees</span><span class="bracket">(</span>radians<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> radians <span class="operator">*</span> <span class="number">180</span> <span class="operator">/</span> <span class="property">Math</span>.<span class="property">PI</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 计算30度的sin值</span>
+<span class="property">Math</span>.<span class="function">sin</span><span class="bracket">(</span><span class="function">toRadians</span><span class="bracket">(</span><span class="number">30</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 0.5</span></code></pre></div>
+                    
+                    <p><strong>常用三角函数：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 基本三角函数</span>
+<span class="property">Math</span>.<span class="function">sin</span><span class="bracket">(</span>x<span class="bracket">)</span>;    <span class="comment">// 正弦</span>
+<span class="property">Math</span>.<span class="function">cos</span><span class="bracket">(</span>x<span class="bracket">)</span>;    <span class="comment">// 余弦</span>
+<span class="property">Math</span>.<span class="function">tan</span><span class="bracket">(</span>x<span class="bracket">)</span>;    <span class="comment">// 正切</span>
+
+<span class="comment">// 反三角函数</span>
+<span class="property">Math</span>.<span class="function">asin</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 反正弦（返回弧度）</span>
+<span class="property">Math</span>.<span class="function">acos</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 反余弦</span>
+<span class="property">Math</span>.<span class="function">atan</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 反正切</span>
+<span class="property">Math</span>.<span class="function">atan2</span><span class="bracket">(</span>y, x<span class="bracket">)</span>;  <span class="comment">// 返回(x,y)到原点的角度</span>
+
+<span class="comment">// 双曲函数（ES6）</span>
+<span class="property">Math</span>.<span class="function">sinh</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 双曲正弦</span>
+<span class="property">Math</span>.<span class="function">cosh</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 双曲余弦</span>
+<span class="property">Math</span>.<span class="function">tanh</span><span class="bracket">(</span>x<span class="bracket">)</span>;   <span class="comment">// 双曲正切</span></code></pre></div>
+                    
+                    <p><strong>实战应用：圆周运动</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 计算圆上点的坐标</span>
+<span class="keyword">function</span> <span class="function">getPointOnCircle</span><span class="bracket">(</span>centerX, centerY, radius, angleDeg<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> angleRad <span class="operator">=</span> angleDeg <span class="operator">*</span> <span class="property">Math</span>.<span class="property">PI</span> <span class="operator">/</span> <span class="number">180</span>;
+    <span class="keyword">return</span> <span class="bracket">{</span>
+        x<span class="operator">:</span> centerX <span class="operator">+</span> radius <span class="operator">*</span> <span class="property">Math</span>.<span class="function">cos</span><span class="bracket">(</span>angleRad<span class="bracket">)</span>,
+        y<span class="operator">:</span> centerY <span class="operator">+</span> radius <span class="operator">*</span> <span class="property">Math</span>.<span class="function">sin</span><span class="bracket">(</span>angleRad<span class="bracket">)</span>
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 计算两点间角度</span>
+<span class="keyword">function</span> <span class="function">getAngle</span><span class="bracket">(</span>x1, y1, x2, y2<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> rad <span class="operator">=</span> <span class="property">Math</span>.<span class="function">atan2</span><span class="bracket">(</span>y2 <span class="operator">-</span> y1, x2 <span class="operator">-</span> x1<span class="bracket">)</span>;
+    <span class="keyword">return</span> rad <span class="operator">*</span> <span class="number">180</span> <span class="operator">/</span> <span class="property">Math</span>.<span class="property">PI</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Math对象</span>
+            </div>
+        </div>
+
+        <!-- Q10: 性能优化 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合应用</span>
+            </div>
+            
+            <div class="question">Q10: 实现一个高性能的倒计时功能，需要注意什么？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用setInterval可能有累积误差
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 应该基于时间戳而不是计数
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 页面不可见时暂停计时节省性能
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 以上都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>高性能倒计时实现：</h4>
+                    
+                    <p><strong>❌ 错误方式：基于计数</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> seconds <span class="operator">=</span> <span class="number">60</span>;
+<span class="function">setInterval</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    seconds<span class="operator">--</span>;
+    <span class="function">display</span><span class="bracket">(</span>seconds<span class="bracket">)</span>;
+<span class="bracket">}</span>, <span class="number">1000</span><span class="bracket">)</span>;
+<span class="comment">// 问题：setInterval不精确，会累积误差</span></code></pre></div>
+                    
+                    <p><strong>✅ 正确方式：基于时间戳</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">Countdown</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span>endTime, onTick<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="property">endTime</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span>endTime<span class="bracket">)</span>.<span class="function">getTime</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">this</span>.<span class="property">onTick</span> <span class="operator">=</span> onTick;
+        <span class="keyword">this</span>.<span class="property">timer</span> <span class="operator">=</span> <span class="keyword">null</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">start</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="function">update</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">this</span>.<span class="property">timer</span> <span class="operator">=</span> <span class="function">setInterval</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">this</span>.<span class="function">update</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="number">1000</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">update</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> now <span class="operator">=</span> <span class="function">Date</span>.<span class="function">now</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> diff <span class="operator">=</span> <span class="property">Math</span>.<span class="function">max</span><span class="bracket">(</span><span class="number">0</span>, <span class="keyword">this</span>.<span class="property">endTime</span> <span class="operator">-</span> now<span class="bracket">)</span>;
+        
+        <span class="keyword">if</span> <span class="bracket">(</span>diff <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">this</span>.<span class="function">stop</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+        
+        <span class="keyword">const</span> days <span class="operator">=</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span>diff <span class="operator">/</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">24</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> hours <span class="operator">=</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="bracket">(</span>diff <span class="operator">%</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">24</span><span class="bracket">)</span><span class="bracket">)</span> <span class="operator">/</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">60</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> minutes <span class="operator">=</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="bracket">(</span>diff <span class="operator">%</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span> <span class="operator">*</span> <span class="number">60</span><span class="bracket">)</span><span class="bracket">)</span> <span class="operator">/</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> seconds <span class="operator">=</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span><span class="bracket">(</span>diff <span class="operator">%</span> <span class="bracket">(</span><span class="number">1000</span> <span class="operator">*</span> <span class="number">60</span><span class="bracket">)</span><span class="bracket">)</span> <span class="operator">/</span> <span class="number">1000</span><span class="bracket">)</span>;
+        
+        <span class="keyword">this</span>.<span class="function">onTick</span><span class="bracket">(</span><span class="bracket">{</span> days, hours, minutes, seconds <span class="bracket">}</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">stop</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="function">clearInterval</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">timer</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 使用</span>
+<span class="keyword">const</span> countdown <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Countdown</span><span class="bracket">(</span><span class="string">'2024-12-31 23:59:59'</span>, <span class="bracket">(</span>time<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`${time.days}天 ${time.hours}:${time.minutes}:${time.seconds}`</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+countdown.<span class="function">start</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>性能优化：Page Visibility API</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 页面不可见时暂停，可见时恢复</span>
+document.<span class="function">addEventListener</span><span class="bracket">(</span><span class="string">'visibilitychange'</span>, <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>document.<span class="property">hidden</span><span class="bracket">)</span> <span class="bracket">{</span>
+        countdown.<span class="function">stop</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">else</span> <span class="bracket">{</span>
+        countdown.<span class="function">start</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>其他应用场景：</strong></p>
+                    <ul>
+                        <li>秒杀活动倒计时</li>
+                        <li>考试时间倒计时</li>
+                        <li>视频播放进度</li>
+                        <li>动画帧计算</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：综合应用</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="07-regex.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：正则表达式</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            
+            if (!selectedOption) {
+                alert('请先选择一个答案！');
+                return;
+            }
+            
+            const userAnswer = selectedOption.getAttribute('data-answer');
+            const allOptions = quizItem.querySelectorAll('.option');
+            
+            allOptions.forEach(option => {
+                option.style.pointerEvents = 'none';
+                if (option.getAttribute('data-answer') === correctAnswer) {
+                    option.classList.add('correct');
+                } else if (option === selectedOption && userAnswer !== correctAnswer) {
+                    option.classList.add('wrong');
+                }
+            });
+            
+            if (userAnswer === correctAnswer) {
+                setTimeout(() => alert('🎉 回答正确！'), 100);
+            } else {
+                setTimeout(() => alert('❌ 回答错误，正确答案已标注为绿色'), 100);
+            }
+        }
+        
+        function showAnswer(questionNum) {
+            const answerSection = document.getElementById(`answer-${questionNum}`);
+            answerSection.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>

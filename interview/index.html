@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 面试题精选 - 导航</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .chapter-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .chapter-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .chapter-number {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chapter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chapter-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        
+        .difficulty {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← 返回学习首页</a>
+        
+        <div class="header">
+            <h1>📝 JavaScript 面试题精选</h1>
+            <p>系统化掌握前端面试核心考点</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">27</div>
+                    <div>章节</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">270</div>
+                    <div>题目</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="font-size: 1.2rem;">持续更新中</div>
+                    <div>状态</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 基础篇 -->
+        <div class="section">
+            <h2 class="section-title">📚 1. JavaScript 基础与语法</h2>
+            <div class="chapter-grid">
+                <a href="basics/01-intro.html" class="chapter-card">
+                    <div class="chapter-number">第1节</div>
+                    <div class="chapter-title">JavaScript 简介与发展史</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 4题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 1题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/01-variables.html" class="chapter-card">
+                    <div class="chapter-number">第2节</div>
+                    <div class="chapter-title">变量声明与作用域</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/01-datatypes.html" class="chapter-card">
+                    <div class="chapter-number">第3节</div>
+                    <div class="chapter-title">数据类型详解</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 4题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/01-type-conversion.html" class="chapter-card">
+                    <div class="chapter-number">第4节</div>
+                    <div class="chapter-title">类型转换与判断</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/02-operators.html" class="chapter-card">
+                    <div class="chapter-number">第5节</div>
+                    <div class="chapter-title">运算符完全指南</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/02-expressions.html" class="chapter-card">
+                    <div class="chapter-number">第6节</div>
+                    <div class="chapter-title">表达式与语句</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/03-conditionals.html" class="chapter-card">
+                    <div class="chapter-number">第7节</div>
+                    <div class="chapter-title">条件判断</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/03-loops.html" class="chapter-card">
+                    <div class="chapter-number">第8节</div>
+                    <div class="chapter-title">循环结构</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/03-error-handling.html" class="chapter-card">
+                    <div class="chapter-number">第9节</div>
+                    <div class="chapter-title">错误处理机制</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/04-function-basics.html" class="chapter-card">
+                    <div class="chapter-number">第10节</div>
+                    <div class="chapter-title">函数基础</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/04-scope.html" class="chapter-card">
+                    <div class="chapter-number">第11节</div>
+                    <div class="chapter-title">作用域与作用域链</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/04-closure.html" class="chapter-card">
+                    <div class="chapter-number">第12节</div>
+                    <div class="chapter-title">闭包</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/04-this.html" class="chapter-card">
+                    <div class="chapter-number">第13节</div>
+                    <div class="chapter-title">this指向</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/04-call-apply-bind.html" class="chapter-card">
+                    <div class="chapter-number">第14节</div>
+                    <div class="chapter-title">call/apply/bind</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/05-object-basics.html" class="chapter-card">
+                    <div class="chapter-number">第15节</div>
+                    <div class="chapter-title">对象基础</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/05-prototype.html" class="chapter-card">
+                    <div class="chapter-number">第16节</div>
+                    <div class="chapter-title">原型与原型链</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/05-inheritance.html" class="chapter-card">
+                    <div class="chapter-number">第17节</div>
+                    <div class="chapter-title">继承方式</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/05-constructor-new.html" class="chapter-card">
+                    <div class="chapter-number">第18节</div>
+                    <div class="chapter-title">构造函数与new</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 4题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/05-arrays.html" class="chapter-card">
+                    <div class="chapter-number">第19节</div>
+                    <div class="chapter-title">数组方法</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/06-array-advanced.html" class="chapter-card">
+                    <div class="chapter-number">第20节</div>
+                    <div class="chapter-title">数组进阶</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/06-typed-array.html" class="chapter-card">
+                    <div class="chapter-number">第21节</div>
+                    <div class="chapter-title">类型数组</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/07-strings.html" class="chapter-card">
+                    <div class="chapter-number">第22节</div>
+                    <div class="chapter-title">字符串操作</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 4题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 2题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/07-regex.html" class="chapter-card">
+                    <div class="chapter-number">第23节</div>
+                    <div class="chapter-title">正则表达式</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="basics/08-math-date.html" class="chapter-card">
+                    <div class="chapter-number">第24节</div>
+                    <div class="chapter-title">Math与Date对象</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <!-- 继续添加其他章节... -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #718096;">
+                    <p>更多章节面试题正在陆续添加...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 进阶篇 -->
+        <div class="section">
+            <h2 class="section-title">🚀 2. JavaScript 进阶特性</h2>
+            <div class="chapter-grid">
+                <a href="advanced/09-promises.html" class="chapter-card">
+                    <div class="chapter-number">第25节</div>
+                    <div class="chapter-title">Promise 详解</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="advanced/09-async-await.html" class="chapter-card">
+                    <div class="chapter-number">第26节</div>
+                    <div class="chapter-title">async/await 语法</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 4题</span>
+                        <span class="difficulty">🔴 3题</span>
+                    </div>
+                </a>
+                
+                <a href="advanced/09-event-loop.html" class="chapter-card">
+                    <div class="chapter-number">第27节</div>
+                    <div class="chapter-title">事件循环机制</div>
+                    <div class="chapter-info">
+                        <span class="difficulty">🟢 3题</span>
+                        <span class="difficulty">🟡 3题</span>
+                        <span class="difficulty">🔴 4题</span>
+                    </div>
+                </a>
+                
+                <!-- 继续添加其他章节... -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #718096;">
+                    <p>更多进阶篇章节正在陆续添加...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 深入原理篇预告 -->
+        <div class="section" style="opacity: 0.6;">
+            <h2 class="section-title">⚡ 3. JavaScript 深入原理（即将开放）</h2>
+            <p style="color: #718096;">包含执行上下文、事件循环、元编程、性能优化等42个章节</p>
+        </div>
+    </div>
+</body>
+</html>

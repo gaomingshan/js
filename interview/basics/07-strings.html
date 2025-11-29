@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串操作 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/07-strings.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 字符串操作 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 4题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 2题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: 字符串不可变性 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">字符串特性</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> str <span class="operator">=</span> <span class="string">'hello'</span>;
+str<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span> <span class="operator">=</span> <span class="string">'H'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'hello'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Hello'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 报错
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>字符串不可变性：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>JavaScript 中字符串是<strong>不可变的</strong>（immutable）</li>
+                        <li>通过索引赋值不会改变字符串，也不会报错（静默失败）</li>
+                        <li>严格模式下会抛出 TypeError</li>
+                    </ul>
+                    
+                    <p><strong>正确的修改方式：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> str <span class="operator">=</span> <span class="string">'hello'</span>;
+
+<span class="comment">// 方法1：重新赋值</span>
+str <span class="operator">=</span> <span class="string">'H'</span> <span class="operator">+</span> str.<span class="function">slice</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// 'Hello'</span>
+
+<span class="comment">// 方法2：转为数组操作</span>
+<span class="keyword">let</span> arr <span class="operator">=</span> str.<span class="function">split</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;
+arr<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span> <span class="operator">=</span> <span class="string">'H'</span>;
+str <span class="operator">=</span> arr.<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;  <span class="comment">// 'Hello'</span>
+
+<span class="comment">// 方法3：使用replace</span>
+str <span class="operator">=</span> str.<span class="function">replace</span><span class="bracket">(</span><span class="string">'h'</span>, <span class="string">'H'</span><span class="bracket">)</span>;  <span class="comment">// 'Hello'</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串特性</span>
+            </div>
+        </div>
+
+        <!-- Q2: slice vs substring vs substr -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">字符串提取</span>
+            </div>
+            
+            <div class="question">Q2: slice()、substring()、substr() 的区别是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'Hello World'</span>;
+
+str.<span class="function">slice</span><span class="bracket">(</span><span class="number">6</span>, <span class="number">11</span><span class="bracket">)</span>;      <span class="comment">// ?</span>
+str.<span class="function">substring</span><span class="bracket">(</span><span class="number">6</span>, <span class="number">11</span><span class="bracket">)</span>;  <span class="comment">// ?</span>
+str.<span class="function">substr</span><span class="bracket">(</span><span class="number">6</span>, <span class="number">5</span><span class="bracket">)</span>;       <span class="comment">// ?</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 三者都返回 'World'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> slice和substring相同，substr不同
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> substr已废弃，不应使用
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> A和C都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>字符串提取方法对比：</h4>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                        <thead>
+                            <tr style="background: #f7fafc;">
+                                <th style="padding: 0.75rem; border: 1px solid #e2e8f0;">方法</th>
+                                <th style="padding: 0.75rem; border: 1px solid #e2e8f0;">参数</th>
+                                <th style="padding: 0.75rem; border: 1px solid #e2e8f0;">负数</th>
+                                <th style="padding: 0.75rem; border: 1px solid #e2e8f0;">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><code>slice(start, end)</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">开始、结束索引</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">✅ 支持</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">✅ 推荐</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><code>substring(start, end)</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">开始、结束索引</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">❌ 当作0</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">✅ 可用</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><code>substr(start, length)</code></td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">开始索引、长度</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">✅ 支持</td>
+                                <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">⚠️ 已废弃</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <p><strong>示例对比：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'Hello World'</span>;
+
+<span class="comment">// 负数处理</span>
+str.<span class="function">slice</span><span class="bracket">(</span><span class="operator">-</span><span class="number">5</span><span class="bracket">)</span>;         <span class="comment">// 'World'（从倒数第5个开始）</span>
+str.<span class="function">substring</span><span class="bracket">(</span><span class="operator">-</span><span class="number">5</span><span class="bracket">)</span>;     <span class="comment">// 'Hello World'（-5当作0）</span>
+str.<span class="function">substr</span><span class="bracket">(</span><span class="operator">-</span><span class="number">5</span>, <span class="number">5</span><span class="bracket">)</span>;    <span class="comment">// 'World'</span>
+
+<span class="comment">// 参数交换</span>
+str.<span class="function">slice</span><span class="bracket">(</span><span class="number">6</span>, <span class="number">2</span><span class="bracket">)</span>;         <span class="comment">// ''（不交换，返回空）</span>
+str.<span class="function">substring</span><span class="bracket">(</span><span class="number">6</span>, <span class="number">2</span><span class="bracket">)</span>;     <span class="comment">// 'llo '（自动交换为(2,6)）</span></code></pre></div>
+                    
+                    <p><strong>推荐：</strong>使用 <code>slice()</code>，功能强大且统一</p>
+                </div>
+                <span class="source-tag">📌 来源：字符串提取</span>
+            </div>
+        </div>
+
+        <!-- Q3: indexOf vs includes -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">字符串搜索</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'Hello World'</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">indexOf</span><span class="bracket">(</span><span class="string">'o'</span><span class="bracket">)</span> <span class="operator">!==</span> <span class="operator">-</span><span class="number">1</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">includes</span><span class="bracket">(</span><span class="string">'o'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, false
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> false, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> includes更简洁易读
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A（但D也正确）</div>
+                <div class="explanation">
+                    <h4>indexOf vs includes：</h4>
+                    
+                    <p><strong>indexOf()：</strong></p>
+                    <ul>
+                        <li>返回首次出现的索引位置</li>
+                        <li>未找到返回 -1</li>
+                        <li>需要转换为布尔值：<code>indexOf(x) !== -1</code></li>
+                    </ul>
+                    
+                    <p><strong>includes()（ES2015）：</strong></p>
+                    <ul>
+                        <li>直接返回布尔值</li>
+                        <li>语义更清晰</li>
+                        <li>可以检测 NaN（数组中）</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'Hello World'</span>;
+
+<span class="comment">// 检查是否存在</span>
+<span class="keyword">if</span> <span class="bracket">(</span>str.<span class="function">includes</span><span class="bracket">(</span><span class="string">'World'</span><span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>  <span class="comment">// ✅ 推荐</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'找到了'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 获取位置</span>
+<span class="keyword">const</span> index <span class="operator">=</span> str.<span class="function">indexOf</span><span class="bracket">(</span><span class="string">'World'</span><span class="bracket">)</span>;  <span class="comment">// ✅ 需要位置时用indexOf</span>
+<span class="keyword">if</span> <span class="bracket">(</span>index <span class="operator">!==</span> <span class="operator">-</span><span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`位置: ${index}`</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 其他搜索方法</span>
+str.<span class="function">startsWith</span><span class="bracket">(</span><span class="string">'Hello'</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+str.<span class="function">endsWith</span><span class="bracket">(</span><span class="string">'World'</span><span class="bracket">)</span>;    <span class="comment">// true</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串搜索</span>
+            </div>
+        </div>
+
+        <!-- Q4: 模板字符串 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">模板字符串</span>
+            </div>
+            
+            <div class="question">Q4: 模板字符串的特性有哪些？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 可以嵌入表达式
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 支持多行字符串
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 可以调用函数（标签模板）
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 以上都对
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>模板字符串的强大功能：</h4>
+                    
+                    <p><strong>1. 嵌入表达式：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> name <span class="operator">=</span> <span class="string">'Alice'</span>;
+<span class="keyword">const</span> age <span class="operator">=</span> <span class="number">25</span>;
+<span class="keyword">const</span> message <span class="operator">=</span> <span class="string">`我是${name}，今年${age}岁`</span>;
+
+<span class="comment">// 可以使用任意表达式</span>
+<span class="keyword">const</span> result <span class="operator">=</span> <span class="string">`1 + 1 = ${<span class="number">1</span> <span class="operator">+</span> <span class="number">1</span>}`</span>;  <span class="comment">// '1 + 1 = 2'</span></code></pre></div>
+                    
+                    <p><strong>2. 多行字符串：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> html <span class="operator">=</span> <span class="string">`
+  &lt;div&gt;
+    &lt;h1&gt;标题&lt;/h1&gt;
+    &lt;p&gt;内容&lt;/p&gt;
+  &lt;/div&gt;
+`</span>;</code></pre></div>
+                    
+                    <p><strong>3. 标签模板（Tagged Templates）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">highlight</span><span class="bracket">(</span>strings, ...values<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> strings.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>result, str, i<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">return</span> result <span class="operator">+</span> str <span class="operator">+</span> <span class="bracket">(</span>values<span class="bracket">[</span>i<span class="bracket">]</span> <span class="operator">?</span> <span class="string">`&lt;b&gt;${values[i]}&lt;/b&gt;`</span> <span class="operator">:</span> <span class="string">''</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>, <span class="string">''</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> name <span class="operator">=</span> <span class="string">'Alice'</span>;
+<span class="keyword">const</span> result <span class="operator">=</span> highlight<span class="string">`Hello ${name}!`</span>;
+<span class="comment">// 'Hello &lt;b&gt;Alice&lt;/b&gt;!'</span></code></pre></div>
+                    
+                    <p><strong>4. 原始字符串（String.raw）：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">String</span>.<span class="function">raw</span><span class="string">`C:\new\folder`</span>;  <span class="comment">// 'C:\new\folder'（不转义）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：模板字符串</span>
+            </div>
+        </div>
+
+        <!-- Q5: trim系列方法 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">字符串处理</span>
+            </div>
+            
+            <div class="question">Q5: 以下哪个方法可以只去除字符串开头的空格？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> trim()
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> trimStart() / trimLeft()
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> trimEnd() / trimRight()
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> replace(/^\s+/, '')
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(5, ['B', 'D'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：B 和 D</div>
+                <div class="explanation">
+                    <h4>字符串空格处理：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'  Hello World  '</span>;
+
+<span class="comment">// ES5</span>
+str.<span class="function">trim</span><span class="bracket">(</span><span class="bracket">)</span>;            <span class="comment">// 'Hello World'（去除两端）</span>
+
+<span class="comment">// ES2019</span>
+str.<span class="function">trimStart</span><span class="bracket">(</span><span class="bracket">)</span>;       <span class="comment">// 'Hello World  '（去除开头）</span>
+str.<span class="function">trimLeft</span><span class="bracket">(</span><span class="bracket">)</span>;        <span class="comment">// 同trimStart（别名）</span>
+str.<span class="function">trimEnd</span><span class="bracket">(</span><span class="bracket">)</span>;         <span class="comment">// '  Hello World'（去除结尾）</span>
+str.<span class="function">trimRight</span><span class="bracket">(</span><span class="bracket">)</span>;       <span class="comment">// 同trimEnd（别名）</span>
+
+<span class="comment">// 正则方式</span>
+str.<span class="function">replace</span><span class="bracket">(</span><span class="operator">/</span><span class="operator">^</span>\s<span class="operator">+</span><span class="operator">/</span>, <span class="string">''</span><span class="bracket">)</span>;   <span class="comment">// 去除开头空格</span>
+str.<span class="function">replace</span><span class="bracket">(</span><span class="operator">/</span>\s<span class="operator">+</span><span class="operator">$</span><span class="operator">/</span>, <span class="string">''</span><span class="bracket">)</span>;   <span class="comment">// 去除结尾空格</span>
+str.<span class="function">replace</span><span class="bracket">(</span><span class="operator">/</span><span class="operator">^</span>\s<span class="operator">+</span><span class="operator">|</span>\s<span class="operator">+</span><span class="operator">$</span><span class="operator">/</span>g, <span class="string">''</span><span class="bracket">)</span>;  <span class="comment">// 去除两端</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串处理</span>
+            </div>
+        </div>
+
+        <!-- Q6: padStart/padEnd -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">字符串填充</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'5'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">padStart</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">padEnd</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> '005', '500'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> '0005', '5000'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> '00005', '50000'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> '5', '5'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>padStart / padEnd（ES2017）：</h4>
+                    
+                    <p><strong>语法：</strong></p>
+                    <ul>
+                        <li><code>str.padStart(targetLength, padString)</code></li>
+                        <li><code>str.padEnd(targetLength, padString)</code></li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 数字补零</span>
+<span class="string">'5'</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span>;     <span class="comment">// '005'</span>
+<span class="string">'12'</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span>;    <span class="comment">// '012'</span>
+<span class="string">'123'</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span>;   <span class="comment">// '123'（已达到长度）</span>
+<span class="string">'1234'</span>.<span class="function">padStart</span><span class="bracket">(</span><span class="number">3</span>, <span class="string">'0'</span><span class="bracket">)</span>;  <span class="comment">// '1234'（超出不截断）</span>
+
+<span class="comment">// 时间格式化</span>
+<span class="keyword">const</span> hours <span class="operator">=</span> <span class="number">9</span>;
+<span class="keyword">const</span> minutes <span class="operator">=</span> <span class="number">5</span>;
+<span class="keyword">const</span> time <span class="operator">=</span> <span class="string">`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`</span>;
+<span class="comment">// '09:05'</span>
+
+<span class="comment">// 对齐显示</span>
+<span class="keyword">const</span> items <span class="operator">=</span> <span class="bracket">[</span><span class="string">'Apple'</span>, <span class="string">'Banana'</span>, <span class="string">'Pear'</span><span class="bracket">]</span>;
+items.<span class="function">forEach</span><span class="bracket">(</span>item <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>item.<span class="function">padEnd</span><span class="bracket">(</span><span class="number">10</span>, <span class="string">'.'</span><span class="bracket">)</span> <span class="operator">+</span> <span class="string">'$10'</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+<span class="comment">// Apple.....$10</span>
+<span class="comment">// Banana.....$10</span>
+<span class="comment">// Pear......$10</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串填充</span>
+            </div>
+        </div>
+
+        <!-- Q7: repeat -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">字符串重复</span>
+            </div>
+            
+            <div class="question">Q7: 如何快速创建重复字符串？</div>
+            
+            <div class="code-question"><pre><code><span class="comment">// 生成10个星号</span>
+<span class="keyword">const</span> stars <span class="operator">=</span> <span class="operator">?</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> '*'.repeat(10)
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> Array(10).fill('*').join('')
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> Array(11).join('*')
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> A和C都可以
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>字符串重复的多种方式：</h4>
+                    
+                    <p><strong>方法1：repeat()（推荐）</strong></p>
+                    <div class="code-question"><pre><code><span class="string">'*'</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">10</span><span class="bracket">)</span>;         <span class="comment">// '**********'</span>
+<span class="string">'abc'</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;       <span class="comment">// 'abcabcabc'</span>
+<span class="string">'hello'</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">0</span><span class="bracket">)</span>;     <span class="comment">// ''（空字符串）</span>
+<span class="comment">// 'hello'.repeat(-1);  // RangeError</span>
+<span class="comment">// 'hello'.repeat(Infinity); // RangeError</span></code></pre></div>
+                    
+                    <p><strong>方法2：Array.join()技巧</strong></p>
+                    <div class="code-question"><pre><code><span class="function">Array</span><span class="bracket">(</span><span class="number">11</span><span class="bracket">)</span>.<span class="function">join</span><span class="bracket">(</span><span class="string">'*'</span><span class="bracket">)</span>;  <span class="comment">// '**********'（10个）</span>
+<span class="comment">// 为什么是11？因为join在元素之间插入，n+1个元素产生n个分隔符</span></code></pre></div>
+                    
+                    <p><strong>方法3：Array.fill()</strong></p>
+                    <div class="code-question"><pre><code><span class="function">Array</span><span class="bracket">(</span><span class="number">10</span><span class="bracket">)</span>.<span class="function">fill</span><span class="bracket">(</span><span class="string">'*'</span><span class="bracket">)</span>.<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;  <span class="comment">// '**********'</span></code></pre></div>
+                    
+                    <p><strong>应用场景：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 创建分割线</span>
+<span class="keyword">const</span> divider <span class="operator">=</span> <span class="string">'-'</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">50</span><span class="bracket">)</span>;
+
+<span class="comment">// 缩进</span>
+<span class="keyword">const</span> indent <span class="operator">=</span> <span class="string">' '</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;
+
+<span class="comment">// 进度条</span>
+<span class="keyword">const</span> progress <span class="operator">=</span> <span class="bracket">(</span>percent<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">const</span> filled <span class="operator">=</span> <span class="string">'█'</span>.<span class="function">repeat</span><span class="bracket">(</span>percent <span class="operator">/</span> <span class="number">2</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> empty <span class="operator">=</span> <span class="string">'░'</span>.<span class="function">repeat</span><span class="bracket">(</span><span class="number">50</span> <span class="operator">-</span> percent <span class="operator">/</span> <span class="number">2</span><span class="bracket">)</span>;
+    <span class="keyword">return</span> <span class="string">`${filled}${empty} ${percent}%`</span>;
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串重复</span>
+            </div>
+        </div>
+
+        <!-- Q8: split -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">字符串分割</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'a-b-c'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">split</span><span class="bracket">(</span><span class="string">'-'</span>, <span class="number">2</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str.<span class="function">split</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>.<span class="property">length</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> ['a', 'b'], 5
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> ['a', 'b', 'c'], 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> ['a-b'], 5
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> ['a', 'b'], 3
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>split() 详解：</h4>
+                    
+                    <p><strong>语法：</strong><code>str.split(separator, limit)</code></p>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'a-b-c-d'</span>;
+
+<span class="comment">// 基本分割</span>
+str.<span class="function">split</span><span class="bracket">(</span><span class="string">'-'</span><span class="bracket">)</span>;           <span class="comment">// ['a', 'b', 'c', 'd']</span>
+
+<span class="comment">// 限制数量</span>
+str.<span class="function">split</span><span class="bracket">(</span><span class="string">'-'</span>, <span class="number">2</span><span class="bracket">)</span>;        <span class="comment">// ['a', 'b']（只返回前2个）</span>
+
+<span class="comment">// 空字符串分割</span>
+<span class="string">'abc'</span>.<span class="function">split</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;        <span class="comment">// ['a', 'b', 'c']（每个字符）</span>
+
+<span class="comment">// 不传参数</span>
+str.<span class="function">split</span><span class="bracket">(</span><span class="bracket">)</span>;              <span class="comment">// ['a-b-c-d']（整个字符串）</span>
+
+<span class="comment">// 正则分割</span>
+<span class="string">'a1b2c3'</span>.<span class="function">split</span><span class="bracket">(</span><span class="operator">/</span>\d<span class="operator">/</span><span class="bracket">)</span>;   <span class="comment">// ['a', 'b', 'c', '']</span>
+
+<span class="comment">// 保留分隔符（使用捕获组）</span>
+<span class="string">'a1b2c'</span>.<span class="function">split</span><span class="bracket">(</span><span class="operator">/</span><span class="bracket">(</span>\d<span class="bracket">)</span><span class="operator">/</span><span class="bracket">)</span>;  <span class="comment">// ['a', '1', 'b', '2', 'c']</span></code></pre></div>
+                    
+                    <p><strong>常见应用：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// CSV解析</span>
+<span class="keyword">const</span> csv <span class="operator">=</span> <span class="string">'name,age,city'</span>;
+<span class="keyword">const</span> fields <span class="operator">=</span> csv.<span class="function">split</span><span class="bracket">(</span><span class="string">','</span><span class="bracket">)</span>;
+
+<span class="comment">// URL参数解析</span>
+<span class="keyword">const</span> query <span class="operator">=</span> <span class="string">'name=Alice&age=25'</span>;
+<span class="keyword">const</span> params <span class="operator">=</span> query.<span class="function">split</span><span class="bracket">(</span><span class="string">'&'</span><span class="bracket">)</span>.<span class="function">map</span><span class="bracket">(</span>p <span class="operator">=></span> p.<span class="function">split</span><span class="bracket">(</span><span class="string">'='</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：字符串分割</span>
+            </div>
+        </div>
+
+        <!-- Q9: 字符串性能 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">性能优化</span>
+            </div>
+            
+            <div class="question">Q9: 大量字符串拼接时，哪种方式性能最好？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用 + 运算符
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 使用 concat()
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 使用数组join()
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 现代引擎中A和C性能相当
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>字符串拼接性能对比：</h4>
+                    
+                    <p><strong>历史背景：</strong></p>
+                    <ul>
+                        <li>早期JS引擎：<code>+</code> 运算符会创建大量临时字符串</li>
+                        <li>推荐使用数组join()避免性能问题</li>
+                        <li>现代引擎（V8等）：优化了字符串拼接，性能差距缩小</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 方式1：+ 运算符（现代引擎优化后也很快）</span>
+<span class="keyword">let</span> result <span class="operator">=</span> <span class="string">''</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    result <span class="operator">+=</span> <span class="string">'a'</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 方式2：数组join()（老引擎推荐）</span>
+<span class="keyword">const</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="bracket">]</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    arr.<span class="function">push</span><span class="bracket">(</span><span class="string">'a'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> result <span class="operator">=</span> arr.<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;
+
+<span class="comment">// 方式3：模板字符串</span>
+<span class="keyword">let</span> result <span class="operator">=</span> <span class="string">''</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    result <span class="operator">=</span> <span class="string">`${result}a`</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>最佳实践：</strong></p>
+                    <ul>
+                        <li><strong>少量拼接</strong>：直接用 <code>+</code> 或模板字符串，简洁易读</li>
+                        <li><strong>大量拼接</strong>：现代浏览器中差距不大，选择最清晰的方式</li>
+                        <li><strong>需要兼容老浏览器</strong>：考虑使用数组join()</li>
+                        <li><strong>固定次数重复</strong>：使用 <code>repeat()</code></li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <!-- Q10: Unicode和Emoji -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">Unicode</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> emoji <span class="operator">=</span> <span class="string">'😀'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>emoji.<span class="property">length</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="bracket">[</span>...emoji<span class="bracket">]</span>.<span class="property">length</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>emoji<span class="bracket">)</span>.<span class="property">length</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 2, 1, 1
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1, 1, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 2, 2, 2
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1, 2, 2
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>JavaScript中的Unicode问题：</h4>
+                    
+                    <p><strong>问题根源：</strong></p>
+                    <ul>
+                        <li>JavaScript使用<strong>UTF-16编码</strong></li>
+                        <li>基本多文种平面（BMP）字符：1个码元（16位）</li>
+                        <li>补充平面字符（如Emoji）：2个码元（代理对）</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">const</span> emoji <span class="operator">=</span> <span class="string">'😀'</span>;
+
+<span class="comment">// length统计码元数量，不是字符数</span>
+emoji.<span class="property">length</span>;  <span class="comment">// 2（2个码元）</span>
+
+<span class="comment">// 正确获取字符数的方法</span>
+<span class="bracket">[</span>...emoji<span class="bracket">]</span>.<span class="property">length</span>;           <span class="comment">// 1</span>
+<span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>emoji<span class="bracket">)</span>.<span class="property">length</span>;   <span class="comment">// 1</span>
+
+<span class="comment">// Unicode码点</span>
+emoji.<span class="function">codePointAt</span><span class="bracket">(</span><span class="number">0</span><span class="bracket">)</span>;       <span class="comment">// 128512</span>
+emoji.<span class="function">charCodeAt</span><span class="bracket">(</span><span class="number">0</span><span class="bracket">)</span>;        <span class="comment">// 55357（代理对前半部分）</span>
+
+<span class="comment">// 字符串遍历</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">const</span> char <span class="keyword">of</span> <span class="string">'😀🎉'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>char<span class="bracket">)</span>;  <span class="comment">// 正确：😀 🎉</span>
+<span class="bracket">}</span>
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="string">'😀🎉'</span>.<span class="property">length</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'😀🎉'</span><span class="bracket">[</span>i<span class="bracket">]</span><span class="bracket">)</span>;  <span class="comment">// 错误：显示乱码</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>实用函数：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 获取真实字符长度</span>
+<span class="keyword">function</span> <span class="function">getCharLength</span><span class="bracket">(</span>str<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">[</span>...str<span class="bracket">]</span>.<span class="property">length</span>;
+    <span class="comment">// 或：Array.from(str).length</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 反转包含Emoji的字符串</span>
+<span class="keyword">function</span> <span class="function">reverseString</span><span class="bracket">(</span>str<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">[</span>...str<span class="bracket">]</span>.<span class="function">reverse</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Unicode处理</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="06-typed-array.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：类型数组</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="07-regex.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">下一节：正则表达式 ➡️</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                options.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

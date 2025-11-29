@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>函数基础 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/04-functions.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 函数基础 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: 函数声明 vs 函数表达式 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">函数声明</span>
+                <span class="tag">函数表达式</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ①</span>
+<span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ②</span>
+
+<span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'foo'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">var</span> <span class="function">bar</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'bar'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "foo", "bar"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "foo", TypeError: bar is not a function
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> ReferenceError: foo is not defined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> TypeError: foo is not a function
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>函数声明 vs 函数表达式：</h4>
+                    
+                    <p><strong>函数声明（Function Declaration）</strong></p>
+                    <ul>
+                        <li>会被<strong>提升</strong>（hoisting）</li>
+                        <li>整个函数定义都会提升到作用域顶部</li>
+                        <li>可以在声明前调用 ✅</li>
+                    </ul>
+                    
+                    <p><strong>函数表达式（Function Expression）</strong></p>
+                    <ul>
+                        <li>变量声明会提升，但赋值不提升</li>
+                        <li>调用时变量值为<code>undefined</code></li>
+                        <li>不能在赋值前调用 ❌</li>
+                    </ul>
+                    
+                    <p><strong>执行过程：</strong></p>
+                    <pre>提升后的代码：
+function foo() { console.log('foo'); }  // 整个函数提升
+var bar;  // 只有声明提升
+
+foo();  // ✅ 可以调用，输出 "foo"
+bar();  // ❌ bar是undefined，报错：bar is not a function</pre>
+                    
+                    <h4>对比示例：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 函数声明 - 可以提前调用</span>
+<span class="function">greet</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ✅ "Hello"</span>
+<span class="keyword">function</span> <span class="function">greet</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 函数表达式 - 不能提前调用</span>
+<span class="function">sayHi</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ❌ TypeError</span>
+<span class="keyword">const</span> <span class="function">sayHi</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hi'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：函数声明与提升</span>
+            </div>
+        </div>
+
+        <!-- Q2: 箭头函数 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">箭头函数</span>
+                <span class="tag">this</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="function">func1</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>,
+    <span class="function">func2</span><span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj.<span class="function">func1</span><span class="bracket">(</span><span class="bracket">)</span>;
+obj.<span class="function">func2</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "obj", "obj"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "obj", undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined, undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "obj", ""
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>箭头函数的this绑定：</h4>
+                    
+                    <p><strong>普通函数：</strong></p>
+                    <ul>
+                        <li><code>this</code>由调用方式决定</li>
+                        <li><code>obj.func1()</code>，this指向obj</li>
+                        <li>输出：<code>obj.name</code> = "obj"</li>
+                    </ul>
+                    
+                    <p><strong>箭头函数：</strong></p>
+                    <ul>
+                        <li>没有自己的<code>this</code></li>
+                        <li>继承外层作用域的this</li>
+                        <li>这里外层是全局作用域</li>
+                        <li>全局的<code>this.name</code> = undefined</li>
+                    </ul>
+                    
+                    <h4>箭头函数特点：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 没有自己的this</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">value</span><span class="operator">:</span> <span class="number">42</span>,
+    <span class="function">method</span><span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">value</span>;  <span class="comment">// this不是obj</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 2. 不能作为构造函数</span>
+<span class="keyword">const</span> <span class="function">Func</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">new</span> <span class="function">Func</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ❌ TypeError</span>
+
+<span class="comment">// 3. 没有arguments对象</span>
+<span class="keyword">const</span> <span class="function">func</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arguments<span class="bracket">)</span>;  <span class="comment">// ❌ ReferenceError</span></code></pre></div>
+                    
+                    <h4>使用场景：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// ✅ 适合：回调函数</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>;
+
+<span class="comment">// ❌ 不适合：对象方法</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">value</span><span class="operator">:</span> <span class="number">1</span>,
+    <span class="function">method</span><span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">this</span>.<span class="property">value</span>  <span class="comment">// this不对</span>
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：箭头函数this</span>
+            </div>
+        </div>
+
+        <!-- Q3: 函数参数 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">参数</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span>a <span class="operator">=</span> <span class="number">1</span>, b<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>a, b<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">test</span><span class="bracket">(</span><span class="keyword">undefined</span>, <span class="number">2</span><span class="bracket">)</span>;
+<span class="function">test</span><span class="bracket">(</span><span class="keyword">null</span>, <span class="number">3</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1 2, 1 3
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1 2, null 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined 2, null 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1 undefined, 1 undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>默认参数触发条件：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>只有传入<code>undefined</code>才会使用默认值</li>
+                        <li><code>null</code>是一个有效的值，不会触发默认值</li>
+                    </ul>
+                    
+                    <p><strong>第一次调用：</strong></p>
+                    <pre>test(undefined, 2)
+a = undefined → 使用默认值 1
+b = 2
+输出：1 2</pre>
+                    
+                    <p><strong>第二次调用：</strong></p>
+                    <pre>test(null, 3)
+a = null → null是有效值，不使用默认值
+b = 3
+输出：null 3</pre>
+                    
+                    <h4>默认参数详解：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span>a <span class="operator">=</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> a;
+<span class="bracket">}</span>
+
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;           <span class="comment">// 1 (没传参)</span>
+<span class="function">test</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>;  <span class="comment">// 1 (undefined触发默认值)</span>
+<span class="function">test</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;       <span class="comment">// null (null不触发)</span>
+<span class="function">test</span><span class="bracket">(</span><span class="number">0</span><span class="bracket">)</span>;          <span class="comment">// 0 (0不触发)</span>
+<span class="function">test</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;         <span class="comment">// '' (空字符串不触发)</span></code></pre></div>
+                    
+                    <h4>默认参数表达式：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 可以使用表达式</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span>a, b <span class="operator">=</span> a <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> b;
+<span class="bracket">}</span>
+<span class="function">test</span><span class="bracket">(</span><span class="number">5</span><span class="bracket">)</span>;  <span class="comment">// 10</span>
+
+<span class="comment">// 可以调用函数</span>
+<span class="keyword">function</span> <span class="function">getDefault</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="number">42</span>; <span class="bracket">}</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span>x <span class="operator">=</span> <span class="function">getDefault</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> x;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：默认参数</span>
+            </div>
+        </div>
+
+        <!-- Q4: arguments vs 剩余参数 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">arguments</span>
+                <span class="tag">剩余参数</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arguments.<span class="property">length</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">typeof</span> arguments<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">test2</span><span class="bracket">(</span>...args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>args.<span class="property">length</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">Array</span>.<span class="function">isArray</span><span class="bracket">(</span>args<span class="bracket">)</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">test1</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">)</span>;
+<span class="function">test2</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 3, "object", 3, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 3, "array", 3, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 3, "object", 3, false
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 0, "undefined", 3, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>arguments vs 剩余参数：</h4>
+                    
+                    <p><strong>arguments对象：</strong></p>
+                    <ul>
+                        <li>类数组对象，不是真正的数组</li>
+                        <li><code>typeof arguments</code> = "object"</li>
+                        <li>有<code>length</code>属性和索引</li>
+                        <li>没有数组方法（map、filter等）</li>
+                    </ul>
+                    
+                    <p><strong>剩余参数（...args）：</strong></p>
+                    <ul>
+                        <li>真正的数组 ✅</li>
+                        <li><code>Array.isArray(args)</code> = true</li>
+                        <li>可以使用所有数组方法</li>
+                        <li>ES6推荐使用</li>
+                    </ul>
+                    
+                    <h4>arguments转数组：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 方法1: Array.from</span>
+    <span class="keyword">const</span> arr1 <span class="operator">=</span> <span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>arguments<span class="bracket">)</span>;
+    
+    <span class="comment">// 方法2: 展开运算符</span>
+    <span class="keyword">const</span> arr2 <span class="operator">=</span> <span class="bracket">[</span>...arguments<span class="bracket">]</span>;
+    
+    <span class="comment">// 方法3: slice.call</span>
+    <span class="keyword">const</span> arr3 <span class="operator">=</span> <span class="function">Array</span>.<span class="property">prototype</span>.<span class="property">slice</span>.<span class="function">call</span><span class="bracket">(</span>arguments<span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <h4>剩余参数使用：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 剩余参数必须是最后一个</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span>first, ...rest<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>first<span class="bracket">)</span>;  <span class="comment">// 1</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>rest<span class="bracket">)</span>;   <span class="comment">// [2, 3, 4]</span>
+    rest.<span class="function">forEach</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// ✅ 可以用数组方法</span>
+<span class="bracket">}</span>
+<span class="function">test</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：arguments对象</span>
+            </div>
+        </div>
+
+        <!-- Q5: IIFE -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">IIFE</span>
+            </div>
+            
+            <div class="question">Q5: 以下哪些是有效的IIFE（立即执行函数）？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> <code>(function() { })();</code>
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> <code>(function() { }());</code>
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> <code>!function() { }();</code>
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> <code>function() { }();</code>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(5, ['A', 'B', 'C'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A、B、C</div>
+                <div class="explanation">
+                    <h4>IIFE（Immediately Invoked Function Expression）：</h4>
+                    
+                    <p><strong>有效的IIFE写法：</strong></p>
+                    
+                    <p><strong>A & B - 最常见的写法 ✅</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 方式1：外部括号</span>
+<span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 方式2：内部括号</span>
+<span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>C - 一元运算符方式 ✅</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 使用 ! + - ~ void 等运算符</span>
+<span class="operator">!</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>; <span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="operator">+</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>; <span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="operator">~</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>; <span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">void</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'IIFE'</span><span class="bracket">)</span>; <span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>D - 语法错误 ❌</strong></p>
+                    <pre>function() { }();  // SyntaxError
+原因：以function开头会被解析为函数声明，
+函数声明不能立即调用</pre>
+                    
+                    <h4>IIFE的用途：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 创建独立作用域，避免污染全局</span>
+<span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">var</span> temp <span class="operator">=</span> <span class="string">'私有变量'</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="comment">// temp在外部不可访问</span>
+
+<span class="comment">// 2. 传递参数</span>
+<span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span>$, window<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// $是jQuery的别名</span>
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span>jQuery, window<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：IIFE模式</span>
+            </div>
+        </div>
+
+        <!-- Q6: 高阶函数 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">高阶函数</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">create</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> count <span class="operator">=</span> <span class="number">0</span>;
+    <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="operator">++</span>count;
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> counter1 <span class="operator">=</span> <span class="function">create</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">const</span> counter2 <span class="operator">=</span> <span class="function">create</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter1</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter1</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1, 2, 3
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1, 2, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1, 1, 1
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 0, 1, 2
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>闭包 - 函数与作用域的组合：</h4>
+                    
+                    <p><strong>执行分析：</strong></p>
+                    <ul>
+                        <li><code>create()</code>每次调用创建新的作用域</li>
+                        <li>每个作用域有自己独立的<code>count</code>变量</li>
+                        <li>返回的函数可以访问外层的count</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>const counter1 = create();  // 创建作用域1，count=0
+const counter2 = create();  // 创建作用域2，count=0
+
+counter1():  作用域1的count: 0 → 1，输出 1
+counter1():  作用域1的count: 1 → 2，输出 2
+counter2():  作用域2的count: 0 → 1，输出 1</pre>
+                    
+                    <h4>高阶函数应用：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 函数作为参数</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// map接收函数</span>
+
+<span class="comment">// 2. 函数返回函数</span>
+<span class="keyword">function</span> <span class="function">multiply</span><span class="bracket">(</span>x<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span>y<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> x <span class="operator">*</span> y;
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> double <span class="operator">=</span> <span class="function">multiply</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;
+<span class="function">double</span><span class="bracket">(</span><span class="number">5</span><span class="bracket">)</span>;  <span class="comment">// 10</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：高阶函数与闭包</span>
+            </div>
+        </div>
+
+        <!-- Q7: 递归 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">递归</span>
+            </div>
+            
+            <div class="question">Q7: 以下递归函数的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">factorial</span><span class="bracket">(</span>n<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>n <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">return</span> n <span class="operator">*</span> <span class="function">factorial</span><span class="bracket">(</span>n <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">factorial</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 10
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 24
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 4
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> Stack Overflow
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>递归执行过程：</h4>
+                    
+                    <p><strong>调用栈：</strong></p>
+                    <pre>factorial(4)
+  = 4 * factorial(3)
+  = 4 * (3 * factorial(2))
+  = 4 * (3 * (2 * factorial(1)))
+  = 4 * (3 * (2 * (1 * factorial(0))))
+  = 4 * (3 * (2 * (1 * 1)))
+  = 4 * (3 * (2 * 1))
+  = 4 * (3 * 2)
+  = 4 * 6
+  = 24</pre>
+                    
+                    <p><strong>递归的三要素：</strong></p>
+                    <ul>
+                        <li><strong>递归终止条件</strong>：<code>n === 0</code></li>
+                        <li><strong>递归调用</strong>：<code>factorial(n - 1)</code></li>
+                        <li><strong>返回结果</strong>：<code>n * factorial(n - 1)</code></li>
+                    </ul>
+                    
+                    <h4>尾递归优化：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 普通递归 - 调用栈累积</span>
+<span class="keyword">function</span> <span class="function">factorial</span><span class="bracket">(</span>n<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>n <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="keyword">return</span> n <span class="operator">*</span> <span class="function">factorial</span><span class="bracket">(</span>n <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 尾递归 - 可优化</span>
+<span class="keyword">function</span> <span class="function">factorial</span><span class="bracket">(</span>n, acc <span class="operator">=</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>n <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="keyword">return</span> acc;
+    <span class="keyword">return</span> <span class="function">factorial</span><span class="bracket">(</span>n <span class="operator">-</span> <span class="number">1</span>, n <span class="operator">*</span> acc<span class="bracket">)</span>;  <span class="comment">// 尾调用</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：递归函数</span>
+            </div>
+        </div>
+
+        <!-- Q8: 函数length -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">length属性</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">func1</span><span class="bracket">(</span>a, b, c<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">function</span> <span class="function">func2</span><span class="bracket">(</span>a, b <span class="operator">=</span> <span class="number">1</span>, c<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">function</span> <span class="function">func3</span><span class="bracket">(</span>a, ...rest<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>func1.<span class="property">length</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>func2.<span class="property">length</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>func3.<span class="property">length</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 3, 3, 2
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 3, 2, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 3, 1, 1
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 3, 3, 1
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>函数的length属性：</h4>
+                    
+                    <p><strong>定义：</strong></p>
+                    <ul>
+                        <li>length表示函数<strong>期望</strong>接收的参数个数</li>
+                        <li>只统计<strong>第一个默认参数之前</strong>的参数</li>
+                        <li>不包含剩余参数</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>func1(a, b, c)
+  - 3个普通参数
+  - length = 3 ✅
+
+func2(a, b = 1, c)
+  - a是普通参数（计入）
+  - b有默认值（不计入，且后续参数也不计入）
+  - c在默认参数之后（不计入）
+  - length = 1 ✅
+
+func3(a, ...rest)
+  - a是普通参数（计入）
+  - rest是剩余参数（不计入）
+  - length = 1 ✅</pre>
+                    
+                    <h4>更多示例：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">f1</span><span class="bracket">(</span>a, b, c <span class="operator">=</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+f1.<span class="property">length</span>;  <span class="comment">// 2 (a, b)</span>
+
+<span class="keyword">function</span> <span class="function">f2</span><span class="bracket">(</span>a <span class="operator">=</span> <span class="number">1</span>, b, c<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+f2.<span class="property">length</span>;  <span class="comment">// 0 (默认参数是第一个)</span>
+
+<span class="keyword">function</span> <span class="function">f3</span><span class="bracket">(</span>a, b, ...rest<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+f3.<span class="property">length</span>;  <span class="comment">// 2 (a, b)</span>
+
+<span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>.<span class="property">length</span>;  <span class="comment">// 2</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：函数length属性</span>
+            </div>
+        </div>
+
+        <!-- Q9: 函数name -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">name属性</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> bar <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">const</span> baz <span class="operator">=</span> <span class="keyword">function</span> <span class="function">qux</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="function">method</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span> <span class="bracket">}</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>foo.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>bar.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>baz.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">method</span>.<span class="property">name</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "foo", "bar", "baz", "method"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "foo", "bar", "qux", "method"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "foo", "", "qux", ""
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "foo", "bar", "baz", ""
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>函数的name属性：</h4>
+                    
+                    <p><strong>规则：</strong></p>
+                    <ul>
+                        <li>函数声明：使用函数名</li>
+                        <li>匿名函数表达式：使用变量名（ES6）</li>
+                        <li>具名函数表达式：使用函数自己的名字</li>
+                        <li>对象方法：使用属性名</li>
+                    </ul>
+                    
+                    <p><strong>详细分析：</strong></p>
+                    <pre>function foo() {}
+  - 函数声明，name = "foo"
+
+const bar = function() {};
+  - 匿名函数表达式，ES6推断name = "bar"
+
+const baz = function qux() {};
+  - 具名函数表达式，优先使用函数名 = "qux"
+
+const obj = { method: function() {} };
+  - 对象方法，name = "method"</pre>
+                    
+                    <h4>特殊情况：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 箭头函数</span>
+<span class="keyword">const</span> arrow <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span><span class="bracket">}</span>;
+arrow.<span class="property">name</span>;  <span class="comment">// "arrow"</span>
+
+<span class="comment">// bind返回的函数</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> bound <span class="operator">=</span> test.<span class="function">bind</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;
+bound.<span class="property">name</span>;  <span class="comment">// "bound test"</span>
+
+<span class="comment">// 构造函数</span>
+<span class="keyword">new</span> <span class="function">Function</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="property">name</span>;  <span class="comment">// "anonymous"</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：函数name属性</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+<span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+    <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">20</span>;
+    <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+        x <span class="operator">=</span> <span class="number">30</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 10, 20, 30, 30, 10
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> undefined, 20, 30, 30, 10
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 10, 20, 30, 30, 30
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined, undefined, 30, 30, 10
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>作用域链与变量提升：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>变量提升（var声明会提升）</li>
+                        <li>作用域链查找</li>
+                        <li>闭包对变量的访问</li>
+                    </ul>
+                    
+                    <p><strong>提升后的代码：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;  <span class="comment">// 全局x</span>
+
+<span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">var</span> x;  <span class="comment">// ← 提升！此时x是undefined</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// ① undefined（局部x）</span>
+    x <span class="operator">=</span> <span class="number">20</span>;  <span class="comment">// 赋值</span>
+    
+    <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// ② 20（访问outer的x）</span>
+        x <span class="operator">=</span> <span class="number">30</span>;  <span class="comment">// 修改outer的x</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// ③ 30</span>
+    <span class="bracket">}</span>
+    <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// ④ 30（被inner修改了）</span>
+<span class="bracket">}</span>
+<span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// ⑤ 10（全局x未变）</span></code></pre></div>
+                    
+                    <p><strong>执行顺序：</strong></p>
+                    <pre>① outer中，访问局部x → undefined（已提升但未赋值）
+② inner中，访问outer的x → 20
+③ inner中，修改x后再访问 → 30
+④ outer中，x已被inner修改 → 30
+⑤ 全局，访问全局x → 10（未受影响）
+
+输出：undefined, 20, 30, 30, 10</pre>
+                    
+                    <h4>作用域链图示：</h4>
+                    <pre>全局作用域: { x: 10 }
+    ↑
+outer作用域: { x: 20 → 30 }
+    ↑
+inner作用域: {} (没有自己的x，访问outer的x)</pre>
+                </div>
+                <span class="source-tag">📌 来源：作用域与闭包综合</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="03-error-handling.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：异常处理</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/04-functions.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

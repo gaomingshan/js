@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异常处理 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/03-error-handling.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 异常处理 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: try-catch基础 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">try-catch</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'A'</span><span class="bracket">)</span>;
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'B'</span><span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'C'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'D'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "A", "B", "D"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "A", "C", "D"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "A", "B", "C", "D"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "A"（程序崩溃）
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>try-catch执行流程：</h4>
+                    
+                    <p><strong>执行顺序：</strong></p>
+                    <pre>1. 输出 "A"
+2. throw抛出异常，立即跳转到catch
+3. "B"不会执行（异常后的代码被跳过）
+4. catch捕获异常，输出 "C"
+5. 继续执行后续代码，输出 "D"</pre>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li><code>throw</code>会立即中断当前代码块</li>
+                        <li>跳转到最近的<code>catch</code>块</li>
+                        <li>catch后的代码继续正常执行</li>
+                        <li>程序不会崩溃</li>
+                    </ul>
+                    
+                    <h4>没有catch的情况：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'A'</span><span class="bracket">)</span>;
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'D'</span><span class="bracket">)</span>;  <span class="comment">// ❌ 不会执行，程序崩溃</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异常处理基础</span>
+            </div>
+        </div>
+
+        <!-- Q2: finally -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">finally</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'try'</span><span class="bracket">)</span>;
+        <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'catch'</span><span class="bracket">)</span>;
+        <span class="keyword">return</span> <span class="number">2</span>;
+    <span class="bracket">}</span> <span class="keyword">finally</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'finally'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "try", 1
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "try", "finally", 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "try", 1, "finally"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "finally", "try", 1
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>finally的执行时机：</h4>
+                    
+                    <p><strong>关键特性：</strong></p>
+                    <ul>
+                        <li><code>finally</code>总是会执行</li>
+                        <li>在<code>return</code><strong>之前</strong>执行</li>
+                        <li>即使有return、break或continue</li>
+                    </ul>
+                    
+                    <p><strong>执行顺序：</strong></p>
+                    <pre>1. 输出 "try"
+2. 准备return 1
+3. 先执行finally，输出 "finally"
+4. 最后返回1，输出 1</pre>
+                    
+                    <h4>finally修改返回值：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="bracket">}</span> <span class="keyword">finally</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="number">2</span>;  <span class="comment">// finally的return会覆盖</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 2</span></code></pre></div>
+                    
+                    <h4>finally的常见用途：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> file;
+<span class="keyword">try</span> <span class="bracket">{</span>
+    file <span class="operator">=</span> <span class="function">openFile</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="comment">// 处理文件</span>
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>e<span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">finally</span> <span class="bracket">{</span>
+    file<span class="operator">?.</span><span class="function">close</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 无论如何都关闭文件</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：finally执行时机</span>
+            </div>
+        </div>
+
+        <!-- Q3: Error类型 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">Error对象</span>
+            </div>
+            
+            <div class="question">Q3: JavaScript有哪些内置的Error类型？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> SyntaxError
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> TypeError
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> ReferenceError
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> NetworkError
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(3, ['A', 'B', 'C'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A、B、C</div>
+                <div class="explanation">
+                    <h4>JavaScript内置Error类型：</h4>
+                    
+                    <p><strong>常见的Error类型：</strong></p>
+                    <ul>
+                        <li><strong>Error</strong> - 基础错误类</li>
+                        <li><strong>SyntaxError</strong> - 语法错误 ✅</li>
+                        <li><strong>TypeError</strong> - 类型错误 ✅</li>
+                        <li><strong>ReferenceError</strong> - 引用错误 ✅</li>
+                        <li><strong>RangeError</strong> - 范围错误</li>
+                        <li><strong>URIError</strong> - URI错误</li>
+                        <li><strong>EvalError</strong> - eval错误（已弃用）</li>
+                    </ul>
+                    
+                    <p><strong>D选项：</strong>NetworkError不是内置类型，但可以自定义</p>
+                    
+                    <h4>示例：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// SyntaxError</span>
+<span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="function">eval</span><span class="bracket">(</span><span class="string">'let x = {'</span><span class="bracket">)</span>;  <span class="comment">// 语法错误</span>
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>e <span class="keyword">instanceof</span> <span class="property">SyntaxError</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+<span class="bracket">}</span>
+
+<span class="comment">// TypeError</span>
+<span class="keyword">null</span>.<span class="function">toString</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// TypeError: Cannot read property</span>
+
+<span class="comment">// ReferenceError</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>unknownVariable<span class="bracket">)</span>;  <span class="comment">// ReferenceError</span></code></pre></div>
+                    
+                    <h4>自定义Error：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">NetworkError</span> <span class="keyword">extends</span> <span class="property">Error</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span>message<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">super</span><span class="bracket">(</span>message<span class="bracket">)</span>;
+        <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> <span class="string">'NetworkError'</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">NetworkError</span><span class="bracket">(</span><span class="string">'请求失败'</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Error类型</span>
+            </div>
+        </div>
+
+        <!-- Q4: 异常捕获范围 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">作用域</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'async error'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'caught'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'end'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "end"然后程序崩溃
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "caught", "end"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "end", "caught"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 程序崩溃
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>try-catch无法捕获异步错误：</h4>
+                    
+                    <p><strong>原因：</strong></p>
+                    <ul>
+                        <li>try-catch只能捕获<strong>同步</strong>代码的异常</li>
+                        <li>setTimeout的回调在<strong>宏任务队列</strong>中</li>
+                        <li>try-catch早已执行完毕</li>
+                        <li>异步回调执行时，catch已不在调用栈</li>
+                    </ul>
+                    
+                    <p><strong>执行顺序：</strong></p>
+                    <pre>1. try块执行，setTimeout注册回调
+2. catch块等待（没有异常）
+3. 输出 "end"
+4. 事件循环执行setTimeout回调
+5. 回调中抛出异常，无catch捕获 → 崩溃</pre>
+                    
+                    <h4>正确处理异步错误：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 方法1：回调内部try-catch</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'caught'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+
+<span class="comment">// 方法2：使用Promise</span>
+<span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span><span class="bracket">(</span>resolve, reject<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span><span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>.<span class="function">catch</span><span class="bracket">(</span>e <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'caught'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异步错误处理</span>
+            </div>
+        </div>
+
+        <!-- Q5: Promise错误 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">Promise</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span><span class="bracket">(</span>resolve, reject<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error1'</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>
+.<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'then'</span><span class="bracket">)</span><span class="bracket">)</span>
+.<span class="function">catch</span><span class="bracket">(</span>e <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'caught:'</span>, e.<span class="property">message</span><span class="bracket">)</span><span class="bracket">)</span>
+.<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'after catch'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "then", "after catch"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "caught: error1"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "caught: error1", "after catch"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 程序崩溃
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>Promise错误处理：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>Promise中<code>throw</code>会自动转为<code>reject</code></li>
+                        <li><code>catch</code>捕获后，Promise链继续</li>
+                        <li>catch返回resolved的Promise</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. executor中throw，Promise变为rejected
+2. 跳过第一个then
+3. catch捕获，输出 "caught: error1"
+4. catch返回resolved的Promise
+5. 执行第二个then，输出 "after catch"</pre>
+                    
+                    <h4>Promise错误传播：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span>resolve <span class="operator">=></span> <span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'不执行'</span><span class="bracket">)</span><span class="bracket">)</span>
+    .<span class="function">catch</span><span class="bracket">(</span>e <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'捕获'</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <h4>未捕获的Promise错误：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// ⚠️ 没有catch，错误会在控制台显示</span>
+<span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span><span class="bracket">(</span>resolve, reject<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'未捕获'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+<span class="comment">// Uncaught (in promise) Error: 未捕获</span>
+
+<span class="comment">// 全局捕获</span>
+window.<span class="function">addEventListener</span><span class="bracket">(</span><span class="string">'unhandledrejection'</span>, e <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'捕获Promise错误'</span>, e.<span class="property">reason</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Promise错误处理</span>
+            </div>
+        </div>
+
+        <!-- Q6: async/await错误 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">async/await</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'A'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'B'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'C'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "A", "C"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "B", "C"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "A", "B", "C"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "C"
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>async/await错误处理：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li><code>await</code>会将Promise的reject转为异常</li>
+                        <li>可以用try-catch捕获</li>
+                        <li>类似同步代码的错误处理</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. await Promise.reject('error')
+2. Promise rejected，转为异常
+3. 跳到catch块，输出 "B"
+4. 继续执行，输出 "C"</pre>
+                    
+                    <h4>多个await的错误处理：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetchData1</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> b <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetchData2</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 任一失败都会跳到catch</span>
+        <span class="keyword">return</span> <span class="bracket">{</span> a, b <span class="bracket">}</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'请求失败'</span>, e<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <h4>不用try-catch：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>
+        .<span class="function">catch</span><span class="bracket">(</span>e <span class="operator">=></span> <span class="string">'默认值'</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;  <span class="comment">// "默认值"</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：async/await错误</span>
+            </div>
+        </div>
+
+        <!-- Q7: 错误重抛 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">重抛异常</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">TypeError</span><span class="bracket">(</span><span class="string">'inner'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'inner catch'</span><span class="bracket">)</span>;
+        <span class="keyword">throw</span> e;  <span class="comment">// 重抛</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'outer catch'</span>, e.<span class="property">name</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "inner catch"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "inner catch", "outer catch TypeError"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "outer catch TypeError"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 程序崩溃
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>异常重抛：</h4>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. 内层try抛出TypeError
+2. 内层catch捕获，输出 "inner catch"
+3. throw e 重新抛出异常
+4. 外层catch捕获，输出 "outer catch TypeError"</pre>
+                    
+                    <p><strong>重抛的用途：</strong></p>
+                    <ul>
+                        <li>记录日志后继续传播错误</li>
+                        <li>只处理特定类型的错误</li>
+                        <li>添加额外的错误信息</li>
+                    </ul>
+                    
+                    <h4>选择性捕获：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="comment">// 可能抛出各种错误</span>
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>e <span class="keyword">instanceof</span> <span class="property">TypeError</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="comment">// 只处理TypeError</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'类型错误'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">else</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> e;  <span class="comment">// 其他错误重抛</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <h4>包装错误：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="function">JSON</span>.<span class="function">parse</span><span class="bracket">(</span>invalidJSON<span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">`解析失败: <span class="operator">${</span>e.<span class="property">message</span><span class="operator">}</span>`</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异常重抛</span>
+            </div>
+        </div>
+
+        <!-- Q8: finally与异常 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">finally</span>
+                <span class="tag">异常</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码会输出什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'try error'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'caught'</span><span class="bracket">)</span>;
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'catch error'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">finally</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'finally'</span><span class="bracket">)</span>;
+        <span class="keyword">return</span> <span class="string">'finally return'</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'outer caught'</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "caught", "finally", "outer caught"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "caught", "finally", "finally return"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "caught", "outer caught"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "caught", "finally"然后崩溃
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>finally的return会覆盖异常：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>finally中的return会<strong>覆盖</strong>异常</li>
+                        <li>catch中抛出的异常被"吞没"</li>
+                        <li>函数正常返回finally的返回值</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. try抛出异常
+2. catch捕获，输出 "caught"
+3. catch抛出新异常
+4. finally执行，输出 "finally"
+5. finally返回 "finally return"
+6. 函数返回值覆盖异常
+7. 外层输出 "finally return"</pre>
+                    
+                    <h4>finally与return的优先级：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="number">1</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="number">2</span>;
+    <span class="bracket">}</span> <span class="keyword">finally</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="number">3</span>;  <span class="comment">// ✅ finally的return优先</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 3</span></code></pre></div>
+                    
+                    <h4>⚠️ 最佳实践：</h4>
+                    <p>避免在finally中使用return，会导致错误被隐藏！</p>
+                </div>
+                <span class="source-tag">📌 来源：finally高级特性</span>
+            </div>
+        </div>
+
+        <!-- Q9: 错误处理模式 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">最佳实践</span>
+            </div>
+            
+            <div class="question">Q9: 以下哪种错误处理方式更好？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 在顶层统一处理所有错误
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 在发生位置立即处理
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 提供有意义的错误信息
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> catch中可以不做任何处理
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(9, ['B', 'C'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：B、C</div>
+                <div class="explanation">
+                    <h4>错误处理最佳实践：</h4>
+                    
+                    <p><strong>B. 在发生位置立即处理 ✅</strong></p>
+                    <ul>
+                        <li>及早失败（Fail Fast）原则</li>
+                        <li>错误上下文更清晰</li>
+                        <li>更容易定位问题</li>
+                    </ul>
+                    
+                    <p><strong>C. 提供有意义的错误信息 ✅</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 不好</span>
+<span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'错误'</span><span class="bracket">)</span>;
+
+<span class="comment">// ✅ 好</span>
+<span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">`无法连接到服务器 <span class="operator">${</span>serverUrl<span class="operator">}</span>: <span class="operator">${</span>reason<span class="operator">}</span>`</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>A. 顶层统一处理 ⚠️</strong></p>
+                    <ul>
+                        <li>适合全局错误监控</li>
+                        <li>但不应是唯一方式</li>
+                        <li>应配合局部处理</li>
+                    </ul>
+                    
+                    <p><strong>D. catch空处理 ❌</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 吞没错误，非常危险！</span>
+<span class="keyword">try</span> <span class="bracket">{</span>
+    riskyOperation<span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 什么都不做</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 至少记录日志</span>
+<span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'操作失败'</span>, e<span class="bracket">)</span>;
+    <span class="comment">// 或上报、重试等</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <h4>推荐模式：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 分层错误处理</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">fetchUserData</span><span class="bracket">(</span>id<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> response <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">`/api/user/<span class="operator">${</span>id<span class="operator">}</span>`</span><span class="bracket">)</span>;
+        <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span>response.<span class="property">ok</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">`HTTP <span class="operator">${</span>response.<span class="property">status</span><span class="operator">}</span>`</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+        <span class="keyword">return</span> <span class="keyword">await</span> response.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">`获取用户<span class="operator">${</span>id<span class="operator">}</span>失败:`</span>, e<span class="bracket">)</span>;
+        <span class="keyword">throw</span> e;  <span class="comment">// 重抛，让上层决定如何处理</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：错误处理最佳实践</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">all</span><span class="bracket">(</span><span class="bracket">[</span>
+            <span class="function">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>,
+            <span class="function">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>,
+            <span class="function">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>
+        <span class="bracket">]</span><span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'success'</span>, result<span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'error'</span>, e<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "success" [1, undefined, 3]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "error" "error"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "success" [1, 3]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "success" [1, null, 3]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>Promise.all错误处理：</h4>
+                    
+                    <p><strong>Promise.all特性：</strong></p>
+                    <ul>
+                        <li>只要有一个Promise reject，整个就reject</li>
+                        <li>不会等待其他Promise完成</li>
+                        <li><strong>快速失败</strong>（Fail Fast）</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. Promise.all同时执行3个Promise
+2. 第二个Promise reject
+3. Promise.all立即reject
+4. await捕获到异常
+5. 跳到catch，输出 "error" "error"</pre>
+                    
+                    <h4>对比Promise.allSettled：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// Promise.all - 快速失败</span>
+<span class="keyword">const</span> result1 <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">all</span><span class="bracket">(</span><span class="bracket">[</span>
+    <span class="function">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>,
+    <span class="function">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="string">'err'</span><span class="bracket">)</span>
+<span class="bracket">]</span><span class="bracket">)</span>;  <span class="comment">// 抛出异常</span>
+
+<span class="comment">// Promise.allSettled - 等待全部</span>
+<span class="keyword">const</span> result2 <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">allSettled</span><span class="bracket">(</span><span class="bracket">[</span>
+    <span class="function">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>,
+    <span class="function">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="string">'err'</span><span class="bracket">)</span>
+<span class="bracket">]</span><span class="bracket">)</span>;
+<span class="comment">// [{status:'fulfilled',value:1}, {status:'rejected',reason:'err'}]</span></code></pre></div>
+                    
+                    <h4>处理部分失败：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 方法1：使用allSettled</span>
+<span class="keyword">const</span> results <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">allSettled</span><span class="bracket">(</span>promises<span class="bracket">)</span>;
+<span class="keyword">const</span> successes <span class="operator">=</span> results
+    .<span class="function">filter</span><span class="bracket">(</span>r <span class="operator">=></span> r.<span class="property">status</span> <span class="operator">===</span> <span class="string">'fulfilled'</span><span class="bracket">)</span>
+    .<span class="function">map</span><span class="bracket">(</span>r <span class="operator">=></span> r.<span class="property">value</span><span class="bracket">)</span>;
+
+<span class="comment">// 方法2：包装Promise</span>
+<span class="keyword">const</span> safe <span class="operator">=</span> p <span class="operator">=></span> p.<span class="function">catch</span><span class="bracket">(</span>e <span class="operator">=></span> <span class="bracket">(</span><span class="bracket">{</span> <span class="property">error</span><span class="operator">:</span> e <span class="bracket">}</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="keyword">const</span> results <span class="operator">=</span> <span class="keyword">await</span> <span class="function">Promise</span>.<span class="function">all</span><span class="bracket">(</span>promises.<span class="function">map</span><span class="bracket">(</span>safe<span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异常处理综合</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="03-loops.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：循环</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/03-error-handling.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

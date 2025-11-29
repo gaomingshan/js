@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>构造函数与new - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .back-link:hover { text-decoration: underline; }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .quiz-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .quiz-item-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .difficulty {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .difficulty.easy { background: #c6f6d5; color: #22543d; }
+        .difficulty.medium { background: #feebc8; color: #7c2d12; }
+        .difficulty.hard { background: #fed7d7; color: #742a2a; }
+        
+        .tag {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        
+        .code-question {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .code-question pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .keyword { color: #c792ea; }
+        .function { color: #82aaff; }
+        .string { color: #c3e88d; }
+        .number { color: #f78c6c; }
+        .comment { color: #697098; }
+        .operator { color: #89ddff; }
+        .property { color: #ffcb6b; }
+        .bracket { color: #89ddff; }
+        
+        .options {
+            margin: 1rem 0;
+        }
+        
+        .option {
+            background: white;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .option.correct {
+            border-color: #48bb78;
+            background: #c6f6d5;
+        }
+        
+        .option.wrong {
+            border-color: #f56565;
+            background: #fed7d7;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .answer-section {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #48bb78;
+        }
+        
+        .answer-section.show {
+            display: block;
+        }
+        
+        .answer-label {
+            color: #48bb78;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .explanation {
+            color: #4a5568;
+            line-height: 1.8;
+        }
+        
+        .explanation h4 {
+            color: #2d3748;
+            margin: 1rem 0 0.5rem 0;
+        }
+        
+        .explanation ul {
+            margin-left: 1.5rem;
+        }
+        
+        .explanation pre {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #667eea;
+            font-size: 0.875rem;
+        }
+        
+        .nav-links {
+            margin-top: 3rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-links a {
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">← 返回面试题导航</a>
+        
+        <h1>🏗️ 构造函数与new</h1>
+        <p class="subtitle">深入理解new运算符的原理和构造函数的使用</p>
+        
+        <!-- Q1: new运算符的作用 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">new运算符</span>
+            </div>
+            
+            <div class="question">Q1: new运算符做了什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 创建空对象 → 设置原型 → 绑定this执行构造函数 → 返回对象
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 直接调用构造函数
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 只是创建一个空对象
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 复制构造函数
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>new运算符的4个步骤：</h4>
+                    
+                    <p><strong>1. 创建新对象：</strong></p>
+                    <pre>const obj = {};</pre>
+                    
+                    <p><strong>2. 设置原型：</strong></p>
+                    <pre>obj.__proto__ = Person.prototype;</pre>
+                    
+                    <p><strong>3. 绑定this并执行构造函数：</strong></p>
+                    <pre>const result = Person.call(obj, 'Alice');</pre>
+                    
+                    <p><strong>4. 返回对象：</strong></p>
+                    <pre>如果构造函数返回对象，则返回该对象
+否则返回新创建的对象</pre>
+                    
+                    <h4>手动实现new：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myNew</span><span class="bracket">(</span>constructor, ...args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 1. 创建新对象，原型指向构造函数的prototype</span>
+    <span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>constructor.<span class="property">prototype</span><span class="bracket">)</span>;
+    
+    <span class="comment">// 2. 执行构造函数，绑定this</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> constructor.<span class="function">apply</span><span class="bracket">(</span>obj, args<span class="bracket">)</span>;
+    
+    <span class="comment">// 3. 如果构造函数返回对象，则返回该对象；否则返回新对象</span>
+    <span class="keyword">return</span> result <span class="keyword">instanceof</span> <span class="property">Object</span> <span class="operator">?</span> result <span class="operator">:</span> obj;
+<span class="bracket">}</span>
+
+<span class="comment">// 使用</span>
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="function">myNew</span><span class="bracket">(</span>Person, <span class="string">'Alice'</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：new运算符</span>
+            </div>
+        </div>
+
+        <!-- Q2: 构造函数返回值 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">构造函数返回值</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+    <span class="keyword">return</span> <span class="bracket">{</span> <span class="property">age</span><span class="operator">:</span> <span class="number">18</span> <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">age</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> undefined, 18
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Alice', 18
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'Alice', undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined, undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>构造函数返回值规则：</h4>
+                    
+                    <p><strong>返回对象：</strong></p>
+                    <ul>
+                        <li>如果构造函数显式返回一个对象，new会返回该对象</li>
+                        <li>this上的属性会被忽略</li>
+                    </ul>
+                    
+                    <p><strong>返回基本类型：</strong></p>
+                    <ul>
+                        <li>如果返回基本类型（或不返回），new返回this对象</li>
+                        <li>基本类型的返回值会被忽略</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Person构造函数返回 { age: 18 }（对象）
+→ new Person() 返回该对象
+→ person = { age: 18 }
+→ person.name = undefined
+→ person.age = 18</pre>
+                    
+                    <h4>不同返回值的对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 返回对象 - 使用返回的对象</span>
+<span class="keyword">function</span> <span class="function">A</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">x</span> <span class="operator">=</span> <span class="number">1</span>;
+    <span class="keyword">return</span> <span class="bracket">{</span> <span class="property">y</span><span class="operator">:</span> <span class="number">2</span> <span class="bracket">}</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">new</span> <span class="function">A</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// { y: 2 }</span>
+
+<span class="comment">// 2. 返回基本类型 - 忽略返回值</span>
+<span class="keyword">function</span> <span class="function">B</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">x</span> <span class="operator">=</span> <span class="number">1</span>;
+    <span class="keyword">return</span> <span class="number">123</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> b <span class="operator">=</span> <span class="keyword">new</span> <span class="function">B</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// { x: 1 }</span>
+
+<span class="comment">// 3. 不返回 - 返回this</span>
+<span class="keyword">function</span> <span class="function">C</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">x</span> <span class="operator">=</span> <span class="number">1</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> c <span class="operator">=</span> <span class="keyword">new</span> <span class="function">C</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// { x: 1 }</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：构造函数返回值</span>
+            </div>
+        </div>
+
+        <!-- Q3: 不使用new调用构造函数 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">构造函数调用</span>
+            </div>
+            
+            <div class="question">Q3: 不使用new调用构造函数会怎样？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">window</span>.<span class="property">name</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> undefined, 'Alice' (this指向window)
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> { name: 'Alice' }, undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> TypeError
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> null, 'Alice'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>不使用new的后果：</h4>
+                    
+                    <p><strong>问题：</strong></p>
+                    <ul>
+                        <li>this指向全局对象（非严格模式）或undefined（严格模式）</li>
+                        <li>构造函数没有返回值，返回undefined</li>
+                        <li>污染全局作用域</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Person('Alice')  // 普通函数调用
+→ this指向window（非严格模式）
+→ window.name = 'Alice'
+→ 函数没有返回值 → undefined</pre>
+                    
+                    <h4>解决方案：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 使用new.target检测</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="keyword">new</span>.<span class="property">target</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'必须使用new调用'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="comment">// 2. 使用instanceof检测</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="bracket">(</span><span class="keyword">this</span> <span class="keyword">instanceof</span> Person<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="comment">// 3. 使用ES6 Class（强制new）</span>
+<span class="keyword">class</span> <span class="function">Person</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="comment">// Person('Alice'); // TypeError: Class constructor</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：构造函数调用</span>
+            </div>
+        </div>
+
+        <!-- Q4: 手动实现new -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">手动实现new</span>
+            </div>
+            
+            <div class="question">Q4: 以下myNew函数有什么问题？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myNew</span><span class="bracket">(</span>constructor, ...args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>constructor.<span class="property">prototype</span><span class="bracket">)</span>;
+    constructor.<span class="function">apply</span><span class="bracket">(</span>obj, args<span class="bracket">)</span>;
+    <span class="keyword">return</span> obj;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 没有处理构造函数返回对象的情况
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 原型设置错误
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> this绑定错误
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 没有问题
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>正确的new实现：</h4>
+                    
+                    <p><strong>问题：</strong></p>
+                    <pre>如果构造函数返回一个对象，应该返回该对象
+而不是总是返回创建的obj</pre>
+                    
+                    <p><strong>完整实现：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myNew</span><span class="bracket">(</span>constructor, ...args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 1. 创建新对象，原型指向构造函数的prototype</span>
+    <span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>constructor.<span class="property">prototype</span><span class="bracket">)</span>;
+    
+    <span class="comment">// 2. 执行构造函数，绑定this</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> constructor.<span class="function">apply</span><span class="bracket">(</span>obj, args<span class="bracket">)</span>;
+    
+    <span class="comment">// 3. 判断构造函数返回值</span>
+    <span class="comment">// 如果返回对象类型，使用返回的对象；否则使用新创建的对象</span>
+    <span class="keyword">return</span> result <span class="keyword">instanceof</span> <span class="property">Object</span> <span class="operator">?</span> result <span class="operator">:</span> obj;
+<span class="bracket">}</span>
+
+<span class="comment">// 测试</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="function">myNew</span><span class="bracket">(</span>Person, <span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p1.<span class="property">name</span><span class="bracket">)</span>;  <span class="comment">// 'Alice'</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p1 <span class="keyword">instanceof</span> Person<span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                    
+                    <h4>更严谨的实现：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myNew</span><span class="bracket">(</span>constructor, ...args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 检查constructor是否为函数</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">typeof</span> constructor <span class="operator">!==</span> <span class="string">'function'</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">TypeError</span><span class="bracket">(</span><span class="string">'constructor must be a function'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>constructor.<span class="property">prototype</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> result <span class="operator">=</span> constructor.<span class="function">apply</span><span class="bracket">(</span>obj, args<span class="bracket">)</span>;
+    
+    <span class="comment">// 检查返回值是否为对象（排除null）</span>
+    <span class="keyword">return</span> <span class="bracket">(</span>result <span class="operator">!==</span> <span class="keyword">null</span> <span class="operator">&&</span> <span class="keyword">typeof</span> result <span class="operator">===</span> <span class="string">'object'</span><span class="bracket">)</span> <span class="operator">||</span> <span class="keyword">typeof</span> result <span class="operator">===</span> <span class="string">'function'</span>
+        <span class="operator">?</span> result
+        <span class="operator">:</span> obj;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：手动实现new</span>
+            </div>
+        </div>
+
+        <!-- Q5: new.target -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">new.target</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">new</span>.<span class="property">target</span> <span class="operator">===</span> Person<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, false
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> false, false
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> true, undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>new.target元属性：</h4>
+                    
+                    <p><strong>作用：</strong></p>
+                    <ul>
+                        <li>检测函数是否通过new调用</li>
+                        <li>new调用时，new.target指向构造函数</li>
+                        <li>普通调用时，new.target为undefined</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>new Person()
+→ new.target === Person → true
+
+Person()
+→ new.target === undefined
+→ undefined === Person → false</pre>
+                    
+                    <h4>应用场景：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 强制使用new</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="keyword">new</span>.<span class="property">target</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'必须使用new调用Person'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="comment">// 2. 判断继承关系</span>
+<span class="keyword">class</span> <span class="function">Parent</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">new</span>.<span class="property">target</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="keyword">new</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 'Parent'</span>
+<span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>;   <span class="comment">// 'Child'</span>
+
+<span class="comment">// 3. 抽象基类</span>
+<span class="keyword">class</span> <span class="function">Abstract</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">new</span>.<span class="property">target</span> <span class="operator">===</span> Abstract<span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'抽象类不能实例化'</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：new.target</span>
+            </div>
+        </div>
+
+        <!-- Q6: constructor属性 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">constructor属性</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'Alice'</span>; <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p.<span class="property">constructor</span> <span class="operator">===</span> Person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p.<span class="property">constructor</span> <span class="operator">===</span> <span class="property">Object</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, false
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> true, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> false, false
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>constructor属性：</h4>
+                    
+                    <p><strong>问题：</strong></p>
+                    <pre>直接赋值新对象给prototype会丢失constructor属性</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Person.prototype = { getName... }
+→ 丢失了constructor属性
+→ p.constructor → Object.prototype.constructor → Object
+
+正确做法：
+Person.prototype = {
+    constructor: Person,  // 手动添加
+    getName() { ... }
+};</pre>
+                    
+                    <h4>修复constructor：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 方法1：手动设置constructor</span>
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">constructor</span><span class="operator">:</span> Person,
+    <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'Alice'</span>; <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 方法2：使用defineProperty（不可枚举）</span>
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'Alice'</span>; <span class="bracket">}</span>
+<span class="bracket">}</span>;
+<span class="property">Object</span>.<span class="function">defineProperty</span><span class="bracket">(</span><span class="property">Person</span>.<span class="property">prototype</span>, <span class="string">'constructor'</span>, <span class="bracket">{</span>
+    <span class="property">value</span><span class="operator">:</span> Person,
+    <span class="property">writable</span><span class="operator">:</span> <span class="keyword">true</span>,
+    <span class="property">enumerable</span><span class="operator">:</span> <span class="keyword">false</span>,  <span class="comment">// 不可枚举</span>
+    <span class="property">configurable</span><span class="operator">:</span> <span class="keyword">true</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 方法3：直接添加方法（推荐）</span>
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'Alice'</span>;
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：constructor属性</span>
+            </div>
+        </div>
+
+        <!-- Q7: instanceof与new -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">instanceof</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">{</span> <span class="property">name</span><span class="operator">:</span> <span class="string">'Alice'</span> <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p <span class="keyword">instanceof</span> Person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p <span class="keyword">instanceof</span> <span class="property">Object</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> true, false
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> false, false
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>构造函数返回对象影响instanceof：</h4>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>Person()返回 { name: 'Alice' }（对象）
+→ new Person() 返回该对象，而不是创建的实例
+→ p = { name: 'Alice' }（普通对象字面量）
+
+p instanceof Person
+→ 检查 p 的原型链是否包含 Person.prototype
+→ p.__proto__ === Object.prototype（不是Person.prototype）
+→ false
+
+p instanceof Object
+→ p.__proto__ === Object.prototype → true</pre>
+                    
+                    <h4>instanceof检测原理：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 手动实现instanceof</span>
+<span class="keyword">function</span> <span class="function">myInstanceof</span><span class="bracket">(</span>obj, constructor<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span>;
+    
+    <span class="keyword">while</span> <span class="bracket">(</span>proto<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>proto <span class="operator">===</span> constructor.<span class="property">prototype</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        <span class="bracket">}</span>
+        proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>proto<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 测试</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">{</span> <span class="property">name</span><span class="operator">:</span> <span class="string">'Alice'</span> <span class="bracket">}</span>;
+<span class="bracket">}</span>
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">myInstanceof</span><span class="bracket">(</span>p, Person<span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// false</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">myInstanceof</span><span class="bracket">(</span>p, <span class="property">Object</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：instanceof与new</span>
+            </div>
+        </div>
+
+        <!-- Q8: 构造函数与this -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">this指向</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+    
+    <span class="keyword">this</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">name</span>;
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> getName <span class="operator">=</span> p.<span class="property">getName</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'Alice', undefined
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Alice', 'Alice'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined, undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'Alice', TypeError
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>构造函数中this的注意事项：</h4>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>p.getName()
+→ this指向p
+→ this.name === p.name === 'Alice'
+
+getName()
+→ 普通函数调用，this指向window/undefined（严格模式）
+→ this.name === window.name === undefined</pre>
+                    
+                    <h4>解决方案：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 使用箭头函数（自动绑定this）</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+    
+    <span class="keyword">this</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">name</span>;  <span class="comment">// this总是指向实例</span>
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 2. 手动bind</span>
+<span class="keyword">const</span> getName <span class="operator">=</span> p.<span class="property">getName</span>.<span class="function">bind</span><span class="bracket">(</span>p<span class="bracket">)</span>;
+
+<span class="comment">// 3. 使用原型方法（推荐）</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="property">Person</span>.<span class="property">prototype</span>.<span class="property">getName</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">name</span>;
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：构造函数与this</span>
+            </div>
+        </div>
+
+        <!-- Q9: 工厂函数 vs 构造函数 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">设计模式</span>
+            </div>
+            
+            <div class="question">Q9: 工厂函数与构造函数的区别？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 工厂函数不使用new，显式返回对象；构造函数需要new
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 工厂函数更快
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 构造函数更简单
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 没有区别
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>工厂函数 vs 构造函数：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 构造函数（需要new）</span>
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+
+<span class="comment">// 工厂函数（普通调用）</span>
+<span class="keyword">function</span> <span class="function">createPerson</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">{</span>
+        <span class="property">name</span>,
+        <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">name</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p2 <span class="operator">=</span> <span class="function">createPerson</span><span class="bracket">(</span><span class="string">'Bob'</span><span class="bracket">)</span>;  <span class="comment">// 不需要new</span></code></pre></div>
+                    
+                    <h4>对比：</h4>
+                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                        <thead>
+                            <tr style="background: #f7fafc;">
+                                <th style="padding: 0.5rem; border: 1px solid #e2e8f0;">特性</th>
+                                <th style="padding: 0.5rem; border: 1px solid #e2e8f0;">构造函数</th>
+                                <th style="padding: 0.5rem; border: 1px solid #e2e8f0;">工厂函数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">调用方式</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">new Person()</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">createPerson()</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">原型链</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">有（instanceof可用）</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">无</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">方法共享</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">通过prototype</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">需手动处理</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">灵活性</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">较低</td>
+                                <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">更灵活</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <span class="source-tag">📌 来源：工厂函数vs构造函数</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合题 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">value</span> <span class="operator">=</span> <span class="number">42</span>;
+    <span class="keyword">return</span> <span class="bracket">{</span>
+        <span class="property">value</span><span class="operator">:</span> <span class="keyword">this</span>.<span class="property">value</span> <span class="operator">+</span> <span class="number">1</span>
+    <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="property">Foo</span>.<span class="property">prototype</span>.<span class="property">getValue</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">value</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> foo <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>foo.<span class="property">value</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>foo.<span class="function">getValue</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>foo <span class="keyword">instanceof</span> Foo<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 43, TypeError, false
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 43, 43, false
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 42, 42, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 43, 43, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>综合分析：</h4>
+                    
+                    <p><strong>步骤分解：</strong></p>
+                    <pre>1. new Foo()
+   → 创建空对象 obj
+   → 设置 obj.__proto__ = Foo.prototype
+   → 执行Foo.call(obj)
+      - this.value = 42 （obj.value = 42）
+      - return { value: this.value + 1 }
+      - return { value: 43 }
+   → 构造函数返回对象，使用该对象
+   → foo = { value: 43 }
+
+2. foo.value → 43
+
+3. foo.getValue()
+   → foo没有getValue方法
+   → TypeError: foo.getValue is not a function
+
+4. foo instanceof Foo
+   → foo的原型链：{ value: 43 } → Object.prototype
+   → 不包含Foo.prototype
+   → false</pre>
+                    
+                    <h4>关键点：</h4>
+                    <ul>
+                        <li>构造函数返回对象会丢失原型链</li>
+                        <li>返回的对象不能访问prototype上的方法</li>
+                        <li>instanceof检测会失效</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：new运算符综合应用</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="05-inheritance.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：继承方式</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const questionDiv = this.closest('.quiz-item');
+                const questionNum = questionDiv.dataset.question;
+                const selectedAnswer = this.dataset.answer;
+                
+                checkAnswer(questionNum, selectedAnswer);
+            });
+        });
+        
+        function checkAnswer(questionNum, answer) {
+            const questionDiv = document.querySelector(`[data-question="${questionNum}"]`);
+            const options = questionDiv.querySelectorAll('.option');
+            const answerSection = document.getElementById(`answer-${questionNum}`);
+            
+            options.forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                if (opt.dataset.answer === answer) {
+                    const correctAnswer = answerSection.querySelector('.answer-label').textContent.includes(answer);
+                    opt.classList.add(correctAnswer ? 'correct' : 'wrong');
+                }
+            });
+            
+            answerSection.classList.add('show');
+        }
+        
+        function showAnswer(questionNum) {
+            const answerSection = document.getElementById(`answer-${questionNum}`);
+            answerSection.classList.add('show');
+        }
+    </script>
+</body>
+</html>

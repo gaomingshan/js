@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>async/await 面试题 - JavaScript 面试题精选</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .quiz-item {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .quiz-item-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .difficulty {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .difficulty.easy {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .difficulty.medium {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .difficulty.hard {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .tag {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .question {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .code-question {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-question pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .code-question code {
+            font-family: inherit;
+        }
+
+        .keyword { color: #c792ea; }
+        .function { color: #82aaff; }
+        .string { color: #c3e88d; }
+        .number { color: #f78c6c; }
+        .comment { color: #697098; font-style: italic; }
+        .operator { color: #89ddff; }
+        .property { color: #ffcb6b; }
+        .bracket { color: #a6accd; }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .option {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+            transform: translateX(4px);
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .option.correct {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .option.wrong {
+            border-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .answer-section {
+            display: none;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            border: 2px solid #bee3f8;
+        }
+
+        .answer-section.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-label {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .explanation {
+            color: #2d3748;
+            line-height: 1.8;
+        }
+
+        .explanation h4 {
+            color: #2d3748;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .explanation ul, .explanation ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        .explanation p {
+            margin-bottom: 1rem;
+        }
+
+        .explanation strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .source-tag {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.4rem 0.8rem;
+            background: #edf2f7;
+            color: #4a5568;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 async/await 面试题精选</h1>
+        <p class="subtitle">掌握 async/await 语法和最佳实践 - 10道精选题目</p>
+
+        <!-- Q1: async函数返回值 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">async函数</span>
+            </div>
+            
+            <div class="question">Q1: async 函数的返回值是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="number">123</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> result <span class="operator">=</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 123
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> Promise {<pending>}
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> Promise {fulfilled: 123}
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>async 函数返回值特性：</h4>
+                    
+                    <p><strong>核心规则：</strong></p>
+                    <ul>
+                        <li>async 函数<strong>总是返回 Promise</strong></li>
+                        <li>return 的值会被包装成 Promise.resolve(value)</li>
+                        <li>抛出的错误会被包装成 Promise.reject(error)</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 返回普通值</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="number">123</span>;
+<span class="bracket">}</span>
+<span class="function">test1</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// Promise {fulfilled: 123}</span>
+
+<span class="comment">// 等价于</span>
+<span class="keyword">function</span> <span class="function">test2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 抛出错误</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test3</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="function">test3</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// Promise {rejected: Error}</span>
+
+<span class="comment">// 返回Promise</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test4</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">456</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="function">test4</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// Promise {fulfilled: 456}</span></code></pre></div>
+                    
+                    <p><strong>使用方式：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 方式1: then/catch</span>
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">then</span><span class="bracket">(</span>result <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// 123</span>
+
+<span class="comment">// 方式2: await</span>
+<span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;  <span class="comment">// 123</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：async函数基础</span>
+            </div>
+        </div>
+
+        <!-- Q2: await表达式 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">await用法</span>
+            </div>
+            
+            <div class="question">Q2: await 表达式可以用在哪里？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 只能在 async 函数内部
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 可以在任何函数内部
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> async 函数内部或模块顶层
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 只能在 Promise.then 中
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>await 使用位置：</h4>
+                    
+                    <p><strong>1. async 函数内部（常见）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">getData</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>;
+    <span class="keyword">return</span> result;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>2. 模块顶层（Top-level await, ES2022）</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 在ES模块顶层直接使用</span>
+<span class="keyword">const</span> data <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> json <span class="operator">=</span> <span class="keyword">await</span> data.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 条件导入</span>
+<span class="keyword">const</span> module <span class="operator">=</span> <span class="keyword">await</span> <span class="keyword">import</span><span class="bracket">(</span><span class="string">'./module.js'</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>❌ 错误用法：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 在普通函数中使用 - 报错！</span>
+<span class="keyword">function</span> <span class="function">getData</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api'</span><span class="bracket">)</span>;  <span class="comment">// ❌ SyntaxError</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 在回调中使用 - 不会等待</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">forEach</span><span class="bracket">(</span><span class="keyword">async</span> item <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="function">process</span><span class="bracket">(</span>item<span class="bracket">)</span>;  <span class="comment">// ⚠️ forEach不会等待</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 正确做法：使用for...of</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">const</span> item <span class="keyword">of</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="function">process</span><span class="bracket">(</span>item<span class="bracket">)</span>;  <span class="comment">// ✅ 串行执行</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：await表达式</span>
+            </div>
+        </div>
+
+        <!-- Q3: 错误处理 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">错误处理</span>
+            </div>
+            
+            <div class="question">Q3: 如何在 async/await 中处理错误？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">fetchData</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> response <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>;
+    <span class="comment">// 如果fetch失败怎么办？</span>
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用 .catch() 方法
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 使用 try/catch 语句
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> A和B都可以
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> async/await 不需要错误处理
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>async/await 错误处理方式：</h4>
+                    
+                    <p><strong>方式1：try/catch（推荐）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">fetchData</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> response <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> data <span class="operator">=</span> <span class="keyword">await</span> response.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">return</span> data;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'获取数据失败:'</span>, error<span class="bracket">)</span>;
+        <span class="keyword">throw</span> error;  <span class="comment">// 重新抛出或处理</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>方式2：.catch() 方法</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">fetchData</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> response <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>
+        .<span class="function">catch</span><span class="bracket">(</span>error <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'请求失败'</span>, error<span class="bracket">)</span>;
+            <span class="keyword">return</span> <span class="keyword">null</span>;
+        <span class="bracket">}</span><span class="bracket">)</span>;
+    
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span>response<span class="bracket">)</span> <span class="keyword">return</span>;
+    <span class="keyword">return</span> <span class="keyword">await</span> response.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>方式3：混合使用</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">main</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> data <span class="operator">=</span> <span class="keyword">await</span> <span class="function">fetchData</span><span class="bracket">(</span><span class="bracket">)</span>
+        .<span class="function">catch</span><span class="bracket">(</span>error <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'使用默认数据'</span><span class="bracket">)</span>;
+            <span class="keyword">return</span> defaultData;
+        <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 调用时也可以捕获</span>
+<span class="function">main</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">catch</span><span class="bracket">(</span>error <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'程序错误'</span>, error<span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>最佳实践：</strong></p>
+                    <ul>
+                        <li>对于可能出错的操作使用 try/catch</li>
+                        <li>单个操作可以使用 .catch()</li>
+                        <li>不要忘记处理 rejected Promise</li>
+                        <li>顶层调用要有错误处理</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：错误处理</span>
+            </div>
+        </div>
+
+        <!-- Q4: 串行vs并行 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">并发控制</span>
+            </div>
+            
+            <div class="question">Q4: 以下两种写法有什么区别？</div>
+            
+            <div class="code-question"><pre><code><span class="comment">// 写法1</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">method1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">await</span> <span class="function">task1</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="keyword">const</span> b <span class="operator">=</span> <span class="keyword">await</span> <span class="function">task2</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 写法2</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">method2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> <span class="bracket">[</span>a, b<span class="bracket">]</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">all</span><span class="bracket">(</span><span class="bracket">[</span><span class="function">task1</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="function">task2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">]</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 完全相同
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> method1串行执行，method2并行执行
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> method1更快
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> method2错误处理更好
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>串行 vs 并行执行：</h4>
+                    
+                    <p><strong>串行执行（Sequential）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">sequential</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">await</span> <span class="function">task1</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 等待task1完成</span>
+    <span class="keyword">const</span> b <span class="operator">=</span> <span class="keyword">await</span> <span class="function">task2</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 然后执行task2</span>
+    <span class="comment">// 总耗时 = task1耗时 + task2耗时</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>并行执行（Parallel）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">parallel</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 同时启动两个任务</span>
+    <span class="keyword">const</span> <span class="bracket">[</span>a, b<span class="bracket">]</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">all</span><span class="bracket">(</span><span class="bracket">[</span><span class="function">task1</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="function">task2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">]</span><span class="bracket">)</span>;
+    <span class="comment">// 总耗时 = max(task1耗时, task2耗时)</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 另一种并行写法</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">parallel2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> p1 <span class="operator">=</span> <span class="function">task1</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 立即启动</span>
+    <span class="keyword">const</span> p2 <span class="operator">=</span> <span class="function">task2</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 立即启动</span>
+    
+    <span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">await</span> p1;  <span class="comment">// 等待p1</span>
+    <span class="keyword">const</span> b <span class="operator">=</span> <span class="keyword">await</span> p2;  <span class="comment">// 等待p2</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>性能对比：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 假设task1耗时1秒，task2耗时2秒</span>
+
+<span class="comment">// 串行：总共3秒</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">seq</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">1000</span><span class="bracket">)</span>;  <span class="comment">// 1秒</span>
+    <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">2000</span><span class="bracket">)</span>;  <span class="comment">// 再2秒</span>
+    <span class="comment">// 总计3秒</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 并行：总共2秒</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">par</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">all</span><span class="bracket">(</span><span class="bracket">[</span>
+        <span class="function">delay</span><span class="bracket">(</span><span class="number">1000</span><span class="bracket">)</span>,
+        <span class="function">delay</span><span class="bracket">(</span><span class="number">2000</span><span class="bracket">)</span>
+    <span class="bracket">]</span><span class="bracket">)</span>;
+    <span class="comment">// 总计2秒（取最长的）</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>选择建议：</strong></p>
+                    <ul>
+                        <li><strong>串行</strong>：任务之间有依赖关系</li>
+                        <li><strong>并行</strong>：任务独立，可以同时执行</li>
+                        <li>并行可以显著提升性能</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：并发控制</span>
+            </div>
+        </div>
+
+        <!-- Q5: 循环中的await -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">循环处理</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码会如何执行？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">processArray</span><span class="bracket">(</span>array<span class="bracket">)</span> <span class="bracket">{</span>
+    array.<span class="function">forEach</span><span class="bracket">(</span><span class="keyword">async</span> item <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">await</span> <span class="function">processItem</span><span class="bracket">(</span>item<span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>item<span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Done'</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 串行处理，Done最后输出
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> Done可能先输出，forEach不会等待await
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 会报错
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 并行处理，Done最后输出
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>循环中的 await 陷阱：</h4>
+                    
+                    <p><strong>❌ 错误：forEach + async</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">wrong</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">forEach</span><span class="bracket">(</span><span class="keyword">async</span> num <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">100</span><span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>num<span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Done'</span><span class="bracket">)</span>;  <span class="comment">// 立即输出！</span>
+<span class="bracket">}</span>
+<span class="comment">// 输出顺序：Done → 1 → 2 → 3</span></code></pre></div>
+                    
+                    <p><strong>✅ 正确：for...of (串行)</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">sequential</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">const</span> num <span class="keyword">of</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">100</span><span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>num<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Done'</span><span class="bracket">)</span>;  <span class="comment">// 等待所有完成</span>
+<span class="bracket">}</span>
+<span class="comment">// 输出顺序：1 → 2 → 3 → Done</span></code></pre></div>
+                    
+                    <p><strong>✅ 正确：Promise.all (并行)</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">parallel</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">all</span><span class="bracket">(</span>
+        <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">map</span><span class="bracket">(</span><span class="keyword">async</span> num <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">100</span><span class="bracket">)</span>;
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>num<span class="bracket">)</span>;
+        <span class="bracket">}</span><span class="bracket">)</span>
+    <span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Done'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="comment">// 输出顺序：1、2、3（几乎同时） → Done</span></code></pre></div>
+                    
+                    <p><strong>对比表：</strong></p>
+                    <ul>
+                        <li><code>forEach</code>: 不等待，立即返回 ❌</li>
+                        <li><code>for...of</code>: 串行执行，依次等待 ✅</li>
+                        <li><code>for await...of</code>: 处理异步迭代器 ✅</li>
+                        <li><code>Promise.all + map</code>: 并行执行 ✅</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：循环中使用await</span>
+            </div>
+        </div>
+
+        <!-- Q6: async函数执行时机 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">执行时机</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码输出什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>;
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1 2 3 4
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1 2 4 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1 4 2 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 2 1 4 3
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>async/await 执行时机：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>async 函数在<strong>第一个 await 之前是同步执行</strong></li>
+                        <li>await 之后的代码进入<strong>微任务队列</strong></li>
+                        <li>微任务在当前宏任务的同步代码执行完后执行</li>
+                    </ul>
+                    
+                    <p><strong>执行流程分析：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// ① 同步，输出1</span>
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// ② 同步，输出2</span>
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// ③ await后的代码进入微任务</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// ⑤ 微任务，输出3</span>
+<span class="bracket">}</span>
+
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 调用函数</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;  <span class="comment">// ④ 同步，输出4</span>
+
+<span class="comment">// 输出顺序：1 → 2 → 4 → 3</span></code></pre></div>
+                    
+                    <p><strong>等价的 Promise 写法：</strong></p>
+                    <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">1</span><span class="bracket">)</span>;
+
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;
+    <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>复杂示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'start'</span><span class="bracket">)</span>;  <span class="comment">// 同步</span>
+    
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'after await 1'</span><span class="bracket">)</span>;  <span class="comment">// 微任务1</span>
+    
+    <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'after await 2'</span><span class="bracket">)</span>;  <span class="comment">// 微任务2</span>
+<span class="bracket">}</span>
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'1'</span><span class="bracket">)</span>;
+<span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'2'</span><span class="bracket">)</span>;
+
+<span class="comment">// 输出：1 → start → 2 → after await 1 → after await 2</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：async执行时机</span>
+            </div>
+        </div>
+
+        <!-- Q7: 返回值处理 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">返回值</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的返回值是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// vs</span>
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> test 返回 123，test2 返回 Promise
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 完全相同，都返回 Promise {123}
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> test 更快
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> test2 更快
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'D')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：D</div>
+                <div class="explanation">
+                    <h4>return await 的区别：</h4>
+                    
+                    <p><strong>结果相同，性能不同：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// test: return await Promise</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>;
+    <span class="comment">// 1. 等待Promise完成</span>
+    <span class="comment">// 2. 取出值123</span>
+    <span class="comment">// 3. 包装成新Promise</span>
+<span class="bracket">}</span>
+
+<span class="comment">// test2: return Promise（更快）</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>;
+    <span class="comment">// 1. 直接返回Promise（无需等待）</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>何时需要 return await：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 多余的 await</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">unnecessary</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span>url<span class="bracket">)</span>;  <span class="comment">// 不必要</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 需要 await 的情况：try/catch</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">necessary</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fetch</span><span class="bracket">(</span>url<span class="bracket">)</span>;  <span class="comment">// 必要！捕获错误</span>
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span>;
+        <span class="keyword">return</span> defaultValue;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ❌ 没有await，catch捕获不到</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">wrong</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="function">fetch</span><span class="bracket">(</span>url<span class="bracket">)</span>;  <span class="comment">// 错误！catch捕获不到</span>
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span>;  <span class="comment">// 不会执行</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>ESLint规则：</strong></p>
+                    <ul>
+                        <li><code>no-return-await</code>: 禁止不必要的 return await</li>
+                        <li>try/catch 内部除外</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：return await</span>
+            </div>
+        </div>
+
+        <!-- Q8: try/catch作用域 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">错误处理</span>
+            </div>
+            
+            <div class="question">Q8: 以下哪个错误会被catch捕获？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> promise <span class="operator">=</span> <span class="property">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error1'</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error2'</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+        <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error3'</span><span class="bracket">)</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>error.<span class="property">message</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> error1, error2, error3 都会被捕获
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 只有 error3 会被捕获
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> error1 和 error3 会被捕获
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 都不会被捕获
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>try/catch 捕获范围：</h4>
+                    
+                    <p><strong>分析每个错误：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// error1: Promise.reject但没有await</span>
+<span class="keyword">const</span> promise <span class="operator">=</span> <span class="property">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error1'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="comment">// ❌ 不会被捕获！没有await，不会同步抛出</span>
+
+<span class="comment">// error2: setTimeout中抛出</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error2'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="comment">// ❌ 不会被捕获！异步回调中的错误无法被外层catch捕获</span>
+
+<span class="comment">// error3: await Promise.reject</span>
+<span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error3'</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="comment">// ✅ 会被捕获！await会将rejected Promise转为抛出错误</span></code></pre></div>
+                    
+                    <p><strong>正确处理方式：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 处理error1</span>
+<span class="keyword">try</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="keyword">await</span> <span class="property">Promise</span>.<span class="function">reject</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error1'</span><span class="bracket">)</span><span class="bracket">)</span>;
+    <span class="comment">// 或</span>
+    promise.<span class="function">catch</span><span class="bracket">(</span>error <span class="operator">=></span> <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span><span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="bracket">{</span> <span class="bracket">}</span>
+
+<span class="comment">// 处理error2</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">'error2'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+
+<span class="comment">// 或使用async</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="keyword">async</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">await</span> <span class="function">riskyOperation</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>关键规则：</strong></p>
+                    <ul>
+                        <li>try/catch 只能捕获<strong>同步代码</strong>和<strong>await的Promise</strong></li>
+                        <li>异步回调（setTimeout, 事件监听器）的错误无法捕获</li>
+                        <li>Promise必须await才能被try/catch捕获</li>
+                        <li>未处理的Promise rejection会触发unhandledrejection事件</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：错误处理陷阱</span>
+            </div>
+        </div>
+
+        <!-- Q9: async函数嵌套 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">执行顺序</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码输出顺序是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">async1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 start'</span><span class="bracket">)</span>;
+    <span class="keyword">await</span> <span class="function">async2</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 end'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">async2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async2'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'script start'</span><span class="bracket">)</span>;
+<span class="function">async1</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'script end'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> script start → async1 start → async2 → async1 end → script end
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> script start → async1 start → async2 → script end → async1 end
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> script start → script end → async1 start → async2 → async1 end
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> async1 start → async2 → async1 end → script start → script end
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>详细执行流程：</h4>
+                    
+                    <p><strong>逐步分析：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 同步代码</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'script start'</span><span class="bracket">)</span>;  <span class="comment">// ① 输出</span>
+
+<span class="comment">// 2. 调用async1</span>
+<span class="function">async1</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="comment">// 2.1 async1函数体（await之前同步执行）</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 start'</span><span class="bracket">)</span>;  <span class="comment">// ② 输出</span>
+  
+  <span class="comment">// 2.2 await async2() - 调用async2</span>
+  <span class="keyword">async</span> <span class="keyword">function</span> <span class="function">async2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async2'</span><span class="bracket">)</span>;  <span class="comment">// ③ 输出（同步）</span>
+  <span class="bracket">}</span>
+  <span class="comment">// async2返回 Promise.resolve(undefined)</span>
+  
+  <span class="comment">// 2.3 await后面的代码进入微任务队列</span>
+  <span class="comment">// console.log('async1 end') → 微任务</span>
+
+<span class="comment">// 3. 继续同步代码</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'script end'</span><span class="bracket">)</span>;  <span class="comment">// ④ 输出</span>
+
+<span class="comment">// 4. 执行微任务</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 end'</span><span class="bracket">)</span>;  <span class="comment">// ⑤ 输出</span>
+
+<span class="comment">// 最终输出：</span>
+<span class="comment">// script start</span>
+<span class="comment">// async1 start</span>
+<span class="comment">// async2</span>
+<span class="comment">// script end</span>
+<span class="comment">// async1 end</span></code></pre></div>
+                    
+                    <p><strong>等价的Promise写法：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">async1</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 start'</span><span class="bracket">)</span>;
+    <span class="keyword">return</span> <span class="function">async2</span><span class="bracket">(</span><span class="bracket">)</span>.<span class="function">then</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async1 end'</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">async2</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'async2'</span><span class="bracket">)</span>;
+    <span class="keyword">return</span> <span class="property">Promise</span>.<span class="function">resolve</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>async函数在第一个await之前<strong>同步执行</strong></li>
+                        <li>await后的代码相当于<strong>Promise.then</strong>（微任务）</li>
+                        <li>被await的async函数会立即执行</li>
+                        <li>微任务优先于下一个宏任务</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：async执行顺序</span>
+            </div>
+        </div>
+
+        <!-- Q10: 实战应用 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">最佳实践</span>
+            </div>
+            
+            <div class="question">Q10: 实现一个重试函数，失败后自动重试N次</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用递归 + try/catch
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 使用循环 + await
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 两种方式都可以
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> async/await无法实现重试
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>实现异步重试功能：</h4>
+                    
+                    <p><strong>方式1：循环实现</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">retry</span><span class="bracket">(</span>fn, times <span class="operator">=</span> <span class="number">3</span>, delay <span class="operator">=</span> <span class="number">1000</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> times; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">try</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 成功则返回</span>
+        <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">===</span> times <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+                <span class="keyword">throw</span> error;  <span class="comment">// 最后一次失败，抛出</span>
+            <span class="bracket">}</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`第${i + 1}次失败，${delay}ms后重试...`</span><span class="bracket">)</span>;
+            <span class="keyword">await</span> <span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span>r <span class="operator">=></span> <span class="function">setTimeout</span><span class="bracket">(</span>r, delay<span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 使用</span>
+<span class="keyword">await</span> <span class="function">retry</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>, <span class="number">3</span>, <span class="number">2000</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>方式2：递归实现</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">retryRecursive</span><span class="bracket">(</span>fn, times <span class="operator">=</span> <span class="number">3</span>, delay <span class="operator">=</span> <span class="number">1000</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">try</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>times <span class="operator">&lt;=</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">throw</span> error;
+        <span class="bracket">}</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`剩余${times - 1}次重试机会`</span><span class="bracket">)</span>;
+        <span class="keyword">await</span> <span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span>r <span class="operator">=></span> <span class="function">setTimeout</span><span class="bracket">(</span>r, delay<span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="keyword">return</span> <span class="function">retryRecursive</span><span class="bracket">(</span>fn, times <span class="operator">-</span> <span class="number">1</span>, delay<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>增强版：指数退避</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">async</span> <span class="keyword">function</span> <span class="function">retryWithBackoff</span><span class="bracket">(</span>
+    fn,
+    times <span class="operator">=</span> <span class="number">3</span>,
+    initialDelay <span class="operator">=</span> <span class="number">1000</span>,
+    backoff <span class="operator">=</span> <span class="number">2</span>
+<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> delay <span class="operator">=</span> initialDelay;
+    
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> times; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">try</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">===</span> times <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span> <span class="keyword">throw</span> error;
+            
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`等待${delay}ms后重试...`</span><span class="bracket">)</span>;
+            <span class="keyword">await</span> <span class="keyword">new</span> <span class="function">Promise</span><span class="bracket">(</span>r <span class="operator">=></span> <span class="function">setTimeout</span><span class="bracket">(</span>r, delay<span class="bracket">)</span><span class="bracket">)</span>;
+            
+            delay <span class="operator">*=</span> backoff;  <span class="comment">// 指数增长</span>
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 1秒 → 2秒 → 4秒</span>
+<span class="keyword">await</span> <span class="function">retryWithBackoff</span><span class="bracket">(</span>fetchData, <span class="number">3</span>, <span class="number">1000</span>, <span class="number">2</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>高级特性：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 支持条件重试</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">retryWhen</span><span class="bracket">(</span>fn, shouldRetry, times <span class="operator">=</span> <span class="number">3</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> times; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">try</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">await</span> <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="bracket">}</span> <span class="keyword">catch</span> <span class="bracket">(</span>error<span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="function">shouldRetry</span><span class="bracket">(</span>error<span class="bracket">)</span> <span class="operator">||</span> i <span class="operator">===</span> times <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>
+                <span class="keyword">throw</span> error;
+            <span class="bracket">}</span>
+            <span class="keyword">await</span> <span class="function">delay</span><span class="bracket">(</span><span class="number">1000</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 只重试网络错误</span>
+<span class="keyword">await</span> <span class="function">retryWhen</span><span class="bracket">(</span>
+    fetchData,
+    error <span class="operator">=></span> error.<span class="property">name</span> <span class="operator">===</span> <span class="string">'NetworkError'</span>,
+    <span class="number">3</span>
+<span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>应用场景：</strong></p>
+                    <ul>
+                        <li>网络请求重试</li>
+                        <li>数据库连接重试</li>
+                        <li>服务调用容错</li>
+                        <li>文件操作重试</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：async/await最佳实践</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="09-promises.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：Promise</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            
+            if (!selectedOption) {
+                alert('请先选择一个答案！');
+                return;
+            }
+            
+            const userAnswer = selectedOption.getAttribute('data-answer');
+            const allOptions = quizItem.querySelectorAll('.option');
+            
+            allOptions.forEach(option => {
+                const answer = option.getAttribute('data-answer');
+                if (answer === correctAnswer) {
+                    option.classList.add('correct');
+                } else if (answer === userAnswer) {
+                    option.classList.add('wrong');
+                }
+            });
+            
+            setTimeout(() => showAnswer(questionNum), 500);
+        }
+
+        function showAnswer(questionNum) {
+            const answerSection = document.getElementById(`answer-${questionNum}`);
+            answerSection.classList.add('show');
+            answerSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>

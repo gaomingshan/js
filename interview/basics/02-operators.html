@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运算符完全指南 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/02-operators.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 运算符完全指南 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: 运算符优先级 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">优先级</span>
+                <span class="tag">求值顺序</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span> <span class="operator">+</span> <span class="number">3</span> <span class="operator">*</span> <span class="number">4</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="bracket">(</span><span class="number">2</span> <span class="operator">+</span> <span class="number">3</span><span class="bracket">)</span> <span class="operator">*</span> <span class="number">4</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">2</span> <span class="operator">**</span> <span class="number">3</span> <span class="operator">**</span> <span class="number">2</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="bracket">(</span><span class="number">2</span> <span class="operator">**</span> <span class="number">3</span><span class="bracket">)</span> <span class="operator">**</span> <span class="number">2</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 14, 20, 512, 64
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 20, 20, 64, 64
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 14, 20, 64, 64
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 14, 20, 512, 512
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>运算符优先级：</h4>
+                    
+                    <p><strong>1. <code>2 + 3 * 4</code> → 14</strong></p>
+                    <ul>
+                        <li>乘法优先级高于加法</li>
+                        <li>先算 3 * 4 = 12</li>
+                        <li>再算 2 + 12 = 14</li>
+                    </ul>
+                    
+                    <p><strong>2. <code>(2 + 3) * 4</code> → 20</strong></p>
+                    <ul>
+                        <li>括号优先级最高</li>
+                        <li>先算 2 + 3 = 5</li>
+                        <li>再算 5 * 4 = 20</li>
+                    </ul>
+                    
+                    <p><strong>3. <code>2 ** 3 ** 2</code> → 512</strong></p>
+                    <ul>
+                        <li>幂运算符 ** 是<strong>右结合</strong>的！</li>
+                        <li>相当于 2 ** (3 ** 2)</li>
+                        <li>先算 3 ** 2 = 9</li>
+                        <li>再算 2 ** 9 = 512</li>
+                    </ul>
+                    
+                    <p><strong>4. <code>(2 ** 3) ** 2</code> → 64</strong></p>
+                    <ul>
+                        <li>括号改变结合性</li>
+                        <li>先算 2 ** 3 = 8</li>
+                        <li>再算 8 ** 2 = 64</li>
+                    </ul>
+                    
+                    <h4>常见优先级（从高到低）：</h4>
+                    <ol>
+                        <li>括号 <code>()</code></li>
+                        <li>成员访问 <code>.</code> <code>[]</code></li>
+                        <li>new（带参数列表）</li>
+                        <li>函数调用 <code>()</code></li>
+                        <li>幂运算 <code>**</code>（右结合）</li>
+                        <li>一元运算符 <code>!</code> <code>~</code> <code>+</code> <code>-</code></li>
+                        <li>乘除模 <code>*</code> <code>/</code> <code>%</code></li>
+                        <li>加减 <code>+</code> <code>-</code></li>
+                        <li>比较 <code>&lt;</code> <code>&gt;</code></li>
+                        <li>相等 <code>==</code> <code>===</code></li>
+                        <li>逻辑与 <code>&&</code></li>
+                        <li>逻辑或 <code>||</code></li>
+                        <li>赋值 <code>=</code></li>
+                    </ol>
+                </div>
+                <span class="source-tag">📌 来源：运算符优先级必考</span>
+            </div>
+        </div>
+
+        <!-- Q2: 逗号运算符 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">逗号运算符</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> x <span class="operator">=</span> <span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+
+<span class="keyword">let</span> y <span class="operator">=</span> <span class="bracket">(</span><span class="number">5</span>, <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>, <span class="number">10</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>y<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 3, "hello", 10
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [1,2,3], "hello", undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 3, "hello", undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1, "hello", 5
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>逗号运算符：</h4>
+                    
+                    <p><strong>特性：</strong></p>
+                    <ul>
+                        <li>从左到右依次执行表达式</li>
+                        <li>返回<strong>最后一个</strong>表达式的值</li>
+                        <li>优先级最低（需要括号）</li>
+                    </ul>
+                    
+                    <p><strong>1. <code>(1, 2, 3)</code> → 3</strong></p>
+                    <ul>
+                        <li>执行 1（无副作用）</li>
+                        <li>执行 2（无副作用）</li>
+                        <li>执行 3，返回 3</li>
+                    </ul>
+                    
+                    <p><strong>2. <code>(5, console.log('hello'), 10)</code> → 10</strong></p>
+                    <ul>
+                        <li>执行 5（无副作用）</li>
+                        <li>执行 console.log('hello')，输出 "hello"，返回 undefined</li>
+                        <li>执行 10，返回 10</li>
+                    </ul>
+                    
+                    <h4>实际应用：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. for 循环中使用</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>, j <span class="operator">=</span> <span class="number">10</span>; i <span class="operator">&lt;</span> j; i<span class="operator">++</span>, j<span class="operator">--</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i, j<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 2. 链式操作</span>
+<span class="keyword">let</span> a <span class="operator">=</span> <span class="bracket">(</span>b <span class="operator">=</span> <span class="number">1</span>, b <span class="operator">+</span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// a = 3, b = 1</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：逗号运算符冷门考点</span>
+            </div>
+        </div>
+
+        <!-- Q3: void运算符 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">void</span>
+                <span class="tag">一元运算符</span>
+            </div>
+            
+            <div class="question">Q3: 以下关于 void 运算符的说法，正确的是？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> <code>void 0</code> 永远返回 undefined
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> <code>void</code> 会执行表达式但丢弃返回值
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> <code>void function(){}</code> 可以立即执行函数
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> <code>void 0 === undefined</code> 永远为 true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(3, ['A', 'B', 'D'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A、B、D</div>
+                <div class="explanation">
+                    <h4>void 运算符：</h4>
+                    
+                    <p><strong>A. ✅ void 0 获取纯粹的 undefined</strong></p>
+                    <ul>
+                        <li><code>void</code> 对任何表达式都返回 undefined</li>
+                        <li><code>void 0</code> 最简洁，常用于代替 undefined</li>
+                        <li>避免 undefined 被局部变量遮蔽</li>
+                    </ul>
+                    
+                    <p><strong>B. ✅ 执行但丢弃返回值</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">void</span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'执行了'</span><span class="bracket">)</span>;  <span class="comment">// 输出"执行了"，返回 undefined</span></code></pre></div>
+                    
+                    <p><strong>C. ❌ 不能直接执行函数</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">void</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'hi'</span><span class="bracket">)</span><span class="bracket">}</span>  <span class="comment">// 只是定义，不执行</span>
+
+<span class="comment">// 正确写法：</span>
+<span class="keyword">void</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'hi'</span><span class="bracket">)</span><span class="bracket">}</span><span class="bracket">(</span><span class="bracket">)</span>  <span class="comment">// 需要加 ()</span></code></pre></div>
+                    
+                    <p><strong>D. ✅ 永远为 true</strong></p>
+                    <ul>
+                        <li><code>void 0</code> 是真正的 undefined</li>
+                        <li>即使 undefined 被修改，void 0 也不受影响</li>
+                    </ul>
+                    
+                    <h4>实际应用：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 获取安全的 undefined</span>
+<span class="keyword">if</span> <span class="bracket">(</span>value <span class="operator">===</span> <span class="keyword">void</span> <span class="number">0</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="comment">/* undefined */</span> <span class="bracket">}</span>
+
+<span class="comment">// 2. 阻止 a 标签跳转</span>
+<span class="comment">&lt;a href="javascript:void(0)"&gt;点击&lt;/a&gt;</span>
+
+<span class="comment">// 3. 箭头函数丢弃返回值</span>
+button.<span class="function">onclick</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">void</span> <span class="function">doSomething</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：void运算符实用技巧</span>
+            </div>
+        </div>
+
+        <!-- Q4: ++ 和 -- 运算符 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">自增自减</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> a <span class="operator">=</span> <span class="number">1</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>a<span class="operator">++</span>, a<span class="bracket">)</span>;
+
+<span class="keyword">let</span> b <span class="operator">=</span> <span class="number">1</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="operator">++</span>b, b<span class="bracket">)</span>;
+
+<span class="keyword">let</span> c <span class="operator">=</span> <span class="number">1</span>;
+<span class="keyword">let</span> d <span class="operator">=</span> c<span class="operator">++</span> <span class="operator">+</span> <span class="operator">++</span>c;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>d, c<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1 2, 2 2, 4 3
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 2 2, 2 2, 3 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1 2, 1 2, 4 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1 1, 2 2, 3 2
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>++ 和 -- 的区别：</h4>
+                    
+                    <p><strong>后置：<code>a++</code></strong></p>
+                    <ul>
+                        <li>先返回当前值</li>
+                        <li>再自增</li>
+                        <li><code>a++</code> → 返回 1，然后 a 变成 2</li>
+                    </ul>
+                    
+                    <p><strong>前置：<code>++b</code></strong></p>
+                    <ul>
+                        <li>先自增</li>
+                        <li>再返回新值</li>
+                        <li><code>++b</code> → b 先变成 2，返回 2</li>
+                    </ul>
+                    
+                    <p><strong>混合使用：<code>c++ + ++c</code></strong></p>
+                    <pre>初始：c = 1
+c++：返回 1，c 变成 2
+++c：c 先变成 3，返回 3
+1 + 3 = 4
+最终：d = 4, c = 3</pre>
+                    
+                    <h4>等价代码：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// a++ 等价于</span>
+<span class="keyword">let</span> temp <span class="operator">=</span> a;
+a <span class="operator">=</span> a <span class="operator">+</span> <span class="number">1</span>;
+<span class="comment">// 返回 temp</span>
+
+<span class="comment">// ++a 等价于</span>
+a <span class="operator">=</span> a <span class="operator">+</span> <span class="number">1</span>;
+<span class="comment">// 返回 a</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：自增自减经典陷阱</span>
+            </div>
+        </div>
+
+        <!-- Q5: 短路求值 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">短路求值</span>
+                <span class="tag">逻辑运算</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> a <span class="operator">=</span> <span class="number">0</span> <span class="operator">||</span> <span class="number">1</span> <span class="operator">&&</span> <span class="number">2</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>a<span class="bracket">)</span>;
+
+<span class="keyword">let</span> b <span class="operator">=</span> <span class="keyword">null</span> <span class="operator">??</span> <span class="number">5</span> <span class="operator">||</span> <span class="number">10</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>b<span class="bracket">)</span>;
+
+<span class="keyword">let</span> c <span class="operator">=</span> <span class="number">0</span> <span class="operator">??</span> <span class="number">5</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>c<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 2, 5, 0
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1, 10, 5
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 2, 10, 0
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1, 5, 0
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>短路求值详解：</h4>
+                    
+                    <p><strong>1. <code>0 || 1 && 2</code> → 2</strong></p>
+                    <pre>优先级：&& 高于 ||
+先算：1 && 2 → 2（两者都真，返回最后一个）
+再算：0 || 2 → 2（左假返回右）</pre>
+                    
+                    <p><strong>2. <code>null ?? 5 || 10</code> → 5</strong></p>
+                    <pre>优先级：?? 不能与 || 混用（需括号）
+但实际执行从左到右：
+null ?? 5 → 5（null/undefined返回右侧）
+5 || 10 → 5（左真返回左）</pre>
+                    
+                    <p><strong>3. <code>0 ?? 5</code> → 0</strong></p>
+                    <ul>
+                        <li><code>??</code> 只判断 null 和 undefined</li>
+                        <li>0 不是 null/undefined，返回 0</li>
+                        <li>与 <code>||</code> 的区别！</li>
+                    </ul>
+                    
+                    <h4>逻辑运算符对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// || - 逻辑或（假值返回右）</span>
+<span class="number">0</span> <span class="operator">||</span> <span class="number">5</span>  <span class="comment">// 5</span>
+<span class="string">''</span> <span class="operator">||</span> <span class="string">'x'</span>  <span class="comment">// 'x'</span>
+
+<span class="comment">// && - 逻辑与（真值返回右）</span>
+<span class="number">1</span> <span class="operator">&&</span> <span class="number">2</span>  <span class="comment">// 2</span>
+<span class="number">0</span> <span class="operator">&&</span> <span class="number">2</span>  <span class="comment">// 0</span>
+
+<span class="comment">// ?? - 空值合并（仅null/undefined返回右）</span>
+<span class="number">0</span> <span class="operator">??</span> <span class="number">5</span>  <span class="comment">// 0（！）</span>
+<span class="keyword">null</span> <span class="operator">??</span> <span class="number">5</span>  <span class="comment">// 5</span>
+<span class="keyword">undefined</span> <span class="operator">??</span> <span class="number">5</span>  <span class="comment">// 5</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：ES2020空值合并</span>
+            </div>
+        </div>
+
+        <!-- Q6: 位运算符 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">位运算</span>
+            </div>
+            
+            <div class="question">Q6: 以下位运算的结果是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">5</span> <span class="operator">&</span> <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">5</span> <span class="operator">|</span> <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">5</span> <span class="operator">^</span> <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="operator">~</span><span class="number">5</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1, 7, 6, -6
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 3, 5, 2, -5
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1, 7, 6, -5
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 2, 6, 5, -6
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>位运算详解：</h4>
+                    
+                    <p><strong>1. <code>5 & 3</code> → 1（按位与）</strong></p>
+                    <pre>5: 0101
+3: 0011
+&: 0001 = 1</pre>
+                    
+                    <p><strong>2. <code>5 | 3</code> → 7（按位或）</strong></p>
+                    <pre>5: 0101
+3: 0011
+|: 0111 = 7</pre>
+                    
+                    <p><strong>3. <code>5 ^ 3</code> → 6（按位异或）</strong></p>
+                    <pre>5: 0101
+3: 0011
+^: 0110 = 6</pre>
+                    
+                    <p><strong>4. <code>~5</code> → -6（按位非）</strong></p>
+                    <ul>
+                        <li>按位取反</li>
+                        <li>等价于 <code>-(n + 1)</code></li>
+                        <li><code>~5 = -(5 + 1) = -6</code></li>
+                    </ul>
+                    
+                    <h4>位运算实用技巧：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 判断奇偶</span>
+n <span class="operator">&</span> <span class="number">1</span>  <span class="comment">// 奇数为1，偶数为0</span>
+
+<span class="comment">// 2. 取整（向下）</span>
+<span class="operator">~~</span><span class="number">3.14</span>  <span class="comment">// 3</span>
+<span class="number">3.14</span> <span class="operator">|</span> <span class="number">0</span>  <span class="comment">// 3</span>
+
+<span class="comment">// 3. 交换变量（不用临时变量）</span>
+a <span class="operator">^=</span> b;
+b <span class="operator">^=</span> a;
+a <span class="operator">^=</span> b;
+
+<span class="comment">// 4. 判断是否存在于数组（indexOf技巧）</span>
+<span class="operator">~</span>arr.<span class="function">indexOf</span><span class="bracket">(</span>x<span class="bracket">)</span>  <span class="comment">// 存在为真（非-1）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：位运算实用技巧</span>
+            </div>
+        </div>
+
+        <!-- Q7: 可选链与空值合并 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">可选链</span>
+                <span class="tag">ES2020</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">a</span><span class="operator">:</span> <span class="bracket">{</span> <span class="property">b</span><span class="operator">:</span> <span class="number">0</span> <span class="bracket">}</span> <span class="bracket">}</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">a</span>?.<span class="property">b</span> <span class="operator">??</span> <span class="number">5</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">c</span>?.<span class="property">d</span> <span class="operator">??</span> <span class="number">5</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">fn</span>?.(<span class="bracket">)</span> <span class="operator">??</span> <span class="string">'no function'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0, 5, "no function"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 5, 5, undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 0, undefined, "no function"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 5, undefined, "no function"
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>可选链 ?. 详解：</h4>
+                    
+                    <p><strong>1. <code>obj.a?.b ?? 5</code> → 0</strong></p>
+                    <ul>
+                        <li><code>obj.a</code> 存在</li>
+                        <li><code>obj.a?.b</code> → 0</li>
+                        <li><code>0 ?? 5</code> → 0（0不是null/undefined）</li>
+                    </ul>
+                    
+                    <p><strong>2. <code>obj.c?.d ?? 5</code> → 5</strong></p>
+                    <ul>
+                        <li><code>obj.c</code> 不存在（undefined）</li>
+                        <li><code>obj.c?.d</code> → undefined（短路）</li>
+                        <li><code>undefined ?? 5</code> → 5</li>
+                    </ul>
+                    
+                    <p><strong>3. <code>obj.fn?.() ?? 'no function'</code> → "no function"</strong></p>
+                    <ul>
+                        <li><code>obj.fn</code> 不存在</li>
+                        <li><code>obj.fn?.()</code> → undefined（不调用）</li>
+                        <li><code>undefined ?? 'no function'</code> → "no function"</li>
+                    </ul>
+                    
+                    <h4>可选链的三种形式：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 属性访问</span>
+obj?.<span class="property">prop</span>
+
+<span class="comment">// 2. 方法调用</span>
+obj.<span class="function">method</span>?.<span class="bracket">(</span><span class="bracket">)</span>
+
+<span class="comment">// 3. 数组索引</span>
+arr?.<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span></code></pre></div>
+                    
+                    <h4>与旧写法对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 旧写法</span>
+<span class="keyword">const</span> street <span class="operator">=</span> user <span class="operator">&&</span> user.<span class="property">address</span> <span class="operator">&&</span> user.<span class="property">address</span>.<span class="property">street</span>;
+
+<span class="comment">// 新写法</span>
+<span class="keyword">const</span> street <span class="operator">=</span> user?.<span class="property">address</span>?.<span class="property">street</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：ES2020新特性</span>
+            </div>
+        </div>
+
+        <!-- Q8: in 运算符 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">in运算符</span>
+                <span class="tag">属性检测</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">a</span><span class="operator">:</span> <span class="keyword">undefined</span> <span class="bracket">}</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'a'</span> <span class="keyword">in</span> obj<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">a</span> <span class="operator">!==</span> <span class="keyword">undefined</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, , <span class="number">3</span><span class="bracket">]</span>;  <span class="comment">// 稀疏数组</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="number">1</span> <span class="keyword">in</span> arr<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'length'</span> <span class="keyword">in</span> arr<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true, false, false, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true, true, false, true
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> false, false, true, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> true, false, true, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>in 运算符特性：</h4>
+                    
+                    <p><strong>1. <code>'a' in obj</code> → true</strong></p>
+                    <ul>
+                        <li><code>in</code> 检查属性是否存在</li>
+                        <li>即使值是 undefined，属性也存在</li>
+                    </ul>
+                    
+                    <p><strong>2. <code>obj.a !== undefined</code> → false</strong></p>
+                    <ul>
+                        <li><code>obj.a</code> 是 undefined</li>
+                        <li><code>undefined !== undefined</code> → false</li>
+                    </ul>
+                    
+                    <p><strong>3. <code>1 in arr</code> → false</strong></p>
+                    <ul>
+                        <li><code>[1, , 3]</code> 索引1处是"空洞"</li>
+                        <li>属性不存在</li>
+                        <li><code>arr[1]</code> 虽然返回 undefined，但属性不存在</li>
+                    </ul>
+                    
+                    <p><strong>4. <code>'length' in arr</code> → true</strong></p>
+                    <ul>
+                        <li>数组有 length 属性</li>
+                    </ul>
+                    
+                    <h4>in vs hasOwnProperty：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">a</span><span class="operator">:</span> <span class="number">1</span> <span class="bracket">}</span>;
+
+<span class="comment">// in - 检查自有属性和继承属性</span>
+<span class="string">'toString'</span> <span class="keyword">in</span> obj;  <span class="comment">// true（继承自Object.prototype）</span>
+
+<span class="comment">// hasOwnProperty - 只检查自有属性</span>
+obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'toString'</span><span class="bracket">)</span>;  <span class="comment">// false</span>
+obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span><span class="string">'a'</span><span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                    
+                    <h4>检查属性的最佳实践：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 检查属性是否存在（包括继承）</span>
+<span class="string">'prop'</span> <span class="keyword">in</span> obj
+
+<span class="comment">// 2. 检查自有属性</span>
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">hasOwnProperty</span>.<span class="function">call</span><span class="bracket">(</span>obj, <span class="string">'prop'</span><span class="bracket">)</span>
+
+<span class="comment">// 3. 检查属性值不是 undefined（会误判）</span>
+obj.<span class="property">prop</span> <span class="operator">!==</span> <span class="keyword">undefined</span>  <span class="comment">// ❌ 不准确</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：属性检测深入</span>
+            </div>
+        </div>
+
+        <!-- Q9: delete 运算符 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">delete</span>
+            </div>
+            
+            <div class="question">Q9: 以下关于 delete 的说法，正确的是？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> delete 可以删除对象的属性
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> delete 可以删除数组元素，数组长度会减少
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> delete 不能删除 var 声明的变量
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> delete 返回布尔值表示是否删除成功
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(9, ['A', 'C', 'D'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A、C、D</div>
+                <div class="explanation">
+                    <h4>delete 运算符详解：</h4>
+                    
+                    <p><strong>A. ✅ 删除对象属性</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">a</span><span class="operator">:</span> <span class="number">1</span>, <span class="property">b</span><span class="operator">:</span> <span class="number">2</span> <span class="bracket">}</span>;
+<span class="keyword">delete</span> obj.<span class="property">a</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj<span class="bracket">)</span>;  <span class="comment">// { b: 2 }</span></code></pre></div>
+                    
+                    <p><strong>B. ❌ 数组长度不变</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+<span class="keyword">delete</span> arr<span class="bracket">[</span><span class="number">1</span><span class="bracket">]</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;  <span class="comment">// [1, empty, 3]</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 3（长度不变！）</span></code></pre></div>
+                    
+                    <p><strong>C. ✅ 不能删除 var 变量</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">1</span>;
+<span class="keyword">delete</span> x;  <span class="comment">// false（严格模式报错）</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// 1（未被删除）</span>
+
+<span class="comment">// 但可以删除 window 属性</span>
+window.<span class="property">y</span> <span class="operator">=</span> <span class="number">2</span>;
+<span class="keyword">delete</span> window.<span class="property">y</span>;  <span class="comment">// true</span></code></pre></div>
+                    
+                    <p><strong>D. ✅ 返回布尔值</strong></p>
+                    <ul>
+                        <li>true - 删除成功或属性不存在</li>
+                        <li>false - 无法删除（不可配置属性）</li>
+                    </ul>
+                    
+                    <h4>delete 不能删除的：</h4>
+                    <ul>
+                        <li>var/let/const 声明的变量</li>
+                        <li>函数声明</li>
+                        <li>不可配置（configurable: false）的属性</li>
+                        <li>继承的属性</li>
+                    </ul>
+                    
+                    <h4>删除数组元素的正确方法：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ delete - 留下空洞</span>
+<span class="keyword">delete</span> arr<span class="bracket">[</span><span class="number">1</span><span class="bracket">]</span>;
+
+<span class="comment">// ✅ splice - 真正删除</span>
+arr.<span class="function">splice</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// 删除索引1的1个元素</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：delete运算符陷阱</span>
+            </div>
+        </div>
+
+        <!-- Q10: typeof 与 instanceof 综合 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">typeof</span>
+                <span class="tag">instanceof</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> f <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">typeof</span> <span class="function">Foo</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">typeof</span> f<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>f <span class="keyword">instanceof</span> <span class="function">Foo</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>f <span class="keyword">instanceof</span> <span class="property">Object</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "function", "object", true, true
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "object", "object", true, false
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "function", "function", true, true
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "function", "object", false, true
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>typeof vs instanceof：</h4>
+                    
+                    <p><strong>1. <code>typeof Foo</code> → "function"</strong></p>
+                    <ul>
+                        <li>函数的类型是 "function"</li>
+                        <li>虽然函数也是对象，但有特殊的 typeof 值</li>
+                    </ul>
+                    
+                    <p><strong>2. <code>typeof f</code> → "object"</strong></p>
+                    <ul>
+                        <li>new 创建的实例是对象</li>
+                        <li>typeof 对所有对象（除函数）都返回 "object"</li>
+                    </ul>
+                    
+                    <p><strong>3. <code>f instanceof Foo</code> → true</strong></p>
+                    <ul>
+                        <li>f 是 Foo 的实例</li>
+                        <li>f 的原型链上有 Foo.prototype</li>
+                    </ul>
+                    
+                    <p><strong>4. <code>f instanceof Object</code> → true</strong></p>
+                    <ul>
+                        <li>所有对象都继承自 Object</li>
+                        <li>原型链：f → Foo.prototype → Object.prototype</li>
+                    </ul>
+                    
+                    <h4>typeof 和 instanceof 的区别：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// typeof - 返回类型字符串</span>
+<span class="keyword">typeof</span> <span class="number">123</span>  <span class="comment">// "number"</span>
+<span class="keyword">typeof</span> <span class="string">'hi'</span>  <span class="comment">// "string"</span>
+<span class="keyword">typeof</span> <span class="bracket">{</span><span class="bracket">}</span>   <span class="comment">// "object"</span>
+
+<span class="comment">// instanceof - 检查原型链</span>
+<span class="bracket">[</span><span class="bracket">]</span> <span class="keyword">instanceof</span> <span class="property">Array</span>   <span class="comment">// true</span>
+<span class="bracket">[</span><span class="bracket">]</span> <span class="keyword">instanceof</span> <span class="property">Object</span>  <span class="comment">// true</span>
+<span class="number">123</span> <span class="keyword">instanceof</span> <span class="property">Number</span>  <span class="comment">// false（原始值！）</span></code></pre></div>
+                    
+                    <h4>手写 instanceof：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">myInstanceof</span><span class="bracket">(</span>obj, constructor<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span>;
+    <span class="keyword">while</span> <span class="bracket">(</span>proto<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>proto <span class="operator">===</span> constructor.<span class="property">prototype</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">true</span>;
+        <span class="bracket">}</span>
+        proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>proto<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：运算符综合</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="01-type-conversion.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：类型转换</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/02-operators.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+            <a href="02-expressions.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：表达式</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

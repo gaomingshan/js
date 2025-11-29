@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>循环语句 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/03-loops.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 循环语句 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: for循环闭包 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">for循环</span>
+                <span class="tag">闭包</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0, 1, 2
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 3, 3, 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 0, 0, 0
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined, undefined, undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>经典闭包陷阱：</h4>
+                    
+                    <p><strong>问题原因：</strong></p>
+                    <ul>
+                        <li><code>var</code> 是函数作用域，没有块级作用域</li>
+                        <li>循环结束后，<code>i = 3</code></li>
+                        <li>setTimeout回调执行时，访问的是同一个i</li>
+                    </ul>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>1. 循环快速执行完，i = 3
+2. 三个setTimeout回调进入任务队列
+3. 回调执行时，都访问i，此时i = 3
+4. 输出：3, 3, 3</pre>
+                    
+                    <h4>解决方案1：使用let</h4>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="comment">// 输出：0, 1, 2（let有块级作用域）</span></code></pre></div>
+                    
+                    <h4>解决方案2：IIFE</h4>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span>j<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>j<span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="comment">// 输出：0, 1, 2</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：经典闭包陷阱</span>
+            </div>
+        </div>
+
+        <!-- Q2: while循环 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">while</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>;
+<span class="keyword">while</span> <span class="bracket">(</span>i <span class="operator">&lt;</span> <span class="number">3</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+    i<span class="operator">++</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">let</span> j <span class="operator">=</span> <span class="number">5</span>;
+<span class="keyword">do</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>j<span class="bracket">)</span>;
+<span class="bracket">}</span> <span class="keyword">while</span> <span class="bracket">(</span>j <span class="operator">&lt;</span> <span class="number">3</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0, 1, 2
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0, 1, 2, 5
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 0, 1, 2, 3, 5
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 5
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>while vs do-while：</h4>
+                    
+                    <p><strong>while循环：</strong></p>
+                    <ul>
+                        <li>先判断条件，再执行</li>
+                        <li>可能一次都不执行</li>
+                        <li>输出：0, 1, 2</li>
+                    </ul>
+                    
+                    <p><strong>do-while循环：</strong></p>
+                    <ul>
+                        <li>先执行，再判断条件</li>
+                        <li><strong>至少执行一次</strong></li>
+                        <li>j=5，不满足条件，但已经执行了一次</li>
+                        <li>输出：5</li>
+                    </ul>
+                    
+                    <h4>对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// while - 可能0次</span>
+<span class="keyword">let</span> x <span class="operator">=</span> <span class="number">10</span>;
+<span class="keyword">while</span> <span class="bracket">(</span>x <span class="operator">&lt;</span> <span class="number">5</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;  <span class="comment">// 不执行</span>
+<span class="bracket">}</span>
+
+<span class="comment">// do-while - 至少1次</span>
+<span class="keyword">let</span> y <span class="operator">=</span> <span class="number">10</span>;
+<span class="keyword">do</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>y<span class="bracket">)</span>;  <span class="comment">// 执行一次：10</span>
+<span class="bracket">}</span> <span class="keyword">while</span> <span class="bracket">(</span>y <span class="operator">&lt;</span> <span class="number">5</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：while循环基础</span>
+            </div>
+        </div>
+
+        <!-- Q3: break和continue -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">break</span>
+                <span class="tag">continue</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">5</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">continue</span>;
+    <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">===</span> <span class="number">4</span><span class="bracket">)</span> <span class="keyword">break</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0, 1, 3
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0, 1, 2, 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 0, 1, 3, 4
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 0, 1, 2, 3, 4
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>break vs continue：</h4>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>i=0: 不满足任何if，输出 0
+i=1: 不满足任何if，输出 1
+i=2: continue，跳过本次，不输出
+i=3: 不满足任何if，输出 3
+i=4: break，退出循环</pre>
+                    
+                    <p><strong>continue - 跳过本次迭代</strong></p>
+                    <ul>
+                        <li>跳到循环的下一次迭代</li>
+                        <li>后续代码不执行</li>
+                        <li>循环继续</li>
+                    </ul>
+                    
+                    <p><strong>break - 退出循环</strong></p>
+                    <ul>
+                        <li>立即终止整个循环</li>
+                        <li>跳出循环体</li>
+                        <li>后续迭代不执行</li>
+                    </ul>
+                    
+                    <h4>示例对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// continue - 跳过偶数</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">5</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">%</span> <span class="number">2</span> <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="keyword">continue</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;  <span class="comment">// 1, 3</span>
+<span class="bracket">}</span>
+
+<span class="comment">// break - 找到就停止</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">5</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">===</span> <span class="number">3</span><span class="bracket">)</span> <span class="keyword">break</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;  <span class="comment">// 0, 1, 2</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：循环控制语句</span>
+            </div>
+        </div>
+
+        <!-- Q4: for...in -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">for...in</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">a</span><span class="operator">:</span> <span class="number">1</span>, <span class="property">b</span><span class="operator">:</span> <span class="number">2</span> <span class="bracket">}</span>;
+<span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="string">'x'</span>, <span class="string">'y'</span><span class="bracket">]</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> key <span class="keyword">in</span> obj<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>key<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> index <span class="keyword">in</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>index<span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "a", "b", "x", "y"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> "a", "b", 0, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "a", "b", "0", "1"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1, 2, "x", "y"
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>for...in 遍历：</h4>
+                    
+                    <p><strong>特性：</strong></p>
+                    <ul>
+                        <li>遍历对象的<strong>可枚举属性</strong></li>
+                        <li>返回<strong>属性名/索引</strong>（字符串）</li>
+                        <li>遍历数组时，索引是字符串</li>
+                    </ul>
+                    
+                    <p><strong>1. 遍历对象：</strong></p>
+                    <pre>遍历 {a: 1, b: 2}
+输出属性名："a", "b"</pre>
+                    
+                    <p><strong>2. 遍历数组：</strong></p>
+                    <pre>遍历 ['x', 'y']
+输出索引（字符串）："0", "1"</pre>
+                    
+                    <h4>注意事项：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// for...in遍历数组的问题</span>
+<span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+arr.<span class="property">foo</span> <span class="operator">=</span> <span class="string">'bar'</span>;  <span class="comment">// 添加自定义属性</span>
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="keyword">in</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;  <span class="comment">// "0", "1", "2", "foo"</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 遍历原型链属性</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> key <span class="keyword">in</span> obj<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span>key<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="comment">// 只处理自有属性</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：for...in遍历</span>
+            </div>
+        </div>
+
+        <!-- Q5: for...of -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">for...of</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'c'</span><span class="bracket">]</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>item<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">let</span> str <span class="operator">=</span> <span class="string">'hi'</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> char <span class="keyword">of</span> str<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>char<span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "a", "b", "c", "h", "i"
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0, 1, 2, 0, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "a", "b", "c", "hi"
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> ['a','b','c'], 'hi'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>for...of 遍历：</h4>
+                    
+                    <p><strong>特性：</strong></p>
+                    <ul>
+                        <li>遍历<strong>可迭代对象</strong>（数组、字符串、Map、Set等）</li>
+                        <li>返回<strong>值本身</strong>，不是索引</li>
+                        <li>ES6新增</li>
+                    </ul>
+                    
+                    <p><strong>1. 遍历数组：</strong></p>
+                    <pre>遍历 ['a', 'b', 'c']
+输出值：'a', 'b', 'c'</pre>
+                    
+                    <p><strong>2. 遍历字符串：</strong></p>
+                    <pre>遍历 'hi'
+输出每个字符：'h', 'i'</pre>
+                    
+                    <h4>for...in vs for...of：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="string">'a'</span>, <span class="string">'b'</span><span class="bracket">]</span>;
+
+<span class="comment">// for...in - 索引（字符串）</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="keyword">in</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;  <span class="comment">// "0", "1"</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">typeof</span> i<span class="bracket">)</span>;  <span class="comment">// "string"</span>
+<span class="bracket">}</span>
+
+<span class="comment">// for...of - 值</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>item<span class="bracket">)</span>;  <span class="comment">// "a", "b"</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <h4>可迭代对象：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 数组</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span><span class="bracket">]</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// Map</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> <span class="bracket">[</span>key, value<span class="bracket">]</span> <span class="keyword">of</span> <span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// Set</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> <span class="keyword">new</span> <span class="function">Set</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：for...of遍历</span>
+            </div>
+        </div>
+
+        <!-- Q6: forEach -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">forEach</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+arr.<span class="function">forEach</span><span class="bracket">(</span><span class="bracket">(</span>item<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>item <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">return</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>item<span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1, 3
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1, 2, 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 无输出
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>forEach的return：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li><code>return</code>只退出当前回调函数</li>
+                        <li>不能中断forEach循环</li>
+                        <li>类似于for循环的<code>continue</code></li>
+                    </ul>
+                    
+                    <p><strong>执行过程：</strong></p>
+                    <pre>item=1: 输出1
+item=2: return退出回调，继续下一个
+item=3: 输出3</pre>
+                    
+                    <h4>forEach vs for循环：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// forEach - 不能用break/continue</span>
+arr.<span class="function">forEach</span><span class="bracket">(</span>item <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>item <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">break</span>;  <span class="comment">// ❌ 语法错误</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// for循环 - 可以用break/continue</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> arr<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>item <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">break</span>;  <span class="comment">// ✅ OK</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：forEach特性</span>
+            </div>
+        </div>
+
+        <!-- Q7: map/filter/reduce -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">数组方法</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result <span class="operator">=</span> arr.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>
+                 .<span class="function">filter</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">2</span><span class="bracket">)</span>
+                 .<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">+</span> b<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 6
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 10
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 12
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> [4, 6]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>数组方法链式调用：</h4>
+                    
+                    <p><strong>执行过程：</strong></p>
+                    <pre>1. map(x => x * 2)
+   [1, 2, 3] → [2, 4, 6]
+
+2. filter(x => x > 2)
+   [2, 4, 6] → [4, 6]
+
+3. reduce((a, b) => a + b)
+   4 + 6 = 10</pre>
+                    
+                    <h4>数组方法对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// map - 转换每个元素</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span><span class="bracket">]</span>.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>  <span class="comment">// [2, 4]</span>
+
+<span class="comment">// filter - 过滤元素</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">filter</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">1</span><span class="bracket">)</span>  <span class="comment">// [2, 3]</span>
+
+<span class="comment">// reduce - 聚合为单值</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">+</span> b<span class="bracket">)</span>  <span class="comment">// 6</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组方法链</span>
+            </div>
+        </div>
+
+        <!-- Q8: 循环中的异步 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">异步</span>
+                <span class="tag">循环</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出顺序是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>, <span class="number">100</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'end'</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> "end", 0, 1, 2
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0, 1, 2, "end"
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> "end", 3, 3, 3
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 3, 3, 3, "end"
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>循环中的异步执行：</h4>
+                    
+                    <p><strong>执行顺序：</strong></p>
+                    <pre>1. 同步代码：循环快速执行，注册3个定时器
+2. 同步代码：输出 "end"
+3. 100ms后：定时器回调执行，输出 0, 1, 2</pre>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li><code>let</code>有块级作用域，每次循环创建新的i</li>
+                        <li>setTimeout是异步，回调延迟执行</li>
+                        <li>同步代码先执行完</li>
+                    </ul>
+                    
+                    <h4>对比var：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>, <span class="number">100</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'end'</span><span class="bracket">)</span>;
+<span class="comment">// 输出："end", 3, 3, 3</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异步循环</span>
+            </div>
+        </div>
+
+        <!-- Q9: 标签语句 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">标签</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code>outer<span class="operator">:</span> <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">2</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> j <span class="operator">=</span> <span class="number">0</span>; j <span class="operator">&lt;</span> <span class="number">2</span>; j<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">+</span> j <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">continue</span> outer;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i, j<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 0 0, 0 1, 1 0
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 0 0, 1 0, 1 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 0 0, 1 0
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 0 0, 0 1
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'C')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：C</div>
+                <div class="explanation">
+                    <h4>标签语句与continue：</h4>
+                    
+                    <p><strong>执行过程：</strong></p>
+                    <pre>i=0, j=0: 0+0=0, 输出 0 0
+i=0, j=1: 0+1=1, 输出 0 1
+i=0, j=2: 循环结束
+i=1, j=0: 1+0=1, 输出 1 0
+i=1, j=1: 1+1=2, continue outer（跳到外层下一次）
+i=2: 外层循环结束</pre>
+                    
+                    <p><strong>continue outer的作用：</strong></p>
+                    <ul>
+                        <li>跳到outer标签的下一次迭代</li>
+                        <li>跳过内层剩余代码和迭代</li>
+                        <li>外层i++，继续下一轮</li>
+                    </ul>
+                    
+                    <h4>对比普通continue：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 普通continue - 只影响内层</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">2</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> j <span class="operator">=</span> <span class="number">0</span>; j <span class="operator">&lt;</span> <span class="number">2</span>; j<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>i <span class="operator">+</span> j <span class="operator">===</span> <span class="number">2</span><span class="bracket">)</span> <span class="keyword">continue</span>;  <span class="comment">// 只跳过内层本次</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i, j<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="comment">// 输出：0 0, 0 1, 1 0, 1 1（跳过了0 2和1 1这两个不存在的）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：标签语句高级</span>
+            </div>
+        </div>
+
+        <!-- Q10: 循环性能 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">性能</span>
+            </div>
+            
+            <div class="question">Q10: 以下哪种循环方式性能最好？（多选）</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> <code>for (let i = 0; i < arr.length; i++)</code>
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> <code>let len = arr.length; for (let i = 0; i < len; i++)</code>
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> <code>for (let item of arr)</code>
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> <code>arr.forEach(item => {})</code>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswerMultiple(10, ['B'])">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>循环性能对比：</h4>
+                    
+                    <p><strong>性能排序（从快到慢）：</strong></p>
+                    <ol>
+                        <li><strong>缓存length的for循环</strong> - 最快 ✅</li>
+                        <li>普通for循环</li>
+                        <li>for...of</li>
+                        <li>forEach</li>
+                        <li>for...in - 最慢</li>
+                    </ol>
+                    
+                    <p><strong>B选项：缓存length</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 每次都读取length属性</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> arr.<span class="property">length</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 缓存length，只读一次 ✅</span>
+<span class="keyword">let</span> len <span class="operator">=</span> arr.<span class="property">length</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> len; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>各方法特点：</strong></p>
+                    <ul>
+                        <li><strong>for循环</strong>：最快，可break/continue</li>
+                        <li><strong>for...of</strong>：语法简洁，可break</li>
+                        <li><strong>forEach</strong>：函数调用开销，不可break</li>
+                        <li><strong>for...in</strong>：遍历原型链，最慢</li>
+                    </ul>
+                    
+                    <h4>选择建议：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 需要索引或性能敏感</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> arr.<span class="property">length</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 简洁遍历，可能需要break</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> item <span class="keyword">of</span> arr<span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 函数式编程</span>
+arr.<span class="function">forEach</span><span class="bracket">(</span>item <span class="operator">=></span> <span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：循环性能优化</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="03-conditionals.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：条件</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/03-loops.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+            <a href="03-error-handling.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：异常处理</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

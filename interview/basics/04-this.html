@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>this指向 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/04-this.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 this指向 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: 默认绑定 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">默认绑定</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？（非严格模式）</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> window（或global）
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> foo函数本身
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> null
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>默认绑定规则：</h4>
+                    
+                    <p><strong>非严格模式：</strong></p>
+                    <ul>
+                        <li>独立函数调用时，this指向全局对象</li>
+                        <li>浏览器中是window</li>
+                        <li>Node.js中是global</li>
+                    </ul>
+                    
+                    <p><strong>严格模式下：</strong></p>
+                    <div class="code-question"><pre><code><span class="string">'use strict'</span>;
+
+<span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span><span class="bracket">)</span>;  <span class="comment">// undefined</span>
+<span class="bracket">}</span>
+
+<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <h4>this绑定规则优先级：</h4>
+                    <pre>1. new绑定
+2. 显式绑定（call/apply/bind）
+3. 隐式绑定（对象方法调用）
+4. 默认绑定（独立函数调用）</pre>
+                </div>
+                <span class="source-tag">📌 来源：默认绑定</span>
+            </div>
+        </div>
+
+        <!-- Q2: 隐式绑定 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">隐式绑定</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'obj'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'foo'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> ReferenceError
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>隐式绑定：</h4>
+                    
+                    <p><strong>规则：</strong></p>
+                    <ul>
+                        <li>函数作为对象的方法调用</li>
+                        <li>this指向调用该方法的对象</li>
+                        <li><code>obj.foo()</code> → this = obj</li>
+                    </ul>
+                    
+                    <h4>隐式丢失：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> bar <span class="operator">=</span> obj.<span class="property">foo</span>;  <span class="comment">// 赋值给变量</span>
+<span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// this丢失，变成默认绑定</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：隐式绑定</span>
+            </div>
+        </div>
+
+        <!-- Q3: 隐式丢失 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">隐式丢失</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？（非严格模式）</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">var</span> name <span class="operator">=</span> <span class="string">'global'</span>;
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> bar <span class="operator">=</span> obj.<span class="property">foo</span>;
+<span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'global'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'foo'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>隐式丢失的原因：</h4>
+                    
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li><code>bar = obj.foo</code>只是赋值函数引用</li>
+                        <li>调用<code>bar()</code>时，不是通过obj调用</li>
+                        <li>变成独立函数调用 → 默认绑定</li>
+                        <li>this指向window → window.name = 'global'</li>
+                    </ul>
+                    
+                    <p><strong>常见的隐式丢失场景：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 赋值给变量</span>
+<span class="keyword">const</span> fn <span class="operator">=</span> obj.<span class="property">method</span>;
+<span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// this丢失</span>
+
+<span class="comment">// 2. 作为参数传递</span>
+<span class="function">setTimeout</span><span class="bracket">(</span>obj.<span class="property">method</span>, <span class="number">100</span><span class="bracket">)</span>;  <span class="comment">// this丢失</span>
+
+<span class="comment">// 3. 回调函数</span>
+<span class="bracket">[</span><span class="number">1</span><span class="bracket">]</span>.<span class="function">forEach</span><span class="bracket">(</span>obj.<span class="property">method</span><span class="bracket">)</span>;  <span class="comment">// this丢失</span></code></pre></div>
+                    
+                    <h4>解决方案：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 使用箭头函数</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> obj.<span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="number">100</span><span class="bracket">)</span>;
+
+<span class="comment">// 使用bind</span>
+<span class="function">setTimeout</span><span class="bracket">(</span>obj.<span class="property">method</span>.<span class="function">bind</span><span class="bracket">(</span>obj<span class="bracket">)</span>, <span class="number">100</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：隐式丢失</span>
+            </div>
+        </div>
+
+        <!-- Q4: 箭头函数的this -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">箭头函数</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> <span class="function">arrow</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>;
+        <span class="function">arrow</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'obj'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> undefined
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'arrow'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> ReferenceError
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>箭头函数的this：</h4>
+                    
+                    <p><strong>核心规则：</strong></p>
+                    <ul>
+                        <li>箭头函数没有自己的this</li>
+                        <li>继承外层作用域的this</li>
+                        <li>定义时确定，不是调用时确定</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>arrow定义在foo内部
+foo的this是obj（隐式绑定）
+arrow继承foo的this → obj
+输出：'obj'</pre>
+                    
+                    <h4>对比普通函数：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> normal <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>;
+        <span class="function">normal</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// undefined（默认绑定）</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：箭头函数this</span>
+            </div>
+        </div>
+
+        <!-- Q5: new绑定 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">new绑定</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> p2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="string">'Bob'</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p1.<span class="property">name</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p2.<span class="property">name</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'Alice', 'Bob'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'Bob', 'Bob'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined, undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'Alice', 'Alice'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>new绑定：</h4>
+                    
+                    <p><strong>new操作符的步骤：</strong></p>
+                    <pre>1. 创建新对象
+2. 新对象的[[Prototype]]指向构造函数的prototype
+3. this绑定到新对象
+4. 执行构造函数
+5. 返回新对象（如果构造函数未显式返回对象）</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li>new Person('Alice') → 创建新对象，this指向它</li>
+                        <li>this.name = 'Alice' → 给新对象添加name属性</li>
+                        <li>每次new都创建独立的对象</li>
+                    </ul>
+                    
+                    <h4>注意事项：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 箭头函数不能作为构造函数</span>
+<span class="keyword">const</span> <span class="function">Arrow</span> <span class="operator">=</span> <span class="bracket">(</span>name<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>;
+
+<span class="keyword">new</span> <span class="function">Arrow</span><span class="bracket">(</span><span class="string">'test'</span><span class="bracket">)</span>;  <span class="comment">// TypeError</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：new绑定</span>
+            </div>
+        </div>
+
+        <!-- Q6: 显式绑定优先级 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">绑定优先级</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> obj1 <span class="operator">=</span> <span class="bracket">{</span> <span class="property">name</span><span class="operator">:</span> <span class="string">'obj1'</span>, <span class="property">foo</span><span class="operator">:</span> foo <span class="bracket">}</span>;
+<span class="keyword">const</span> obj2 <span class="operator">=</span> <span class="bracket">{</span> <span class="property">name</span><span class="operator">:</span> <span class="string">'obj2'</span> <span class="bracket">}</span>;
+
+obj1.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;
+obj1.<span class="property">foo</span>.<span class="function">call</span><span class="bracket">(</span>obj2<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'obj1', 'obj2'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj1', 'obj1'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'obj2', 'obj2'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> undefined, 'obj2'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>this绑定优先级：</h4>
+                    
+                    <p><strong>优先级（从高到低）：</strong></p>
+                    <pre>1. new绑定
+2. 显式绑定（call/apply/bind）
+3. 隐式绑定（对象方法）
+4. 默认绑定（独立调用）</pre>
+                    
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li><code>obj1.foo()</code> → 隐式绑定，this = obj1</li>
+                        <li><code>obj1.foo.call(obj2)</code> → 显式绑定，this = obj2</li>
+                        <li>显式绑定优先级高于隐式绑定</li>
+                    </ul>
+                    
+                    <h4>new vs bind：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="keyword">const</span> bar <span class="operator">=</span> foo.<span class="function">bind</span><span class="bracket">(</span>obj<span class="bracket">)</span>;
+
+<span class="function">bar</span><span class="bracket">(</span><span class="string">'test1'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>obj.<span class="property">name</span><span class="bracket">)</span>;  <span class="comment">// 'test1'</span>
+
+<span class="keyword">const</span> baz <span class="operator">=</span> <span class="keyword">new</span> <span class="function">bar</span><span class="bracket">(</span><span class="string">'test2'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>baz.<span class="property">name</span><span class="bracket">)</span>;  <span class="comment">// 'test2' (new优先级更高)</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：绑定优先级</span>
+            </div>
+        </div>
+
+        <!-- Q7: 多层嵌套 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">嵌套调用</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？（非严格模式）</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">var</span> name <span class="operator">=</span> <span class="string">'global'</span>;
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">inner</span><span class="operator">:</span> <span class="bracket">{</span>
+        <span class="property">name</span><span class="operator">:</span> <span class="string">'inner'</span>,
+        <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj.<span class="property">inner</span>.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> bar <span class="operator">=</span> obj.<span class="property">inner</span>.<span class="property">foo</span>;
+<span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'inner', 'global'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj', 'global'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'inner', 'inner'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'obj', 'obj'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>多层对象嵌套：</h4>
+                    
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li><code>obj.inner.foo()</code> → 谁调用指向谁</li>
+                        <li>this指向最后一个点之前的对象：inner</li>
+                        <li><code>bar = obj.inner.foo</code> → 隐式丢失</li>
+                        <li><code>bar()</code> → 独立调用 → this指向window</li>
+                    </ul>
+                    
+                    <p><strong>关键规则：</strong></p>
+                    <pre>隐式绑定只看最后一层调用
+obj.a.b.c.method() → this指向c对象
+与obj、a、b无关</pre>
+                    
+                    <h4>示例：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> obj1 <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">obj2</span><span class="operator">:</span> <span class="bracket">{</span>
+        <span class="property">obj3</span><span class="operator">:</span> <span class="bracket">{</span>
+            <span class="property">name</span><span class="operator">:</span> <span class="string">'obj3'</span>,
+            <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+                <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+            <span class="bracket">}</span>
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj1.<span class="property">obj2</span>.<span class="property">obj3</span>.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 'obj3' (this = obj3)</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：多层嵌套</span>
+            </div>
+        </div>
+
+        <!-- Q8: setTimeout中的this -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">异步this</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？（非严格模式）</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">var</span> name <span class="operator">=</span> <span class="string">'global'</span>;
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="function">setTimeout</span><span class="bracket">(</span>obj.<span class="property">foo</span>, <span class="number">0</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'global'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'foo'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>setTimeout中的this丢失：</h4>
+                    
+                    <p><strong>原因：</strong></p>
+                    <ul>
+                        <li>setTimeout接收的是函数引用</li>
+                        <li>等价于：<code>const fn = obj.foo; setTimeout(fn, 0);</code></li>
+                        <li>执行时是独立调用 → 默认绑定</li>
+                    </ul>
+                    
+                    <h4>解决方案：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 方案1: 箭头函数</span>
+<span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> obj.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+
+<span class="comment">// 方案2: bind</span>
+<span class="function">setTimeout</span><span class="bracket">(</span>obj.<span class="property">foo</span>.<span class="function">bind</span><span class="bracket">(</span>obj<span class="bracket">)</span>, <span class="number">0</span><span class="bracket">)</span>;
+
+<span class="comment">// 方案3: 对象方法内使用箭头函数</span>
+<span class="keyword">const</span> obj2 <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj2'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;  <span class="comment">// 'obj2'</span>
+        <span class="bracket">}</span>, <span class="number">0</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：异步this</span>
+            </div>
+        </div>
+
+        <!-- Q9: 对象方法中的箭头函数 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">箭头函数陷阱</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码的输出是什么？（非严格模式）</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">var</span> name <span class="operator">=</span> <span class="string">'global'</span>;
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+obj.<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'global'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'foo'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>对象字面量中的箭头函数：</h4>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>对象字面量不创建作用域</li>
+                        <li>箭头函数定义在全局作用域</li>
+                        <li>继承全局的this → window</li>
+                    </ul>
+                    
+                    <p><strong>分析：</strong></p>
+                    <pre>foo是箭头函数
+定义位置：全局（对象字面量不是作用域）
+继承的this：window
+输出：window.name = 'global'</pre>
+                    
+                    <h4>正确的用法：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 错误：对象方法用箭头函数</span>
+<span class="keyword">const</span> obj1 <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">this</span>.<span class="property">name</span>  <span class="comment">// this !== obj</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// ✅ 正确：普通函数 + 内部箭头函数</span>
+<span class="keyword">const</span> obj2 <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> arrow <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">this</span>.<span class="property">name</span>;
+        <span class="keyword">return</span> <span class="function">arrow</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// this = obj</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：箭头函数陷阱</span>
+            </div>
+        </div>
+
+        <!-- Q10: this综合 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+    <span class="property">name</span><span class="operator">:</span> <span class="string">'obj'</span>,
+    <span class="property">foo1</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>,
+    <span class="property">foo2</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>;
+    <span class="bracket">}</span>,
+    <span class="property">foo3</span><span class="operator">:</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">return</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">var</span> name <span class="operator">=</span> <span class="string">'global'</span>;
+
+obj.<span class="function">foo1</span><span class="bracket">(</span><span class="bracket">)</span>;
+obj.<span class="function">foo2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;
+obj.<span class="function">foo3</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 'obj', 'global', 'obj'
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'obj', 'obj', 'obj'
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 'global', 'global', 'global'
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 'obj', 'global', 'global'
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>this综合分析：</h4>
+                    
+                    <p><strong>obj.foo1()：</strong></p>
+                    <pre>隐式绑定
+this = obj
+输出：'obj'</pre>
+                    
+                    <p><strong>obj.foo2()()：</strong></p>
+                    <pre>foo2返回普通函数
+独立调用返回的函数
+this = window（默认绑定）
+输出：'global'</pre>
+                    
+                    <p><strong>obj.foo3()()：</strong></p>
+                    <pre>foo3返回箭头函数
+箭头函数继承foo3的this
+foo3的this = obj（隐式绑定）
+输出：'obj'</pre>
+                    
+                    <h4>对比总结：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 普通函数：调用时确定this</span>
+obj.<span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span>  <span class="comment">// this = obj</span>
+<span class="keyword">const</span> fn <span class="operator">=</span> obj.<span class="property">method</span>; <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>  <span class="comment">// this = window</span>
+
+<span class="comment">// 箭头函数：定义时继承this</span>
+<span class="keyword">const</span> arrow <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="keyword">this</span>;
+<span class="comment">// this永远是定义时的外层this</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：this综合</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="04-closure.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：闭包</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="../../basics/04-this.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">📖 返回学习内容</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

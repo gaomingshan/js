@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数组方法 - 面试题精选</title>
+    <link rel="stylesheet" href="../../assets/css/main.css">
+    <link rel="stylesheet" href="../../assets/css/page.css">
+    <style>
+        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
+        .back-link:hover { opacity: 1; }
+        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
+        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
+        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
+        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .comment { color: #6a9955; font-style: italic; }
+        .property { color: #9cdcfe; }
+        .bracket { color: #ffd700; }
+        .operator { color: #d4d4d4; }
+        .options { margin: 1.5rem 0; }
+        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: #eef2ff; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
+        .answer-section.show { display: block; }
+        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-secondary { background: #e2e8f0; color: #2d3748; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <a href="../../basics/06-array-methods.html" class="back-link">← 返回学习内容</a>
+            <h1>📝 数组方法 - 面试题精选</h1>
+            <div class="quiz-stats">
+                <span>🟢 基础 3题</span>
+                <span>🟡 进阶 4题</span>
+                <span>🔴 困难 3题</span>
+                <span>📊 总计 10题</span>
+            </div>
+        </div>
+
+        <!-- Q1: 数组的length -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">length</span>
+            </div>
+            
+            <div class="question">Q1: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+arr.<span class="property">length</span> <span class="operator">=</span> <span class="number">5</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">[</span><span class="number">4</span><span class="bracket">]</span><span class="bracket">)</span>;
+
+arr.<span class="property">length</span> <span class="operator">=</span> <span class="number">2</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [1, 2, 3, undefined, undefined], undefined, [1, 2]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [1, 2, 3, empty × 2], undefined, [1, 2]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [1, 2, 3, null, null], null, [1, 2]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> Error
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>数组length的特殊性：</h4>
+                    
+                    <p><strong>增加length：</strong></p>
+                    <ul>
+                        <li>length从3增加到5</li>
+                        <li>新增的位置是<strong>空槽（empty slot）</strong></li>
+                        <li>不是<code>undefined</code>，而是<strong>不存在的属性</strong></li>
+                        <li>访问<code>arr[4]</code>返回<code>undefined</code></li>
+                    </ul>
+                    
+                    <p><strong>减少length：</strong></p>
+                    <ul>
+                        <li>length从5减少到2</li>
+                        <li>超出部分的元素被<strong>删除</strong></li>
+                        <li>数组变为<code>[1, 2]</code></li>
+                    </ul>
+                    
+                    <h4>空槽 vs undefined：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 方式1：空槽（empty）</span>
+<span class="keyword">let</span> arr1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Array</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// [empty × 3]</span>
+arr1.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// [empty × 3] (跳过空槽)</span>
+
+<span class="comment">// 方式2：undefined</span>
+<span class="keyword">let</span> arr2 <span class="operator">=</span> <span class="bracket">[</span><span class="keyword">undefined</span>, <span class="keyword">undefined</span>, <span class="keyword">undefined</span><span class="bracket">]</span>;
+arr2.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// [1, 1, 1]</span>
+
+<span class="comment">// 检查是否存在</span>
+<span class="number">0</span> <span class="keyword">in</span> arr1;  <span class="comment">// false（不存在）</span>
+<span class="number">0</span> <span class="keyword">in</span> arr2;  <span class="comment">// true（存在）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组length属性</span>
+            </div>
+        </div>
+
+        <!-- Q2: splice vs slice -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">splice</span>
+                <span class="tag">slice</span>
+            </div>
+            
+            <div class="question">Q2: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result1 <span class="operator">=</span> arr.<span class="function">splice</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result1<span class="bracket">)</span>;
+
+arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result2 <span class="operator">=</span> arr.<span class="function">slice</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result2<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [1, 4, 5], [2, 3], [1, 2, 3, 4, 5], [2, 3]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [1, 4, 5], [2, 3], [1, 4, 5], [2, 3]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [1, 2, 3, 4, 5], [2, 3], [1, 2, 3, 4, 5], [2, 3]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> [2, 3], [1, 4, 5], [2, 3], [1, 2, 3, 4, 5]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>splice vs slice：</h4>
+                    
+                    <p><strong>splice - 修改原数组 ❗</strong></p>
+                    <ul>
+                        <li><code>arr.splice(start, deleteCount, ...items)</code></li>
+                        <li>从索引1开始，删除2个元素</li>
+                        <li>原数组被修改：<code>[1, 4, 5]</code></li>
+                        <li>返回被删除的元素：<code>[2, 3]</code></li>
+                    </ul>
+                    
+                    <p><strong>slice - 不修改原数组 ✅</strong></p>
+                    <ul>
+                        <li><code>arr.slice(start, end)</code></li>
+                        <li>提取索引1到3（不包括3）</li>
+                        <li>原数组不变：<code>[1, 2, 3, 4, 5]</code></li>
+                        <li>返回新数组：<code>[2, 3]</code></li>
+                    </ul>
+                    
+                    <h4>splice的多种用法：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+
+<span class="comment">// 删除元素</span>
+arr.<span class="function">splice</span><span class="bracket">(</span><span class="number">2</span>, <span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// [1, 2, 4, 5]</span>
+
+<span class="comment">// 插入元素</span>
+arr.<span class="function">splice</span><span class="bracket">(</span><span class="number">2</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'b'</span><span class="bracket">)</span>;  <span class="comment">// [1, 2, 'a', 'b', 4, 5]</span>
+
+<span class="comment">// 替换元素</span>
+arr.<span class="function">splice</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="string">'x'</span><span class="bracket">)</span>;  <span class="comment">// [1, 'x', 'b', 4, 5]</span></code></pre></div>
+                    
+                    <h4>slice的边界情况：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+
+arr.<span class="function">slice</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;      <span class="comment">// [3, 4, 5] (从索引2到结尾)</span>
+arr.<span class="function">slice</span><span class="bracket">(</span><span class="operator">-</span><span class="number">2</span><span class="bracket">)</span>;     <span class="comment">// [4, 5] (负数从末尾算)</span>
+arr.<span class="function">slice</span><span class="bracket">(</span><span class="bracket">)</span>;       <span class="comment">// [1, 2, 3, 4, 5] (浅拷贝)</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组方法对比</span>
+            </div>
+        </div>
+
+        <!-- Q3: 数组方法返回值 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">push</span>
+                <span class="tag">pop</span>
+            </div>
+            
+            <div class="question">Q3: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result1 <span class="operator">=</span> arr.<span class="function">push</span><span class="bracket">(</span><span class="number">4</span>, <span class="number">5</span><span class="bracket">)</span>;
+<span class="keyword">let</span> result2 <span class="operator">=</span> arr.<span class="function">pop</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result1<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result2<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [1, 2, 3, 4, 5], 5, [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 5, 5, [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 2, 5, [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 5, 4, [1, 2, 3]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>数组修改方法的返回值：</h4>
+                    
+                    <p><strong>push() - 返回新长度</strong></p>
+                    <ul>
+                        <li>添加4和5到数组末尾</li>
+                        <li>数组变为<code>[1, 2, 3, 4, 5]</code></li>
+                        <li>返回新的长度：<code>5</code> ✅</li>
+                    </ul>
+                    
+                    <p><strong>pop() - 返回被删除的元素</strong></p>
+                    <ul>
+                        <li>删除数组最后一个元素</li>
+                        <li>返回被删除的元素：<code>5</code> ✅</li>
+                        <li>数组变为<code>[1, 2, 3, 4]</code></li>
+                    </ul>
+                    
+                    <h4>常见数组方法返回值：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+
+<span class="comment">// 返回新长度</span>
+arr.<span class="function">push</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;       <span class="comment">// 4</span>
+arr.<span class="function">unshift</span><span class="bracket">(</span><span class="number">0</span><span class="bracket">)</span>;    <span class="comment">// 5</span>
+
+<span class="comment">// 返回被删除的元素</span>
+arr.<span class="function">pop</span><span class="bracket">(</span><span class="bracket">)</span>;          <span class="comment">// 4</span>
+arr.<span class="function">shift</span><span class="bracket">(</span><span class="bracket">)</span>;        <span class="comment">// 0</span>
+
+<span class="comment">// 返回新数组</span>
+arr.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// [2, 4, 6]</span>
+arr.<span class="function">filter</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">1</span><span class="bracket">)</span>;  <span class="comment">// [2, 3]</span>
+
+<span class="comment">// 返回单个值</span>
+arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a,b<span class="bracket">)</span> <span class="operator">=></span> a<span class="operator">+</span>b<span class="bracket">)</span>;  <span class="comment">// 6</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组方法返回值</span>
+            </div>
+        </div>
+
+        <!-- Q4: map filter reduce -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">map</span>
+                <span class="tag">filter</span>
+            </div>
+            
+            <div class="question">Q4: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result <span class="operator">=</span> arr
+    .<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>
+    .<span class="function">filter</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">5</span><span class="bracket">)</span>
+    .<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">-</span> <span class="number">1</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [5, 7], [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [5, 7], [2, 4, 6, 8]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [6, 8], [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> [1, 3, 5, 7], [1, 2, 3, 4]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>数组方法链式调用：</h4>
+                    
+                    <p><strong>执行流程：</strong></p>
+                    <pre>原数组: [1, 2, 3, 4]
+
+第1步 map(x => x * 2):
+  [1, 2, 3, 4] → [2, 4, 6, 8]
+
+第2步 filter(x => x > 5):
+  [2, 4, 6, 8] → [6, 8] (保留大于5的)
+
+第3步 map(x => x - 1):
+  [6, 8] → [5, 7]
+
+原数组不变: [1, 2, 3, 4] ✅</pre>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li><code>map</code>和<code>filter</code>都返回新数组</li>
+                        <li>原数组不被修改</li>
+                        <li>可以链式调用</li>
+                    </ul>
+                    
+                    <h4>方法对比：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span><span class="bracket">]</span>;
+
+<span class="comment">// map - 转换每个元素</span>
+arr.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">*</span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// [2, 4, 6, 8]</span>
+
+<span class="comment">// filter - 筛选元素</span>
+arr.<span class="function">filter</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// [3, 4]</span>
+
+<span class="comment">// reduce - 归约为单值</span>
+arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>sum, x<span class="bracket">)</span> <span class="operator">=></span> sum <span class="operator">+</span> x, <span class="number">0</span><span class="bracket">)</span>;  <span class="comment">// 10</span>
+
+<span class="comment">// forEach - 遍历（无返回值）</span>
+arr.<span class="function">forEach</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// undefined</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组高阶方法</span>
+            </div>
+        </div>
+
+        <!-- Q5: sort -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">sort</span>
+            </div>
+            
+            <div class="question">Q5: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr1 <span class="operator">=</span> <span class="bracket">[</span><span class="number">10</span>, <span class="number">5</span>, <span class="number">40</span>, <span class="number">25</span>, <span class="number">1</span><span class="bracket">]</span>;
+arr1.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr1<span class="bracket">)</span>;
+
+<span class="keyword">let</span> arr2 <span class="operator">=</span> <span class="bracket">[</span><span class="number">10</span>, <span class="number">5</span>, <span class="number">40</span>, <span class="number">25</span>, <span class="number">1</span><span class="bracket">]</span>;
+arr2.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">-</span> b<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr2<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [1, 5, 10, 25, 40], [1, 5, 10, 25, 40]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [1, 10, 25, 40, 5], [1, 5, 10, 25, 40]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [1, 10, 25, 40, 5], [1, 10, 25, 40, 5]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> [10, 5, 40, 25, 1], [1, 5, 10, 25, 40]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'B')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：B</div>
+                <div class="explanation">
+                    <h4>sort()的默认行为：</h4>
+                    
+                    <p><strong>arr1.sort() - 默认按字符串排序 ⚠️</strong></p>
+                    <ul>
+                        <li>将元素转为字符串比较</li>
+                        <li>"1" < "10" < "25" < "40" < "5"</li>
+                        <li>结果：<code>[1, 10, 25, 40, 5]</code></li>
+                    </ul>
+                    
+                    <p><strong>arr2.sort((a, b) => a - b) - 数值排序 ✅</strong></p>
+                    <ul>
+                        <li>比较函数返回负数/0/正数</li>
+                        <li>a - b < 0 → a在b前</li>
+                        <li>结果：<code>[1, 5, 10, 25, 40]</code></li>
+                    </ul>
+                    
+                    <h4>sort()修改原数组：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span><span class="bracket">]</span>;
+<span class="keyword">let</span> result <span class="operator">=</span> arr.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;     <span class="comment">// [1, 2, 3] (原数组被修改)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>result<span class="bracket">)</span>;  <span class="comment">// [1, 2, 3] (返回原数组引用)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr <span class="operator">===</span> result<span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                    
+                    <h4>常用排序模式：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 升序</span>
+arr.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">-</span> b<span class="bracket">)</span>;
+
+<span class="comment">// 降序</span>
+arr.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> b <span class="operator">-</span> a<span class="bracket">)</span>;
+
+<span class="comment">// 字符串排序</span>
+arr.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a.<span class="function">localeCompare</span><span class="bracket">(</span>b<span class="bracket">)</span><span class="bracket">)</span>;
+
+<span class="comment">// 不修改原数组的排序</span>
+<span class="keyword">const</span> sorted <span class="operator">=</span> <span class="bracket">[</span>...arr<span class="bracket">]</span>.<span class="function">sort</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">-</span> b<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组排序</span>
+            </div>
+        </div>
+
+        <!-- Q6: find findIndex -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">find</span>
+                <span class="tag">findIndex</span>
+            </div>
+            
+            <div class="question">Q6: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">find</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">3</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">findIndex</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">3</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">find</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">10</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">findIndex</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">10</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 4, 3, undefined, -1
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 4, 3, null, -1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [4, 5], 3, undefined, -1
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 4, 3, undefined, undefined
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>find vs findIndex：</h4>
+                    
+                    <p><strong>find() - 返回第一个满足条件的元素</strong></p>
+                    <ul>
+                        <li>找到：返回该<strong>元素</strong></li>
+                        <li>未找到：返回<code>undefined</code></li>
+                    </ul>
+                    
+                    <p><strong>findIndex() - 返回第一个满足条件的索引</strong></p>
+                    <ul>
+                        <li>找到：返回该<strong>索引</strong></li>
+                        <li>未找到：返回<code>-1</code></li>
+                    </ul>
+                    
+                    <p><strong>执行结果：</strong></p>
+                    <pre>arr.find(x => x > 3)       → 4 (第一个满足的元素)
+arr.findIndex(x => x > 3)  → 3 (第一个满足的索引)
+arr.find(x => x > 10)      → undefined (没找到)
+arr.findIndex(x => x > 10) → -1 (没找到)</pre>
+                    
+                    <h4>相关方法对比：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+
+<span class="comment">// find - 返回元素</span>
+arr.<span class="function">find</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// 3</span>
+
+<span class="comment">// findIndex - 返回索引</span>
+arr.<span class="function">findIndex</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">2</span><span class="bracket">)</span>;  <span class="comment">// 2</span>
+
+<span class="comment">// indexOf - 查找值的索引</span>
+arr.<span class="function">indexOf</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// 2</span>
+arr.<span class="function">indexOf</span><span class="bracket">(</span><span class="number">10</span><span class="bracket">)</span>;  <span class="comment">// -1</span>
+
+<span class="comment">// includes - 是否包含</span>
+arr.<span class="function">includes</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+arr.<span class="function">includes</span><span class="bracket">(</span><span class="number">10</span><span class="bracket">)</span>;  <span class="comment">// false</span>
+
+<span class="comment">// some - 是否有满足条件</span>
+arr.<span class="function">some</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">4</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+
+<span class="comment">// every - 是否全部满足</span>
+arr.<span class="function">every</span><span class="bracket">(</span>x <span class="operator">=></span> x <span class="operator">></span> <span class="number">0</span><span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组查找方法</span>
+            </div>
+        </div>
+
+        <!-- Q7: reduce -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">reduce</span>
+            </div>
+            
+            <div class="question">Q7: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span><span class="bracket">]</span>;
+
+<span class="keyword">let</span> sum <span class="operator">=</span> arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>acc, cur<span class="bracket">)</span> <span class="operator">=></span> acc <span class="operator">+</span> cur<span class="bracket">)</span>;
+<span class="keyword">let</span> product <span class="operator">=</span> arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>acc, cur<span class="bracket">)</span> <span class="operator">=></span> acc <span class="operator">*</span> cur, <span class="number">1</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>sum<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>product<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 10, 24
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 10, 1
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> NaN, 24
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> "1234", 24
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>reduce()归约方法：</h4>
+                    
+                    <p><strong>sum计算（无初始值）：</strong></p>
+                    <pre>arr.reduce((acc, cur) => acc + cur)
+
+第1次: acc=1, cur=2 → 3
+第2次: acc=3, cur=3 → 6
+第3次: acc=6, cur=4 → 10 ✅</pre>
+                    
+                    <p><strong>product计算（有初始值1）：</strong></p>
+                    <pre>arr.reduce((acc, cur) => acc * cur, 1)
+
+第1次: acc=1, cur=1 → 1
+第2次: acc=1, cur=2 → 2
+第3次: acc=2, cur=3 → 6
+第4次: acc=6, cur=4 → 24 ✅</pre>
+                    
+                    <h4>reduce的语法：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// arr.reduce(callback, initialValue)</span>
+<span class="comment">// callback(accumulator, currentValue, index, array)</span>
+
+<span class="comment">// 没有初始值：从数组第1个元素开始</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">+</span> b<span class="bracket">)</span>;  <span class="comment">// 6</span>
+
+<span class="comment">// 有初始值：从初始值开始</span>
+<span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">+</span> b, <span class="number">10</span><span class="bracket">)</span>;  <span class="comment">// 16</span></code></pre></div>
+                    
+                    <h4>reduce的常见用法：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 数组求和</span>
+arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>sum, x<span class="bracket">)</span> <span class="operator">=></span> sum <span class="operator">+</span> x, <span class="number">0</span><span class="bracket">)</span>;
+
+<span class="comment">// 2. 数组扁平化</span>
+<span class="bracket">[</span><span class="bracket">[</span><span class="number">1</span>,<span class="number">2</span><span class="bracket">]</span>, <span class="bracket">[</span><span class="number">3</span>,<span class="number">4</span><span class="bracket">]</span><span class="bracket">]</span>.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>a,b<span class="bracket">)</span> <span class="operator">=></span> a.<span class="function">concat</span><span class="bracket">(</span>b<span class="bracket">)</span>, <span class="bracket">[</span><span class="bracket">]</span><span class="bracket">)</span>;
+
+<span class="comment">// 3. 计数</span>
+arr.<span class="function">reduce</span><span class="bracket">(</span><span class="bracket">(</span>acc, item<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    acc<span class="bracket">[</span>item<span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">(</span>acc<span class="bracket">[</span>item<span class="bracket">]</span> <span class="operator">||</span> <span class="number">0</span><span class="bracket">)</span> <span class="operator">+</span> <span class="number">1</span>;
+    <span class="keyword">return</span> acc;
+<span class="bracket">}</span>, <span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：reduce归约</span>
+            </div>
+        </div>
+
+        <!-- Q8: flat -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">flat</span>
+                <span class="tag">flatMap</span>
+            </div>
+            
+            <div class="question">Q8: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="bracket">[</span><span class="number">2</span>, <span class="bracket">[</span><span class="number">3</span>, <span class="bracket">[</span><span class="number">4</span><span class="bracket">]</span><span class="bracket">]</span><span class="bracket">]</span><span class="bracket">]</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">flat</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">flat</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">flat</span><span class="bracket">(</span><span class="function">Infinity</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> [1, 2, [3, [4]]], [1, 2, 3, [4]], [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> [1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> [1, 2, 3, [4]], [1, 2, 3, 4], [1, 2, 3, 4]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> [1, [2, [3, [4]]]], [1, 2, [3, [4]]], [1, 2, 3, 4]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>flat()扁平化数组：</h4>
+                    
+                    <p><strong>flat() - 默认深度1</strong></p>
+                    <pre>[1, [2, [3, [4]]]]
+→ [1, 2, [3, [4]]]  (展开1层)</pre>
+                    
+                    <p><strong>flat(2) - 深度2</strong></p>
+                    <pre>[1, [2, [3, [4]]]]
+→ [1, 2, 3, [4]]  (展开2层)</pre>
+                    
+                    <p><strong>flat(Infinity) - 完全扁平化</strong></p>
+                    <pre>[1, [2, [3, [4]]]]
+→ [1, 2, 3, 4]  (展开所有层)</pre>
+                    
+                    <h4>flatMap()：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// flatMap = map + flat(1)</span>
+<span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+
+<span class="comment">// map返回嵌套数组</span>
+arr.<span class="function">map</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="bracket">[</span>x, x <span class="operator">*</span> <span class="number">2</span><span class="bracket">]</span><span class="bracket">)</span>;
+<span class="comment">// [[1, 2], [2, 4], [3, 6]]</span>
+
+<span class="comment">// flatMap自动扁平化一层</span>
+arr.<span class="function">flatMap</span><span class="bracket">(</span>x <span class="operator">=></span> <span class="bracket">[</span>x, x <span class="operator">*</span> <span class="number">2</span><span class="bracket">]</span><span class="bracket">)</span>;
+<span class="comment">// [1, 2, 2, 4, 3, 6]</span></code></pre></div>
+                    
+                    <h4>移除空项：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">let</span> arr <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, , <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;  <span class="comment">// 有空项</span>
+
+<span class="comment">// flat会移除空项</span>
+arr.<span class="function">flat</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// [1, 2, 4, 5]</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组扁平化</span>
+            </div>
+        </div>
+
+        <!-- Q9: 数组解构 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">解构</span>
+            </div>
+            
+            <div class="question">Q9: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="keyword">let</span> <span class="bracket">[</span>a, b, ...rest<span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span><span class="bracket">]</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>a, b, rest<span class="bracket">)</span>;
+
+<span class="keyword">let</span> <span class="bracket">[</span>x, , y<span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x, y<span class="bracket">)</span>;
+
+<span class="keyword">let</span> <span class="bracket">[</span>p <span class="operator">=</span> <span class="number">10</span>, q <span class="operator">=</span> <span class="number">20</span><span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span><span class="bracket">]</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p, q<span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 1 2 [3, 4, 5], 1 3, 1 20
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 1 2 3, 1 3, 1 20
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 1 2 [3, 4, 5], 1 2, 1 undefined
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 1 2 [3, 4, 5], 1 undefined, 1 20
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>数组解构赋值：</h4>
+                    
+                    <p><strong>第1行 - 剩余参数：</strong></p>
+                    <pre>let [a, b, ...rest] = [1, 2, 3, 4, 5];
+a = 1
+b = 2
+rest = [3, 4, 5]  (剩余元素组成数组)</pre>
+                    
+                    <p><strong>第2行 - 跳过元素：</strong></p>
+                    <pre>let [x, , y] = [1, 2, 3];
+x = 1  (第1个)
+   (跳过第2个)
+y = 3  (第3个)</pre>
+                    
+                    <p><strong>第3行 - 默认值：</strong></p>
+                    <pre>let [p = 10, q = 20] = [1];
+p = 1   (有值，不用默认值)
+q = 20  (没值，使用默认值)</pre>
+                    
+                    <h4>解构赋值特性：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 交换变量</span>
+<span class="keyword">let</span> a <span class="operator">=</span> <span class="number">1</span>, b <span class="operator">=</span> <span class="number">2</span>;
+<span class="bracket">[</span>a, b<span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">[</span>b, a<span class="bracket">]</span>;  <span class="comment">// a=2, b=1</span>
+
+<span class="comment">// 2. 获取函数返回的多个值</span>
+<span class="keyword">function</span> <span class="function">getCoords</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">[</span><span class="number">10</span>, <span class="number">20</span><span class="bracket">]</span>;
+<span class="bracket">}</span>
+<span class="keyword">let</span> <span class="bracket">[</span>x, y<span class="bracket">]</span> <span class="operator">=</span> <span class="function">getCoords</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 3. 嵌套解构</span>
+<span class="keyword">let</span> <span class="bracket">[</span>a, <span class="bracket">[</span>b, c<span class="bracket">]</span><span class="bracket">]</span> <span class="operator">=</span> <span class="bracket">[</span><span class="number">1</span>, <span class="bracket">[</span><span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span><span class="bracket">]</span>;
+<span class="comment">// a=1, b=2, c=3</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组解构</span>
+            </div>
+        </div>
+
+        <!-- Q10: Array.from -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">Array.from</span>
+            </div>
+            
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            
+            <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span><span class="bracket">{</span> <span class="property">length</span><span class="operator">:</span> <span class="number">3</span> <span class="bracket">}</span>, <span class="bracket">(</span>v, i<span class="bracket">)</span> <span class="operator">=></span> i<span class="bracket">)</span><span class="bracket">)</span>;
+
+<span class="keyword">let</span> set <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Set</span><span class="bracket">(</span><span class="bracket">[</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">]</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>set<span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> ['h','e','l','l','o'], [0, 1, 2], [1, 2, 3]
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 'hello', [0, 1, 2], [1, 2, 2, 3]
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> ['h','e','l','l','o'], [undefined, undefined, undefined], [1, 2, 3]
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> ['hello'], [0, 1, 2], [1, 2, 3]
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Array.from()的用法：</h4>
+                    
+                    <p><strong>第1个 - 字符串转数组：</strong></p>
+                    <pre>Array.from('hello')
+→ ['h', 'e', 'l', 'l', 'o']</pre>
+                    
+                    <p><strong>第2个 - 类数组对象 + 映射函数：</strong></p>
+                    <pre>Array.from({length: 3}, (v, i) => i)
+创建长度为3的数组，用索引填充
+→ [0, 1, 2]</pre>
+                    
+                    <p><strong>第3个 - Set转数组：</strong></p>
+                    <pre>let set = new Set([1, 2, 2, 3]);
+Set自动去重: {1, 2, 3}
+Array.from(set) → [1, 2, 3]</pre>
+                    
+                    <h4>Array.from的常见用法：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 复制数组（浅拷贝）</span>
+<span class="keyword">let</span> arr2 <span class="operator">=</span> <span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>arr1<span class="bracket">)</span>;
+
+<span class="comment">// 2. 类数组转数组</span>
+<span class="keyword">let</span> divs <span class="operator">=</span> <span class="property">document</span>.<span class="function">querySelectorAll</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="keyword">let</span> arr <span class="operator">=</span> <span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span>divs<span class="bracket">)</span>;
+
+<span class="comment">// 3. 生成数字序列</span>
+<span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span><span class="bracket">{</span><span class="property">length</span><span class="operator">:</span> <span class="number">5</span><span class="bracket">}</span>, <span class="bracket">(</span>v, i<span class="bracket">)</span> <span class="operator">=></span> i<span class="operator">+</span><span class="number">1</span><span class="bracket">)</span>;
+<span class="comment">// [1, 2, 3, 4, 5]</span>
+
+<span class="comment">// 4. 数组去重</span>
+<span class="function">Array</span>.<span class="function">from</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Set</span><span class="bracket">(</span>arr<span class="bracket">)</span><span class="bracket">)</span>;
+<span class="comment">// 或 [...new Set(arr)]</span></code></pre></div>
+                    
+                    <h4>Array.of 对比：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// Array.of - 创建包含参数的数组</span>
+<span class="function">Array</span>.<span class="function">of</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// [3]</span>
+<span class="keyword">new</span> <span class="function">Array</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;  <span class="comment">// [empty × 3]</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Array.from方法</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="05-constructor-new.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：构造函数与new</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+            <a href="06-array-advanced.html" style="padding: 0.75rem 1.5rem; background: #48bb78; color: white; text-decoration: none; border-radius: 6px;">下一节：数组进阶 ➡️</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                const options = parent.querySelectorAll('.option');
+                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
+                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
+                if (isMultiple) {
+                    this.classList.toggle('selected');
+                } else {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        function checkAnswer(questionNum, correctAnswer) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelector('.option.selected');
+            if (!selected) { alert('请先选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function checkAnswerMultiple(questionNum, correctAnswers) {
+            const parent = document.querySelector(`[data-question="${questionNum}"]`);
+            const selected = parent.querySelectorAll('.option.selected');
+            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
+            const options = parent.querySelectorAll('.option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
+                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
+            });
+            showAnswer(questionNum);
+        }
+        
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>
