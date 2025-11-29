@@ -14,6 +14,7 @@
             
             <h2>概述</h2>
             <p>JavaScript 是动态类型语言，会在需要时自动进行类型转换（隐式转换）。理解类型转换规则对于避免 bug 至关重要。</p>
+            <p>本章将深入到 ECMAScript 规范层面，讲解 JavaScript 解释器如何执行类型转换的底层原理。</p>
             
             <h2>一、类型转换分类</h2>
             
@@ -218,21 +219,258 @@ Array.isArray({})   // false</code></pre>
 Number.isNaN("abc")    // false (不进行类型转换)
 isNaN("abc")           // true (会先转换为数字)</code></pre>
             
-            <h2>七、特殊情况</h2>
+            <h2>七、ECMAScript 抽象操作（深入原理）</h2>
             
-            <h3>7.1 对象转原始值</h3>
-            <p>对象转换时会调用 <code>valueOf()</code> 和 <code>toString()</code>：</p>
+            <h3>7.1 ToPrimitive 抽象操作</h3>
+            <p>这是类型转换的核心！所有对象转原始值都要经过这个操作。</p>
             
             <div class="spec">
-                <strong>ToPrimitive 抽象操作：</strong>
-                <pre>1. 如果有 [Symbol.toPrimitive] 方法，调用它
-2. 否则，根据 hint：
-   - "number"：先 valueOf()，再 toString()
-   - "string"：先 toString()，再 valueOf()
-   - "default"：通常同 "number"</pre>
+                <strong>ToPrimitive(input, preferredType) 执行步骤：</strong>
+                <pre>1. 如果 input 是原始值，直接返回
+
+2. 如果 input 有 [Symbol.toPrimitive] 方法：
+   - 调用 input[Symbol.toPrimitive](hint)
+   - hint 可能是 "string"、"number" 或 "default"
+   - 如果返回原始值，返回结果
+   - 如果返回对象，抛出 TypeError
+
+3. 如果没有 Symbol.toPrimitive：
+   
+   情况A：preferredType 是 "string" (hint = "string")
+   ├─ 先调用 toString() 方法
+   │  └─ 如果返回原始值，返回结果
+   └─ 再调用 valueOf() 方法
+      └─ 如果返回原始值，返回结果
+      └─ 如果都不是原始值，抛出 TypeError
+   
+   情况B：preferredType 是 "number" 或 "default" (hint = "number")
+   ├─ 先调用 valueOf() 方法
+   │  └─ 如果返回原始值，返回结果
+   └─ 再调用 toString() 方法
+      └─ 如果返回原始值，返回结果
+      └─ 如果都不是原始值，抛出 TypeError</pre>
             </div>
             
-            <h3>7.2 常见陷阱</h3>
+            <pre><code>// 示例：自定义 Symbol.toPrimitive
+const obj = {
+    [Symbol.toPrimitive](hint) {
+        console.log('hint:', hint);
+        if (hint === 'number') return 42;
+        if (hint === 'string') return 'hello';
+        return 'default';
+    }
+};
+
++obj;         // hint: "number" → 42
+String(obj);  // hint: "string" → "hello"
+obj + '';     // hint: "default" → "default"</code></pre>
+            
+            <h3>7.2 ToString 抽象操作</h3>
+            <div class="spec">
+                <strong>ToString(argument) 执行步骤：</strong>
+                <pre>1. Undefined → "undefined"
+2. Null → "null"
+3. Boolean → "true" / "false"
+4. Number → 数字的字符串表示
+   - NaN → "NaN"
+   - +0/-0 → "0"
+   - Infinity → "Infinity"
+5. String → 直接返回
+6. Symbol → 抛出 TypeError
+7. BigInt → BigInt 字符串（不带 n）
+8. Object:
+   ├─ primValue = ToPrimitive(argument, "string")
+   └─ 返回 ToString(primValue)</pre>
+            </div>
+            
+            <pre><code>// 示例：对象转字符串的执行过程
+const obj = {
+    valueOf() { return 42; },
+    toString() { return "hello"; }
+};
+
+String(obj)
+// 执行：ToPrimitive(obj, "string")
+// → 先调用 toString() → 返回 "hello" (原始值)
+// → ToString("hello") → "hello"</code></pre>
+            
+            <h3>7.3 ToNumber 抽象操作</h3>
+            <div class="spec">
+                <strong>ToNumber(argument) 执行步骤：</strong>
+                <pre>1. Undefined → NaN
+2. Null → +0
+3. Boolean → true: 1, false: +0
+4. Number → 直接返回
+5. String:
+   - "" → +0
+   - 纯数字字符串 → 对应数字
+   - 其他 → NaN
+6. Symbol → 抛出 TypeError
+7. BigInt → 抛出 TypeError
+8. Object:
+   ├─ primValue = ToPrimitive(argument, "number")
+   └─ 返回 ToNumber(primValue)</pre>
+            </div>
+            
+            <pre><code>// 示例：对象转数字的执行过程
+const obj = {
+    valueOf() { return 42; },
+    toString() { return "100"; }
+};
+
+Number(obj)
+// 执行：ToPrimitive(obj, "number")
+// → 先调用 valueOf() → 返回 42 (原始值)
+// → ToNumber(42) → 42
+
+// 如果没有 valueOf：
+const obj2 = {
+    toString() { return "100"; }
+};
+
+Number(obj2)
+// → 先调用 valueOf() → 返回 obj2 本身（不是原始值）
+// → 再调用 toString() → 返回 "100" (原始值)
+// → ToNumber("100") → 100</code></pre>
+            
+            <h3>7.4 ToBoolean 抽象操作</h3>
+            <p><strong>注意：</strong>ToBoolean 不会调用 valueOf 或 toString！</p>
+            <div class="spec">
+                <strong>ToBoolean(argument) - 最简单的转换：</strong>
+                <pre>假值（返回 false）：
+1. undefined
+2. null
+3. false
+4. +0、-0、NaN
+5. "" (空字符串)
+6. 0n (BigInt零值)
+
+其他所有值：返回 true
+（包括对象、数组、"false"字符串等）</pre>
+            </div>
+            
+            <h2>八、运算符的类型转换算法</h2>
+            
+            <h3>8.1 加法运算符 (+) 的完整算法</h3>
+            <p>加法是最复杂的运算符，因为它同时支持数字相加和字符串拼接。</p>
+            
+            <div class="spec">
+                <strong>left + right 执行步骤：</strong>
+                <pre>1. lprim = ToPrimitive(left)    // hint 是 "default"
+2. rprim = ToPrimitive(right)   // hint 是 "default"
+
+3. 如果 lprim 是 String 或 rprim 是 String：
+   └─ 返回 ToString(lprim) + ToString(rprim)  // 字符串拼接
+   
+4. 否则：
+   └─ 返回 ToNumber(lprim) + ToNumber(rprim)  // 数字相加</pre>
+            </div>
+            
+            <pre><code>// 示例分析
+
+// 1. [] + []
+[] + []
+// → ToPrimitive([]) → valueOf() 返回 [] (不是原始值)
+// → toString() 返回 "" (原始值)
+// → "" + "" → ""
+
+// 2. 1 + "2"
+1 + "2"
+// → lprim = 1, rprim = "2"
+// → rprim 是字符串！触发字符串拼接
+// → ToString(1) + ToString("2") → "1" + "2" → "12"
+
+// 3. 1 + 2
+1 + 2
+// → lprim = 1, rprim = 2
+// → 都不是字符串，触发数字相加
+// → ToNumber(1) + ToNumber(2) → 1 + 2 → 3</code></pre>
+            
+            <h3>8.2 相等性比较 (==) 的完整算法</h3>
+            <div class="spec">
+                <strong>x == y 执行步骤（10步算法）：</strong>
+                <pre>1. 如果 Type(x) === Type(y)：
+   └─ 返回 x === y 的结果
+
+2. 如果 x 是 null 且 y 是 undefined（或相反）：
+   └─ 返回 true
+
+3. 如果 x 是 Number 且 y 是 String：
+   └─ 返回 x == ToNumber(y)
+
+4. 如果 x 是 String 且 y 是 Number：
+   └─ 返回 ToNumber(x) == y
+
+5. 如果 x 是 BigInt 且 y 是 String：
+   └─ 返回 x == StringToBigInt(y)
+
+6. 如果 x 是 Boolean：
+   └─ 返回 ToNumber(x) == y
+
+7. 如果 y 是 Boolean：
+   └─ 返回 x == ToNumber(y)
+
+8. 如果 x 是 String/Number/BigInt/Symbol 且 y 是 Object：
+   └─ 返回 x == ToPrimitive(y)
+
+9. 如果 x 是 Object 且 y 是 String/Number/BigInt/Symbol：
+   └─ 返回 ToPrimitive(x) == y
+
+10. 返回 false</pre>
+            </div>
+            
+            <pre><code>// 示例：[] == ![]
+[] == ![]
+// 步骤1：![] 先求值 → !true → false
+// 步骤2：[] == false
+// 步骤3：y 是 Boolean，转为 ToNumber(false) → 0
+// 步骤4：[] == 0
+// 步骤5：x 是 Object，转为 ToPrimitive([]) → ""
+// 步骤6："" == 0
+// 步骤7：x 是 String，转为 ToNumber("") → 0
+// 步骤8：0 == 0 → true
+
+// 示例："5" == 5
+"5" == 5
+// → x 是 String，y 是 Number（规则4）
+// → ToNumber("5") == 5
+// → 5 == 5 → true</code></pre>
+            
+            <h2>九、完整执行流程图</h2>
+            
+            <h3>9.1 Number(obj) 的执行流程</h3>
+            <div class="spec">
+                <pre>Number(obj)
+  ↓
+ToNumber(obj)
+  ↓
+判断：obj 是 Object
+  ↓
+调用 ToPrimitive(obj, "number")
+  ↓
+检查：obj[Symbol.toPrimitive] 存在？
+  ├─ 是 → 调用 obj[Symbol.toPrimitive]("number")
+  │        ↓
+  │      返回结果（必须是原始值）
+  │        ↓
+  │      ToNumber(结果)
+  │
+  └─ 否 → 先调用 obj.valueOf()
+           ↓
+         返回原始值？
+           ├─ 是 → ToNumber(结果)
+           │
+           └─ 否 → 调用 obj.toString()
+                    ↓
+                  返回原始值？
+                    ├─ 是 → ToNumber(结果)
+                    │
+                    └─ 否 → 抛出 TypeError</pre>
+            </div>
+            
+            <h2>十、特殊情况</h2>
+            
+            <h3>10.1 常见陷阱的底层解释</h3>
             <div class="warning">
                 <pre><code>// 陷阱1：+ 运算符
 "5" + 3          // "53" (字符串拼接)
@@ -252,7 +490,20 @@ const str = "hello";
 str.length       // 5 (自动转换为 String 对象)</code></pre>
             </div>
             
-            <h2>八、最佳实践</h2>
+            <h3>10.2 自动装箱（Auto-boxing）</h3>
+            <pre><code>// 原始类型如何访问方法？
+"hello".length
+// 执行过程：
+// 1. 创建临时 String 对象：new String("hello")
+// 2. 访问 .length 属性 → 5
+// 3. 销毁临时对象
+// 4. 返回 5
+
+// 这就是为什么原始值可以调用方法！
+const str = "hello";
+str.toUpperCase();  // 临时装箱为 String 对象</code></pre>
+            
+            <h2>十一、最佳实践</h2>
             
             <div class="tip">
                 <strong>建议：</strong>
@@ -458,6 +709,169 @@ const str = "hello";
 console.log('str.length:', str.length);       // 5
 console.log('typeof str:', typeof str);       // "string"
 console.log('str[0]:', str[0]);               // "h"</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 7：ToPrimitive 深入</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== ToPrimitive 抽象操作 ===\n');
+
+// 1. Symbol.toPrimitive 优先级最高
+const obj1 = {
+    [Symbol.toPrimitive](hint) {
+        console.log(`1. hint: "${hint}"`);
+        if (hint === 'number') return 42;
+        if (hint === 'string') return 'hello';
+        return 'default';
+    }
+};
+
+console.log('Number(obj1):', Number(obj1));   // hint: "number"
+console.log('String(obj1):', String(obj1));   // hint: "string"
+console.log('obj1 + "":', obj1 + '');         // hint: "default"
+
+// 2. 没有 Symbol.toPrimitive，使用 valueOf/toString
+console.log('\n2. valueOf 和 toString 的调用顺序:');
+const obj2 = {
+    valueOf() {
+        console.log('  调用 valueOf()');
+        return 100;
+    },
+    toString() {
+        console.log('  调用 toString()');
+        return 'text';
+    }
+};
+
+console.log('Number(obj2):');
+Number(obj2);  // 先 valueOf
+
+console.log('\nString(obj2):');
+String(obj2);  // 先 toString</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 8：加法运算符深入分析</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 加法运算符的执行过程 ===\n');
+
+// 例1：[] + []
+console.log('1. [] + []:');
+console.log('  结果:', [] + []);
+console.log('  解释: ToPrimitive([]) → "" , "" + "" → ""');
+
+// 例2：[] + {}
+console.log('\n2. [] + {}:');
+console.log('  结果:', [] + {});
+console.log('  解释: ToPrimitive([]) → ""');
+console.log('        ToPrimitive({}) → "[object Object]"');
+console.log('        "" + "[object Object]" → "[object Object]"');
+
+// 例3：1 + "2"
+console.log('\n3. 1 + "2":');
+console.log('  结果:', 1 + "2");
+console.log('  解释: rprim 是 String，触发字符串拼接');
+
+// 例4：带 valueOf 的对象
+const money = {
+    valueOf() { return 100; }
+};
+console.log('\n4. money + 50:');
+console.log('  结果:', money + 50);
+console.log('  解释: ToPrimitive(money) → valueOf() → 100');
+console.log('        100 + 50 → 150');</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 9：== 相等性比较深入</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 相等性比较的执行过程 ===\n');
+
+// 例1：[] == ![]
+console.log('1. [] == ![] 的执行步骤:');
+console.log('  ![] → false');
+console.log('  [] == false');
+console.log('  ToNumber(false) → 0');
+console.log('  [] == 0');
+console.log('  ToPrimitive([]) → ""');
+console.log('  "" == 0');
+console.log('  ToNumber("") → 0');
+console.log('  0 == 0 → true');
+console.log('  结果:', [] == ![]);
+
+// 例2："5" == 5
+console.log('\n2. "5" == 5 的执行步骤:');
+console.log('  x 是 String，y 是 Number');
+console.log('  ToNumber("5") → 5');
+console.log('  5 == 5 → true');
+console.log('  结果:', "5" == 5);
+
+// 例3：null == undefined
+console.log('\n3. null == undefined:');
+console.log('  特殊规则：直接返回 true');
+console.log('  结果:', null == undefined);
+
+// 例4：对比 === 
+console.log('\n4. 严格相等 (===) 不进行类型转换:');
+console.log('  "5" === 5:', "5" === 5);
+console.log('  null === undefined:', null === undefined);</code></pre>
+                </div>
+                <button class="run-btn">▶ 运行代码</button>
+                <div class="output"></div>
+            </div>
+            
+            <div class="code-example">
+                <h3>示例 10：完整转换流程演示</h3>
+                <div class="code-block">
+                    <pre><code>console.log('=== 完整的类型转换流程 ===\n');
+
+// 创建一个追踪转换过程的对象
+const tracker = {
+    valueOf() {
+        console.log('  → valueOf() 被调用');
+        return this;  // 返回对象本身（不是原始值）
+    },
+    toString() {
+        console.log('  → toString() 被调用');
+        return '42';  // 返回原始值
+    }
+};
+
+console.log('1. Number(tracker):');
+console.log('  执行 ToPrimitive(tracker, "number")');
+const result1 = Number(tracker);
+console.log('  → ToNumber("42") → 42');
+console.log('  最终结果:', result1);
+
+console.log('\n2. String(tracker):');
+console.log('  执行 ToPrimitive(tracker, "string")');
+const result2 = String(tracker);
+console.log('  最终结果:', result2);
+
+// 带 Symbol.toPrimitive 的对象
+console.log('\n3. 带 Symbol.toPrimitive 的对象:');
+const custom = {
+    [Symbol.toPrimitive](hint) {
+        console.log(`  → Symbol.toPrimitive("${hint}") 被调用`);
+        return hint === 'number' ? 100 : 'custom';
+    },
+    valueOf() {
+        console.log('  → valueOf() (不会被调用)');
+        return 50;
+    }
+};
+
+console.log('  +custom:', +custom);
+console.log('  String(custom):', String(custom));</code></pre>
                 </div>
                 <button class="run-btn">▶ 运行代码</button>
                 <div class="output"></div>
