@@ -632,38 +632,16 @@ foo <span class="operator">=</span> <span class="number">10</span>;            <
             </div>
         </div>
 
-        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="02-scope-chain.html" style="padding: 0.75rem 1.5rem; background: #f5576c; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：作用域链</a>
-            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #f5576c; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
-        </div>
+        <div class="nav-links" id="nav-links"></div>
     </div>
-    
+
+    <!-- 先加载渲染引擎 -->
+    <script src="../js/quiz-renderer.js"></script>
+    <!-- 再加载数据 -->
+    <script src="../data/deep-01-execution-context.js"></script>
+    <!-- 最后初始化 -->
     <script>
-        document.querySelectorAll('.option').forEach(option => {
-            option.addEventListener('click', function() {
-                const parent = this.closest('.quiz-item');
-                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-            });
-        });
-
-        function checkAnswer(questionNum, correctAnswer) {
-            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
-            const selectedOption = quizItem.querySelector('.option.selected');
-            if (!selectedOption) { alert('请先选择一个答案！'); return; }
-            const userAnswer = selectedOption.dataset.answer;
-            quizItem.querySelectorAll('.option').forEach(opt => {
-                opt.style.pointerEvents = 'none';
-                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
-                else if (opt === selectedOption) opt.classList.add('wrong');
-            });
-            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
-            showAnswer(questionNum);
-        }
-
-        function showAnswer(questionNum) {
-            document.getElementById(`answer-${questionNum}`).classList.add('show');
-        }
+        QuizRenderer.init(window.quizData_Deep01);
     </script>
 </body>
 </html>

@@ -3,182 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>类型数组 - 面试题精选</title>
-    <link rel="stylesheet" href="../../assets/css/main.css">
-    <link rel="stylesheet" href="../../assets/css/page.css">
+    <title>类型化数组 - JavaScript 面试题</title>
+    <link rel="stylesheet" href="../css/quiz-common.css">
     <style>
-        .quiz-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-        .quiz-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .back-link { display: inline-block; color: white; text-decoration: none; margin-bottom: 1rem; opacity: 0.9; }
-        .back-link:hover { opacity: 1; }
-        .quiz-stats { display: flex; gap: 2rem; margin-top: 1rem; font-size: 0.9rem; }
-        .quiz-item { background: white; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .quiz-item-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-        .difficulty { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
-        .difficulty.easy { background: #d4edda; color: #155724; }
-        .difficulty.medium { background: #fff3cd; color: #856404; }
-        .difficulty.hard { background: #f8d7da; color: #721c24; }
-        .tag { background: #e7f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; }
-        .question { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
-        .code-question { background: #1e1e1e; color: #d4d4d4; padding: 0; border-radius: 8px; margin: 1rem 0; font-family: 'Consolas', monospace; overflow-x: auto; position: relative; }
-        .code-question::before { content: 'JavaScript'; position: absolute; top: 0.5rem; right: 0.75rem; background: #3c3c3c; color: #858585; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
-        .code-question pre { margin: 0; padding: 1.5rem; padding-top: 2.5rem; }
-        .keyword { color: #c586c0; }
-        .function { color: #dcdcaa; }
-        .string { color: #ce9178; }
-        .number { color: #b5cea8; }
-        .comment { color: #6a9955; font-style: italic; }
-        .property { color: #9cdcfe; }
-        .bracket { color: #ffd700; }
-        .operator { color: #d4d4d4; }
-        .options { margin: 1.5rem 0; }
-        .option { background: #f7fafc; border: 2px solid #e2e8f0; padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-        .option:hover { border-color: #667eea; background: #eef2ff; }
-        .option.selected { border-color: #667eea; background: #eef2ff; }
-        .option.correct { border-color: #48bb78; background: #f0fff4; }
-        .option.wrong { border-color: #f56565; background: #fff5f5; }
-        .answer-section { margin-top: 1.5rem; padding: 1.5rem; background: #f7fafc; border-radius: 8px; display: none; }
-        .answer-section.show { display: block; }
-        .answer-label { font-weight: 600; color: #2d3748; margin-bottom: 0.5rem; }
-        .explanation { color: #4a5568; line-height: 1.8; }
-        .explanation h4 { color: #2d3748; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .explanation code { background: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
-        .btn-group { display: flex; gap: 1rem; margin-top: 1rem; }
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5a67d8; }
-        .btn-secondary { background: #e2e8f0; color: #2d3748; }
-        .btn-secondary:hover { background: #cbd5e0; }
-        .source-tag { display: inline-block; background: #fef5e7; color: #d68910; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; margin-top: 1rem; }
+        :root {
+            --primary-color: #f59e0b;
+            --primary-light: #fef3c7;
+        }
+        body { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .header { border-bottom: 3px solid #f59e0b; }
+        .header h1 { color: #f59e0b; }
     </style>
 </head>
 <body>
-    <div class="quiz-container">
-        <div class="quiz-header">
-            <a href="../../basics/06-typed-array.html" class="back-link">← 返回学习内容</a>
-            <h1>📝 类型数组 - 面试题精选</h1>
-            <div class="quiz-stats">
-                <span>🟢 基础 3题</span>
-                <span>🟡 进阶 4题</span>
-                <span>🔴 困难 3题</span>
-                <span>📊 总计 10题</span>
-            </div>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    <div class="container">
+        <div class="header">
+            <h1 id="chapter-title">加载中...</h1>
+            <p id="chapter-desc">正在加载题目数据...</p>
         </div>
-
-        <!-- Q1: TypedArray基础 -->
-        <div class="quiz-item" data-question="1">
-            <div class="quiz-item-header">
-                <span class="difficulty easy">🟢 基础</span>
-                <span class="tag">TypedArray</span>
-            </div>
-            
-            <div class="question">Q1: TypedArray与普通Array的主要区别是什么？</div>
-            
-            <div class="options">
-                <div class="option" data-answer="A">
-                    <strong>A.</strong> TypedArray元素类型固定，普通Array可以混合类型
-                </div>
-                <div class="option" data-answer="B">
-                    <strong>B.</strong> TypedArray性能更好
-                </div>
-                <div class="option" data-answer="C">
-                    <strong>C.</strong> TypedArray基于ArrayBuffer
-                </div>
-                <div class="option" data-answer="D">
-                    <strong>D.</strong> 以上都对
-                </div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="checkAnswer(1, 'D')">提交答案</button>
-                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
-            </div>
-            
-            <div class="answer-section" id="answer-1">
-                <div class="answer-label">✅ 正确答案：D</div>
-                <div class="explanation">
-                    <h4>TypedArray（类型数组）特点：</h4>
-                    
-                    <p><strong>主要特征：</strong></p>
-                    <ul>
-                        <li><strong>类型固定</strong>：每个元素都是特定数值类型（Int8, Uint8, Float32等）</li>
-                        <li><strong>性能优势</strong>：连续内存存储，无需类型检查</li>
-                        <li><strong>基于ArrayBuffer</strong>：底层二进制数据缓冲区</li>
-                        <li><strong>长度固定</strong>：创建后不能改变大小</li>
-                    </ul>
-                    
-                    <p><strong>常用TypedArray类型：</strong></p>
-                    <div class="code-question"><pre><code><span class="comment">// 整数类型</span>
-<span class="keyword">const</span> int8 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Int8Array</span><span class="bracket">(</span><span class="number">8</span><span class="bracket">)</span>;      <span class="comment">// -128 to 127</span>
-<span class="keyword">const</span> uint8 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Uint8Array</span><span class="bracket">(</span><span class="number">8</span><span class="bracket">)</span>;    <span class="comment">// 0 to 255</span>
-<span class="keyword">const</span> int16 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Int16Array</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;    <span class="comment">// -32768 to 32767</span>
-<span class="keyword">const</span> int32 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Int32Array</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;    <span class="comment">// -2^31 to 2^31-1</span>
-
-<span class="comment">// 浮点类型</span>
-<span class="keyword">const</span> float32 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Float32Array</span><span class="bracket">(</span><span class="number">4</span><span class="bracket">)</span>;
-<span class="keyword">const</span> float64 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Float64Array</span><span class="bracket">(</span><span class="number">2</span><span class="bracket">)</span>;</code></pre></div>
-                </div>
-                <span class="source-tag">📌 来源：TypedArray基础</span>
-            </div>
-        </div>
-
-        <!-- 简化版：只展示框架，实际应包含Q2-Q10 -->
-        <p style="text-align: center; padding: 2rem; color: #718096;">
-            <strong>注意：</strong>本章节为类型数组进阶内容，主要用于处理二进制数据、WebGL、音视频处理等场景。<br>
-            实际面试中出现频率较低，建议重点掌握前两个数组章节的内容。
-        </p>
-
-        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="06-array-advanced.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：数组进阶</a>
-            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
-        </div>
+        <div id="quiz-container"></div>
+        <div class="nav-links" id="nav-links"></div>
     </div>
-    
-    <script>
-        document.querySelectorAll('.option').forEach(option => {
-            option.addEventListener('click', function() {
-                const parent = this.closest('.quiz-item');
-                const options = parent.querySelectorAll('.option');
-                if (this.classList.contains('correct') || this.classList.contains('wrong')) return;
-                const isMultiple = parent.querySelector('.btn-primary').onclick.toString().includes('Multiple');
-                if (isMultiple) {
-                    this.classList.toggle('selected');
-                } else {
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-                }
-            });
-        });
-        
-        function checkAnswer(questionNum, correctAnswer) {
-            const parent = document.querySelector(`[data-question="${questionNum}"]`);
-            const selected = parent.querySelector('.option.selected');
-            if (!selected) { alert('请先选择一个答案！'); return; }
-            const options = parent.querySelectorAll('.option');
-            options.forEach(opt => {
-                opt.style.pointerEvents = 'none';
-                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
-                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
-            });
-            showAnswer(questionNum);
-        }
-        
-        function checkAnswerMultiple(questionNum, correctAnswers) {
-            const parent = document.querySelector(`[data-question="${questionNum}"]`);
-            const selected = parent.querySelectorAll('.option.selected');
-            if (selected.length === 0) { alert('请至少选择一个答案！'); return; }
-            const options = parent.querySelectorAll('.option');
-            options.forEach(opt => {
-                opt.style.pointerEvents = 'none';
-                if (correctAnswers.includes(opt.dataset.answer)) opt.classList.add('correct');
-                else if (opt.classList.contains('selected')) opt.classList.add('wrong');
-            });
-            showAnswer(questionNum);
-        }
-        
-        function showAnswer(questionNum) {
-            document.getElementById(`answer-${questionNum}`).classList.add('show');
-        }
-    </script>
+    <script src="../js/quiz-renderer.js"></script>
+    <script src="../data/basics-06-typed-array.js"></script>
+    <script>QuizRenderer.init(window.quizData_Basics06TypedArray);</script>
 </body>
 </html>

@@ -3,30 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>函数基础 - JavaScript 面试题</title>
+    <title>{{TITLE}} - JavaScript 面试题</title>
     <link rel="stylesheet" href="../css/quiz-common.css">
     <style>
+        /* 章节主题色 */
         :root {
-            --primary-color: #3b82f6;
-            --primary-light: #dbeafe;
+            --primary-color: {{PRIMARY_COLOR}};
+            --primary-light: {{PRIMARY_LIGHT}};
         }
-        body { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .header { border-bottom: 3px solid #3b82f6; }
-        .header h1 { color: #3b82f6; }
+        body {
+            background: {{BG_GRADIENT}};
+        }
+        .header {
+            border-bottom: 3px solid {{PRIMARY_COLOR}};
+        }
+        .header h1 {
+            color: {{PRIMARY_COLOR}};
+        }
     </style>
 </head>
 <body>
     <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
     <div class="container">
         <div class="header">
             <h1 id="chapter-title">加载中...</h1>
             <p id="chapter-desc">正在加载题目数据...</p>
         </div>
+
         <div id="quiz-container"></div>
         <div class="nav-links" id="nav-links"></div>
     </div>
+
     <script src="../js/quiz-renderer.js"></script>
-    <script src="../data/basics-04-function-basics.js"></script>
-    <script>QuizRenderer.init(window.quizData_Basics04FunctionBasics);</script>
+    <script src="../data/{{DATA_FILE}}"></script>
+    <script>QuizRenderer.init(window.{{DATA_VAR}});</script>
 </body>
 </html>
