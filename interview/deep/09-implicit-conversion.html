@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐式转换 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #667eea; background: #f7fafc; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #667eea; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #eef2ff; color: #667eea; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        h4 { color: #2d3748; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+        p { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>⚡ 隐式转换</h1>
+            <p>深入理解JavaScript隐式类型转换的陷阱与规则</p>
+        </div>
+
+        <!-- Q1: +运算符隐式转换 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">+运算符</span>
+            </div>
+            <div class="question">Q1: +运算符的隐式转换规则是什么？哪些情况会字符串拼接？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 有一个操作数是字符串就拼接；否则转数字相加；对象先转原始值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 总是进行数字相加</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 总是进行字符串拼接</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 根据第一个操作数类型决定</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>+运算符隐式转换规则：</h4>
+                    <p><strong>基本规则：有字符串就拼接，否则转数字</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 字符串拼接</span>
+<span class="number">1</span> <span class="operator">+</span> <span class="string">'2'</span>          <span class="comment">// "12"</span>
+<span class="string">'hello'</span> <span class="operator">+</span> <span class="number">123</span>   <span class="comment">// "hello123"</span>
+<span class="number">1</span> <span class="operator">+</span> <span class="number">2</span> <span class="operator">+</span> <span class="string">'3'</span>      <span class="comment">// "33"（先3再拼接）</span>
+<span class="string">'1'</span> <span class="operator">+</span> <span class="number">2</span> <span class="operator">+</span> <span class="number">3</span>      <span class="comment">// "123"（全是拼接）</span>
+
+<span class="comment">// 数字相加</span>
+<span class="number">1</span> <span class="operator">+</span> <span class="number">2</span>           <span class="comment">// 3</span>
+<span class="keyword">true</span> <span class="operator">+</span> <span class="number">1</span>        <span class="comment">// 2</span>
+<span class="keyword">null</span> <span class="operator">+</span> <span class="number">1</span>        <span class="comment">// 1</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：+运算符</span>
+            </div>
+        </div>
+
+        <!-- Q2: ==比较隐式转换 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">==比较</span>
+            </div>
+            <div class="question">Q2: ==比较的隐式转换规则有哪些？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> null==undefined为true；字符串数字互转；对象转原始值；NaN不等于任何值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全不进行类型转换</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只转换数字类型</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 与===完全相同</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>==比较规则：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">null</span> <span class="operator">==</span> <span class="keyword">undefined</span>  <span class="comment">// true ⚠️</span>
+<span class="number">1</span> <span class="operator">==</span> <span class="string">'1'</span>           <span class="comment">// true</span>
+[] <span class="operator">==</span> <span class="number">0</span>            <span class="comment">// true</span>
+[] <span class="operator">==</span> <span class="keyword">false</span>        <span class="comment">// true</span>
+<span class="property">NaN</span> <span class="operator">==</span> <span class="property">NaN</span>         <span class="comment">// false</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：==比较</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">算术运算</span>
+            </div>
+            <div class="question">Q3: -、*、/、%等算术运算符的隐式转换规则？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 都转换为数字进行运算；无法转换则NaN</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 保持原类型</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 转为字符串</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 转为布尔值</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>算术运算符转换：</h4>
+                    <div class="code-question"><pre><code><span class="string">'5'</span> <span class="operator">-</span> <span class="number">2</span>    <span class="comment">// 3</span>
+<span class="string">'5'</span> <span class="operator">*</span> <span class="string">'2'</span>  <span class="comment">// 10</span>
+[] <span class="operator">-</span> <span class="number">1</span>      <span class="comment">// -1</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：算术运算</span>
+            </div>
+        </div>
+
+        <!-- Q4-Q10简化版本 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">条件判断</span>
+            </div>
+            <div class="question">Q4: if/while等条件语句中的隐式转换规则？7个假值是什么？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> false、0、-0、0n、''、null、undefined、NaN；其余都是真值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有false为假</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 空数组空对象也是假值</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 所有空值都是假值</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>7个假值（Falsy）：</strong>false、0、-0、0n、''、null、undefined、NaN</p>
+                    <p><strong>常见陷阱：</strong>[]、{}、'0'、'false'都是真值！</p>
+                </div>
+                <span class="source-tag">📌 来源：条件判断</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">一元+运算符</span>
+            </div>
+            <div class="question">Q5: 一元+运算符（+value）的隐式转换规则？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 将操作数转换为数字；等同于Number()；常用于快速转数字</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 转换为字符串</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 转换为布尔值</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不进行转换</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>一元+转数字：</strong>+'123' → 123；+true → 1；+[] → 0</p>
+                </div>
+                <span class="source-tag">📌 来源：一元运算符</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">逻辑运算符</span>
+            </div>
+            <div class="question">Q6: &&和||运算符的返回值规则？会隐式转布尔值吗？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 返回操作数本身而非布尔值；&&返回第一个假值或最后值；||返回第一个真值或最后值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 总是返回true或false</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 总是返回第一个操作数</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 总是返回最后一个操作数</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>&&：</strong>返回第一个假值或最后一个值</p>
+                    <p><strong>||：</strong>返回第一个真值或最后一个值</p>
+                    <p>常用于：默认值、条件渲染、短路求值</p>
+                </div>
+                <span class="source-tag">📌 来源：逻辑运算符</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">比较运算符</span>
+            </div>
+            <div class="question">Q7: >、<、>=、<=比较运算符的隐式转换规则？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 都转数字比较；字符串比较则按Unicode码点；对象先转原始值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 总是字符串比较</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 总是数字比较</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不进行转换</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p>'10' > 9 → true（转数字）</p>
+                    <p>'10' > '9' → false（字符串比较）</p>
+                </div>
+                <span class="source-tag">📌 来源：比较运算符</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">字符串模板</span>
+            </div>
+            <div class="question">Q8: 模板字符串`${value}`中的隐式转换规则？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 调用toString()转字符串；null/undefined转为"null"/"undefined"；对象转"[object Object]"</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 转为数字</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 转为布尔值</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 保持原样</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p>`${123}` → "123"</p>
+                    <p>`${null}` → "null"</p>
+                    <p>`${{}}` → "[object Object]"</p>
+                </div>
+                <span class="source-tag">📌 来源：模板字符串</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合</span>
+            </div>
+            <div class="question">Q9: !运算符的隐式转换规则？!!value的作用？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> !转布尔值后取反；!!强制转布尔值；常用于判断真假</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 转数字后取反</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 转字符串后取反</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不进行转换</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p>!'hello' → false</p>
+                    <p>!!'hello' → true</p>
+                    <p>!!0 → false</p>
+                </div>
+                <span class="source-tag">📌 来源：逻辑非</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合应用</span>
+            </div>
+            <div class="question">Q10: 以下代码输出什么？[] + {} + ![] + null</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> "[object Object]falsenull"</div>
+                <div class="option" data-answer="B"><strong>B.</strong> "0"</div>
+                <div class="option" data-answer="C"><strong>C.</strong> NaN</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 报错</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p>[] + {} → "" + "[object Object]" = "[object Object]"</p>
+                    <p>+ ![] → + false = "[object Object]false"</p>
+                    <p>+ null → "[object Object]falsenull"</p>
+                </div>
+                <span class="source-tag">📌 来源：综合转换</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="08-type-conversion.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：类型转换</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

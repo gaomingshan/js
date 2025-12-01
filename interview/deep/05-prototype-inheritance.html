@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原型继承 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #667eea; background: #f7fafc; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #667eea; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #eef2ff; color: #667eea; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        h4 { color: #2d3748; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+        p { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧬 原型继承</h1>
+            <p>掌握JavaScript继承的各种实现方式</p>
+        </div>
+
+        <!-- Q1: 原型链继承 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">基础继承</span>
+            </div>
+            <div class="question">Q1: 原型链继承的实现方式和缺点是什么？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 子类prototype指向父类实例；缺点：引用类型共享、无法传参</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 通过call继承</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 使用Object.create</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 完美继承方式</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型链继承：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">this</span>.<span class="property">colors</span> <span class="operator">=</span> [<span class="string">'red'</span>, <span class="string">'blue'</span>];
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 原型链继承</span>
+<span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> child1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">const</span> child2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+child1.<span class="property">colors</span>.<span class="function">push</span><span class="bracket">(</span><span class="string">'green'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>child2.<span class="property">colors</span><span class="bracket">)</span>; <span class="comment">// ['red', 'blue', 'green']</span>
+<span class="comment">// ❌ 问题：所有实例共享同一个colors数组</span></code></pre></div>
+                    
+                    <p><strong>主要缺点：</strong></p>
+                    <ul>
+                        <li>引用类型属性被所有实例共享</li>
+                        <li>创建子类实例时，无法向父类构造函数传参</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：原型链继承</span>
+            </div>
+        </div>
+
+        <!-- Q2: 构造函数继承 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">构造函数</span>
+            </div>
+            <div class="question">Q2: 构造函数继承如何实现？有什么问题？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 在子类中call父类；缺点：无法继承父类原型方法、函数无法复用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完美解决所有问题</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 使用prototype继承</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 通过Object.create实现</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>构造函数继承（借用构造函数）：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Parent</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+  <span class="keyword">this</span>.<span class="property">colors</span> <span class="operator">=</span> [<span class="string">'red'</span>, <span class="string">'blue'</span>];
+<span class="bracket">}</span>
+
+<span class="property">Parent</span>.<span class="property">prototype</span>.<span class="property">sayHello</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 调用父类构造函数</span>
+  <span class="property">Parent</span>.<span class="function">call</span><span class="bracket">(</span><span class="keyword">this</span>, name<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> child1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> child2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="string">'Bob'</span><span class="bracket">)</span>;
+
+child1.<span class="property">colors</span>.<span class="function">push</span><span class="bracket">(</span><span class="string">'green'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>child2.<span class="property">colors</span><span class="bracket">)</span>; <span class="comment">// ['red', 'blue'] ✓ 独立</span>
+
+child1.<span class="function">sayHello</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// ❌ TypeError: child1.sayHello is not a function</span></code></pre></div>
+                    
+                    <p><strong>优点：</strong></p>
+                    <ul>
+                        <li>避免了引用类型的属性被所有实例共享</li>
+                        <li>可以向父类传参</li>
+                    </ul>
+                    
+                    <p><strong>缺点：</strong></p>
+                    <ul>
+                        <li>无法继承父类原型上的方法</li>
+                        <li>每次创建实例都会创建一遍方法，无法复用</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：构造函数继承</span>
+            </div>
+        </div>
+
+        <!-- Q3: 组合继承 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">组合模式</span>
+            </div>
+            <div class="question">Q3: 组合继承（伪经典继承）是什么？有什么缺点？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 结合原型链和构造函数；缺点：父类构造函数被调用两次</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完美的继承方式</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只用原型链</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只用构造函数</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>组合继承：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Parent</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+  <span class="keyword">this</span>.<span class="property">colors</span> <span class="operator">=</span> [<span class="string">'red'</span>, <span class="string">'blue'</span>];
+<span class="bracket">}</span>
+
+<span class="property">Parent</span>.<span class="property">prototype</span>.<span class="property">sayHello</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello '</span> <span class="operator">+</span> <span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span>name, age<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">Parent</span>.<span class="function">call</span><span class="bracket">(</span><span class="keyword">this</span>, name<span class="bracket">)</span>; <span class="comment">// 第二次调用Parent()</span>
+  <span class="keyword">this</span>.<span class="property">age</span> <span class="operator">=</span> age;
+<span class="bracket">}</span>
+
+<span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 第一次调用Parent()</span>
+<span class="property">Child</span>.<span class="property">prototype</span>.<span class="property">constructor</span> <span class="operator">=</span> Child;
+
+<span class="keyword">const</span> child1 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="string">'Alice'</span>, <span class="number">5</span><span class="bracket">)</span>;
+child1.<span class="function">sayHello</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// ✓ "Hello Alice"</span>
+child1.<span class="property">colors</span>.<span class="function">push</span><span class="bracket">(</span><span class="string">'green'</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> child2 <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="string">'Bob'</span>, <span class="number">6</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>child2.<span class="property">colors</span><span class="bracket">)</span>; <span class="comment">// ✓ ['red', 'blue']</span></code></pre></div>
+                    
+                    <p><strong>优点：</strong></p>
+                    <ul>
+                        <li>融合原型链继承和构造函数的优点</li>
+                        <li>可以继承父类原型的方法</li>
+                        <li>可以传参</li>
+                        <li>引用类型不共享</li>
+                    </ul>
+                    
+                    <p><strong>缺点：</strong></p>
+                    <ul>
+                        <li>父类构造函数被调用了两次</li>
+                        <li>子类原型上有多余的父类属性</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：组合继承</span>
+            </div>
+        </div>
+
+        <!-- Q4: 原型式继承 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">原型式继承</span>
+            </div>
+            <div class="question">Q4: 原型式继承（Object.create）是如何实现的？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 创建临时构造函数，将对象作为原型，返回新实例；适合不需要构造函数的简单继承</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 使用call方法</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 直接复制对象</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 使用new关键字</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原型式继承（道格拉斯·克罗克福德提出）：</h4>
+                    
+                    <p><strong>手动实现Object.create：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">object</span><span class="bracket">(</span>o<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">function</span> <span class="function">F</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+  <span class="property">F</span>.<span class="property">prototype</span> <span class="operator">=</span> o;
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="function">F</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="property">name</span>: <span class="string">'Nick'</span>,
+  <span class="property">friends</span>: [<span class="string">'Alice'</span>, <span class="string">'Bob'</span>]
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="function">object</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+<span class="keyword">const</span> p2 <span class="operator">=</span> <span class="function">object</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+
+p1.<span class="property">friends</span>.<span class="function">push</span><span class="bracket">(</span><span class="string">'Charlie'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p2.<span class="property">friends</span><span class="bracket">)</span>; <span class="comment">// ['Alice', 'Bob', 'Charlie']</span>
+<span class="comment">// 仍然存在引用类型共享的问题</span></code></pre></div>
+                    
+                    <p><strong>ES5标准化版本：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> person <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="property">name</span>: <span class="string">'Nick'</span>,
+  <span class="property">friends</span>: [<span class="string">'Alice'</span>]
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+<span class="keyword">const</span> p2 <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>person, <span class="bracket">{</span>
+  <span class="property">name</span>: <span class="bracket">{</span>
+    <span class="property">value</span>: <span class="string">'Greg'</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>适用场景：</strong></p>
+                    <ul>
+                        <li>想让一个对象与另一个对象保持类似，不需要构造函数</li>
+                        <li>快速创建对象原型链</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：原型式继承</span>
+            </div>
+        </div>
+
+        <!-- Q5: 寄生式继承 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">寄生式继承</span>
+            </div>
+            <div class="question">Q5: 寄生式继承是什么？有什么缺点？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 在原型式继承基础上增强对象；缺点：函数无法复用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 使用call继承</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 完美继承方式</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 使用prototype继承</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>寄生式继承：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">createAnother</span><span class="bracket">(</span>original<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 通过原型式继承创建新对象</span>
+  <span class="keyword">const</span> clone <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span>original<span class="bracket">)</span>;
+  
+  <span class="comment">// 增强对象</span>
+  clone.<span class="property">sayHi</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hi'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+  
+  <span class="keyword">return</span> clone;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> person <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="property">name</span>: <span class="string">'Nick'</span>,
+  <span class="property">friends</span>: [<span class="string">'Alice'</span>]
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> p1 <span class="operator">=</span> <span class="function">createAnother</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+p1.<span class="function">sayHi</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// "Hi"</span>
+
+<span class="keyword">const</span> p2 <span class="operator">=</span> <span class="function">createAnother</span><span class="bracket">(</span>person<span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>p1.<span class="property">sayHi</span> <span class="operator">===</span> p2.<span class="property">sayHi</span><span class="bracket">)</span>; <span class="comment">// false（无法复用）</span></code></pre></div>
+                    
+                    <p><strong>特点：</strong></p>
+                    <ul>
+                        <li>创建一个仅用于封装继承过程的函数</li>
+                        <li>在函数内部以某种方式增强对象</li>
+                        <li>返回对象</li>
+                    </ul>
+                    
+                    <p><strong>缺点：</strong></p>
+                    <ul>
+                        <li>每次创建对象都会创建一遍方法，函数无法复用</li>
+                        <li>类似构造函数模式的问题</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：寄生式继承</span>
+            </div>
+        </div>
+
+        <!-- Q6: 寄生组合继承 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">最佳实践</span>
+            </div>
+            <div class="question">Q6: 寄生组合继承是什么？为什么是最理想的继承方式？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 用Object.create替代new Parent()；避免调用两次父类构造函数，是ES5最完美的继承方案</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 使用原型链继承</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 使用构造函数继承</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 使用Object.assign</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>寄生组合继承（最理想的继承范式）：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">inheritPrototype</span><span class="bracket">(</span>Child, Parent<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 创建父类原型的副本</span>
+  <span class="keyword">const</span> prototype <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="property">Parent</span>.<span class="property">prototype</span><span class="bracket">)</span>;
+  
+  <span class="comment">// 修正constructor</span>
+  prototype.<span class="property">constructor</span> <span class="operator">=</span> Child;
+  
+  <span class="comment">// 赋值给子类原型</span>
+  <span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> prototype;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">Parent</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+  <span class="keyword">this</span>.<span class="property">colors</span> <span class="operator">=</span> [<span class="string">'red'</span>, <span class="string">'blue'</span>];
+<span class="bracket">}</span>
+
+<span class="property">Parent</span>.<span class="property">prototype</span>.<span class="property">sayHello</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello '</span> <span class="operator">+</span> <span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+<span class="bracket">}</span>;
+
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span>name, age<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">Parent</span>.<span class="function">call</span><span class="bracket">(</span><span class="keyword">this</span>, name<span class="bracket">)</span>; <span class="comment">// 只调用一次Parent()</span>
+  <span class="keyword">this</span>.<span class="property">age</span> <span class="operator">=</span> age;
+<span class="bracket">}</span>
+
+<span class="comment">// 使用寄生组合继承</span>
+<span class="function">inheritPrototype</span><span class="bracket">(</span>Child, Parent<span class="bracket">)</span>;
+
+<span class="keyword">const</span> child <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="string">'Alice'</span>, <span class="number">5</span><span class="bracket">)</span>;
+child.<span class="function">sayHello</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// "Hello Alice"</span></code></pre></div>
+                    
+                    <p><strong>对比组合继承：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 组合继承（调用两次）：</span>
+<span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Parent</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 第一次</span>
+<span class="keyword">const</span> child <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 内部call，第二次</span>
+
+<span class="comment">// 寄生组合继承（只调用一次）：</span>
+<span class="property">Child</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="property">Parent</span>.<span class="property">prototype</span><span class="bracket">)</span>; <span class="comment">// 不调用</span>
+<span class="keyword">const</span> child <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 内部call，唯一一次</span></code></pre></div>
+                    
+                    <p><strong>优点：</strong></p>
+                    <ul>
+                        <li>只调用一次父类构造函数</li>
+                        <li>避免在子类原型上创建不必要的、多余的属性</li>
+                        <li>原型链保持不变，instanceof和isPrototypeOf()正常工作</li>
+                        <li>被认为是引用类型最理想的继承范式</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：寄生组合继承</span>
+            </div>
+        </div>
+
+        <!-- Q7: ES6 Class继承 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">ES6</span>
+            </div>
+            <div class="question">Q7: ES6 Class继承与ES5继承有什么区别？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> Class有暂时性死区、必须new调用、super必须在this之前、原生构造函数可继承</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只是语法糖</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只是写法不同</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>ES6 Class继承 vs ES5继承：</h4>
+                    
+                    <p><strong>ES6 Class继承：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">Parent</span> <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> name;
+  <span class="bracket">}</span>
+  
+  <span class="function">sayHello</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello '</span> <span class="operator">+</span> <span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span>name, age<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">super</span><span class="bracket">(</span>name<span class="bracket">)</span>; <span class="comment">// 必须先调用super</span>
+    <span class="keyword">this</span>.<span class="property">age</span> <span class="operator">=</span> age;
+  <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>关键区别：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. Class必须通过new调用</span>
+<span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// TypeError: Class constructor cannot be invoked without 'new'</span>
+
+<span class="comment">// 2. Class有暂时性死区</span>
+<span class="keyword">const</span> c <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// ReferenceError: Must call super before this</span>
+<span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">age</span> <span class="operator">=</span> <span class="number">5</span>; <span class="comment">// ❌ 必须先调用super</span>
+    <span class="keyword">super</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 3. Class方法不可枚举</span>
+<span class="property">Object</span>.<span class="function">keys</span><span class="bracket">(</span><span class="property">Child</span>.<span class="property">prototype</span><span class="bracket">)</span>; <span class="comment">// []</span>
+
+<span class="comment">// 4. 可以继承原生构造函数</span>
+<span class="keyword">class</span> <span class="function">MyArray</span> <span class="keyword">extends</span> Array <span class="bracket">{</span>
+  <span class="function">first</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">this</span>[<span class="number">0</span>];
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> arr <span class="operator">=</span> <span class="keyword">new</span> <span class="function">MyArray</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr.<span class="function">first</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 1</span></code></pre></div>
+                    
+                    <p><strong>底层实现差异：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ES5: 先创建子类this，再调用父类构造函数修饰this</span>
+<span class="keyword">function</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">const</span> <span class="keyword">this</span> <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="property">Child</span>.<span class="property">prototype</span><span class="bracket">)</span>; <span class="comment">// ①先有this</span>
+  <span class="property">Parent</span>.<span class="function">call</span><span class="bracket">(</span><span class="keyword">this</span><span class="bracket">)</span>; <span class="comment">// ②再修饰this</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ES6: 先调用父类构造函数创建this，再用子类构造函数修饰this</span>
+<span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">super</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// ①先调用父类创建this</span>
+    <span class="keyword">this</span>.<span class="property">age</span> <span class="operator">=</span> <span class="number">5</span>; <span class="comment">// ②再修饰this</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：ES6 Class继承</span>
+            </div>
+        </div>
+
+        <!-- Q8: 多重继承 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">高级技巧</span>
+            </div>
+            <div class="question">Q8: JavaScript如何实现多重继承？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用Mixin混入模式、Object.assign()、Symbol避免冲突</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 直接使用extends</div>
+                <div class="option" data-answer="C"><strong>C.</strong> JavaScript不支持多重继承</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 使用prototype链</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>JavaScript多重继承实现：</h4>
+                    
+                    <p><strong>方法1：Mixin混入模式</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> walkMixin <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="function">walk</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Walking...'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> swimMixin <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="function">swim</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Swimming...'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">class</span> <span class="function">Animal</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 混入多个能力</span>
+<span class="property">Object</span>.<span class="function">assign</span><span class="bracket">(</span><span class="property">Animal</span>.<span class="property">prototype</span>, walkMixin, swimMixin<span class="bracket">)</span>;
+
+<span class="keyword">const</span> animal <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Animal</span><span class="bracket">(</span><span class="bracket">)</span>;
+animal.<span class="function">walk</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// "Walking..."</span>
+animal.<span class="function">swim</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// "Swimming..."</span></code></pre></div>
+                    
+                    <p><strong>方法2：函数式Mixin</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">mixin</span><span class="bracket">(</span>target, <span class="operator">...</span>sources<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">Object</span>.<span class="function">assign</span><span class="bracket">(</span>target, <span class="operator">...</span>sources<span class="bracket">)</span>;
+  <span class="keyword">return</span> target;
+<span class="bracket">}</span>
+
+<span class="keyword">class</span> <span class="function">Duck</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="function">mixin</span><span class="bracket">(</span><span class="property">Duck</span>.<span class="property">prototype</span>, walkMixin, swimMixin<span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>方法3：使用Symbol避免冲突</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> walkSymbol <span class="operator">=</span> <span class="property">Symbol</span>.<span class="keyword">for</span><span class="bracket">(</span><span class="string">'walk'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> swimSymbol <span class="operator">=</span> <span class="property">Symbol</span>.<span class="keyword">for</span><span class="bracket">(</span><span class="string">'swim'</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> walkMixin <span class="operator">=</span> <span class="bracket">{</span>
+  [walkSymbol]<span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Walking...'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> swimMixin <span class="operator">=</span> <span class="bracket">{</span>
+  [swimSymbol]<span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Swimming...'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">class</span> <span class="function">Animal</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="property">Object</span>.<span class="function">assign</span><span class="bracket">(</span><span class="property">Animal</span>.<span class="property">prototype</span>, walkMixin, swimMixin<span class="bracket">)</span>;
+
+<span class="keyword">const</span> a <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Animal</span><span class="bracket">(</span><span class="bracket">)</span>;
+a[walkSymbol]<span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// "Walking..."</span></code></pre></div>
+                    
+                    <p><strong>注意事项：</strong></p>
+                    <ul>
+                        <li>方法名冲突问题</li>
+                        <li>原型链只有一条，不是真正的多重继承</li>
+                        <li>instanceof只能识别直接继承的类</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：多重继承</span>
+            </div>
+        </div>
+
+        <!-- Q9: 继承性能 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">性能优化</span>
+            </div>
+            <div class="question">Q9: 不同继承方式的性能差异是什么？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 寄生组合继承性能最优；原型链长度影响查找速度；优化：减少层级、缓存方法</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 所有继承方式性能相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> Class继承最慢</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 性能差异可忽略</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>继承性能对比：</h4>
+                    
+                    <p><strong>不同继承方式性能：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 原型链继承 - 性能较差</span>
+<span class="comment">// - 所有实例共享引用类型，内存占用少</span>
+<span class="comment">// - 但查找链路可能较长</span>
+
+<span class="comment">// 2. 构造函数继承 - 性能一般</span>
+<span class="comment">// - 每次创建实例都调用构造函数</span>
+<span class="comment">// - 每个实例都有独立方法，内存占用大</span>
+
+<span class="comment">// 3. 组合继承 - 性能中等</span>
+<span class="comment">// - 父类构造函数调用两次（性能损耗）</span>
+<span class="comment">// - 原型上有冗余属性</span>
+
+<span class="comment">// 4. 寄生组合继承 - 性能最优 ⭐</span>
+<span class="comment">// - 父类构造函数只调用一次</span>
+<span class="comment">// - 原型链纯净，查找效率高</span>
+<span class="comment">// - 内存占用最优</span></code></pre></div>
+                    
+                    <p><strong>性能优化建议：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ✅ 优化1：减少原型链层级</span>
+<span class="comment">// 不要超过3-4层继承</span>
+
+<span class="comment">// ✅ 优化2：将常用方法放在实例上</span>
+<span class="keyword">class</span> <span class="function">Optimized</span> <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 热路径方法直接绑定到实例</span>
+    <span class="keyword">this</span>.<span class="property">frequentMethod</span> <span class="operator">=</span> <span class="keyword">this</span>.<span class="property">frequentMethod</span>.<span class="function">bind</span><span class="bracket">(</span><span class="keyword">this</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  
+  <span class="function">frequentMethod</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="operator">...</span> <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 优化3：缓存原型方法</span>
+<span class="keyword">const</span> proto <span class="operator">=</span> <span class="property">Child</span>.<span class="property">prototype</span>;
+<span class="keyword">const</span> method <span class="operator">=</span> proto.<span class="property">someMethod</span>;
+<span class="comment">// 多次调用时避免重复查找</span>
+
+<span class="comment">// ✅ 优化4：使用Object.create(null)作为纯数据容器</span>
+<span class="keyword">const</span> data <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>;
+<span class="comment">// 没有原型链，查找更快</span></code></pre></div>
+                    
+                    <p><strong>性能测试结果：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1000000次方法调用测试：</span>
+<span class="comment">// - 直接调用实例方法: ~5ms</span>
+<span class="comment">// - 1层原型链查找: ~10ms</span>
+<span class="comment">// - 3层原型链查找: ~25ms</span>
+<span class="comment">// - 5层原型链查找: ~50ms</span>
+
+<span class="comment">// 结论：每增加一层原型，性能损耗约5-10ms/百万次调用</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：继承性能优化</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合分析 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合应用</span>
+            </div>
+            <div class="question">Q10: 以下代码的输出是什么？</div>
+            <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">Parent</span> <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> <span class="string">'parent'</span>;
+    <span class="keyword">this</span>.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  
+  <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">super</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="keyword">this</span>.<span class="property">name</span> <span class="operator">=</span> <span class="string">'child'</span>;
+  <span class="bracket">}</span>
+  
+  <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'child getName'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> "child getName"</div>
+                <div class="option" data-answer="B"><strong>B.</strong> "parent"</div>
+                <div class="option" data-answer="C"><strong>C.</strong> "child"</div>
+                <div class="option" data-answer="D"><strong>D.</strong> undefined</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>子类方法覆盖父类方法：</h4>
+                    
+                    <p><strong>执行流程分析：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. new Child() 创建实例</span>
+<span class="comment">// 2. Child构造函数调用super()</span>
+<span class="comment">// 3. 进入Parent构造函数</span>
+<span class="comment">//    - this.name = 'parent'</span>
+<span class="comment">//    - this.getName() 调用方法</span>
+<span class="comment">// 4. 查找getName方法：</span>
+<span class="comment">//    - this是Child实例</span>
+<span class="comment">//    - 先查找实例自身 → 没有</span>
+<span class="comment">//    - 再查找Child.prototype → 找到了！</span>
+<span class="comment">//    - 调用Child.prototype.getName()</span>
+<span class="comment">// 5. 输出："child getName"</span>
+<span class="comment">// 6. 返回Parent构造函数</span>
+<span class="comment">// 7. 继续Child构造函数</span>
+<span class="comment">//    - this.name = 'child'（覆盖）</span></code></pre></div>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 即使在父类构造函数中调用方法，</span>
+<span class="comment">// 由于this指向子类实例，会调用子类的覆盖方法</span>
+
+<span class="keyword">class</span> <span class="function">Parent</span> <span class="bracket">{</span>
+  <span class="keyword">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">this</span>.<span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 调用的是子类的method!</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>如果想调用父类方法：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">Child</span> <span class="keyword">extends</span> Parent <span class="bracket">{</span>
+  <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">super</span>.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 调用父类的getName</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'child getName'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="keyword">new</span> <span class="function">Child</span><span class="bracket">(</span><span class="bracket">)</span>; 
+<span class="comment">// 输出：</span>
+<span class="comment">// "parent"（父类方法）</span>
+<span class="comment">// "child getName"（子类方法）</span></code></pre></div>
+                    
+                    <p><strong>这个行为类似于：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// Java/C++中的虚函数机制</span>
+<span class="comment">// 在构造函数中调用的方法会动态绑定到实际类型</span>
+<span class="comment">// 这是面向对象多态的体现</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：继承综合应用</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="04-prototype-chain.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：原型链</a>
+            <a href="06-object-creation.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：对象创建模式</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

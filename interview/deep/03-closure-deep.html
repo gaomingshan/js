@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闭包深入 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #f5576c; }
+        .header h1 { color: #f5576c; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #f5576c; background: #f7fafc; }
+        .option.selected { border-color: #f5576c; background: #fff5f7; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #f5576c; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #f5576c; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #fff5f7; color: #f5576c; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔒 闭包深入</h1>
+            <p>深入理解闭包的原理和应用</p>
+        </div>
+
+        <!-- Q1: 闭包定义 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">基础概念</span>
+            </div>
+            <div class="question">Q1: 从作用域链角度解释闭包？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 函数可以访问其词法作用域外的变量，通过作用域链保持对外部变量的引用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只是函数嵌套</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 全局变量</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 局部变量</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>闭包的本质：</h4>
+                    <p>闭包是函数和其词法环境的组合，函数可以"记住"并访问其定义时的作用域，即使函数在其词法作用域之外执行。</p>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> count <span class="operator">=</span> <span class="number">0</span>;
+  
+  <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    count<span class="operator">++</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>count<span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  
+  <span class="keyword">return</span> inner;
+<span class="bracket">}</span>
+
+<span class="keyword">var</span> counter <span class="operator">=</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">counter</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 1</span>
+<span class="function">counter</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 2</span>
+
+<span class="comment">// 作用域链分析：</span>
+<span class="comment">// 1. outer执行完毕，正常情况AO应该被销毁</span>
+<span class="comment">// 2. 但inner的[[Scope]]保存了对outerAO的引用</span>
+<span class="comment">// 3. counter.[[Scope]] = [outerAO, globalVO]</span>
+<span class="comment">// 4. 所以count变量得以保留</span></code></pre></div>
+                    
+                    <p><strong>关键点：</strong></p>
+                    <ul>
+                        <li>inner函数的[[Scope]]包含outerAO</li>
+                        <li>即使outer执行完毕，outerAO不会被销毁</li>
+                        <li>因为inner保持着对它的引用</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：闭包原理</span>
+            </div>
+        </div>
+
+        <!-- Q2: 闭包的创建 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">创建时机</span>
+            </div>
+            <div class="question">Q2: 闭包什么时候创建？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 函数定义时创建[[Scope]]，函数执行时形成完整闭包</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 函数调用时创建</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 变量声明时创建</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 自动创建</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>闭包创建过程：</h4>
+                    
+                    <p><strong>1. 函数定义阶段：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+  
+  <span class="comment">// inner定义时，保存父级作用域链</span>
+  <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  <span class="comment">// inner.[[Scope]] = [outerAO, globalVO]</span>
+  
+  <span class="keyword">return</span> inner;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>2. 函数执行阶段：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> fn <span class="operator">=</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// outer执行</span>
+<span class="comment">// outerAO = { x: 10, inner: function }</span>
+<span class="comment">// outer执行完毕，但outerAO不销毁（被inner引用）</span>
+
+<span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// inner执行，形成闭包</span>
+<span class="comment">// innerEC.Scope = [innerAO] + fn.[[Scope]]</span>
+<span class="comment">//                = [innerAO, outerAO, globalVO]</span></code></pre></div>
+                    
+                    <p><strong>关键：</strong>[[Scope]]在函数定义时确定，闭包在函数执行时完整形成。</p>
+                </div>
+                <span class="source-tag">📌 来源：闭包创建</span>
+            </div>
+        </div>
+
+        <!-- Q3-Q10 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">内存管理</span></div>
+            <div class="question">Q3: 闭包会导致内存泄漏吗？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 不当使用可能导致，因为外部变量无法被回收，需要手动解除引用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 一定会泄漏</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不会泄漏</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 自动回收</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 可能导致内存泄漏</span>
+<span class="keyword">function</span> <span class="function">createClosure</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> largeData <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Array</span><span class="bracket">(</span><span class="number">1000000</span><span class="bracket">)</span>; <span class="comment">// 大量数据</span>
+  
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>largeData.<span class="property">length</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">var</span> closure <span class="operator">=</span> <span class="function">createClosure</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="comment">// largeData无法被回收</span>
+
+<span class="comment">// ✅ 解决方案：手动解除引用</span>
+closure <span class="operator">=</span> <span class="keyword">null</span>; <span class="comment">// 现在largeData可以被回收了</span></code></pre></div>
+                    
+                    <p><strong>避免内存问题：</strong></p>
+                    <ul>
+                        <li>不使用时及时解除引用</li>
+                        <li>避免在闭包中引用大对象</li>
+                        <li>只保留需要的变量</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：内存管理</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">循环闭包</span></div>
+            <div class="question">Q4: 如何解决循环中的闭包问题？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用IIFE、let声明、forEach等创建独立作用域</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 无法解决</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不需要解决</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能用var</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>问题：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> funcs <span class="operator">=</span> <span class="bracket">[</span><span class="bracket">]</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+  funcs.<span class="function">push</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+  <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+funcs<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 3（所有函数共享同一个i）</span></code></pre></div>
+                    
+                    <p><strong>解决方案1：IIFE</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+  funcs.<span class="function">push</span><span class="bracket">(</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span>j<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>j<span class="bracket">)</span>;
+    <span class="bracket">}</span>;
+  <span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span>i<span class="bracket">)</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>解决方案2：let</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+  funcs.<span class="function">push</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+  <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：循环闭包</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">私有变量</span></div>
+            <div class="question">Q5: 如何使用闭包实现私有变量？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 在函数内定义变量，通过返回的方法访问和修改</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 使用全局变量</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 无法实现</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 用_开头命名</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">createPerson</span><span class="bracket">(</span>name<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 私有变量</span>
+  <span class="keyword">var</span> _name <span class="operator">=</span> name;
+  <span class="keyword">var</span> _age <span class="operator">=</span> <span class="number">0</span>;
+  
+  <span class="comment">// 公开方法（特权方法）</span>
+  <span class="keyword">return</span> <span class="bracket">{</span>
+    <span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> _name;
+    <span class="bracket">}</span>,
+    <span class="function">setName</span><span class="bracket">(</span>newName<span class="bracket">)</span> <span class="bracket">{</span>
+      _name <span class="operator">=</span> newName;
+    <span class="bracket">}</span>,
+    <span class="function">getAge</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> _age;
+    <span class="bracket">}</span>,
+    <span class="function">growUp</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      _age<span class="operator">++</span>;
+    <span class="bracket">}</span>
+  <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">var</span> person <span class="operator">=</span> <span class="function">createPerson</span><span class="bracket">(</span><span class="string">'Alice'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="function">getName</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 'Alice'</span>
+person.<span class="function">growUp</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="function">getAge</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 1</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>person.<span class="property">_name</span><span class="bracket">)</span>; <span class="comment">// undefined（无法直接访问）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：私有变量</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">模块模式</span></div>
+            <div class="question">Q6: 使用闭包实现模块模式？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> IIFE + 闭包，返回公开API，隐藏私有实现</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 全局对象</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 简单封装</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不需要闭包</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>模块模式（Module Pattern）：</h4>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> MyModule <span class="operator">=</span> <span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 私有变量和函数</span>
+  <span class="keyword">var</span> privateVar <span class="operator">=</span> <span class="string">'private'</span>;
+  <span class="keyword">var</span> privateCounter <span class="operator">=</span> <span class="number">0</span>;
+  
+  <span class="keyword">function</span> <span class="function">privateMethod</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Private method'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 公开API</span>
+  <span class="keyword">return</span> <span class="bracket">{</span>
+    <span class="function">publicMethod</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      privateCounter<span class="operator">++</span>;
+      <span class="function">privateMethod</span><span class="bracket">(</span><span class="bracket">)</span>;
+      <span class="keyword">return</span> privateCounter;
+    <span class="bracket">}</span>,
+    <span class="function">getPrivateVar</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> privateVar;
+    <span class="bracket">}</span>,
+    <span class="function">reset</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      privateCounter <span class="operator">=</span> <span class="number">0</span>;
+    <span class="bracket">}</span>
+  <span class="bracket">}</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+MyModule.<span class="function">publicMethod</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 1</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>MyModule.<span class="function">getPrivateVar</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 'private'</span></code></pre></div>
+                    
+                    <p><strong>揭示模块模式：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> MyModule <span class="operator">=</span> <span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> count <span class="operator">=</span> <span class="number">0</span>;
+  
+  <span class="keyword">function</span> <span class="function">increment</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> count<span class="operator">++</span>; <span class="bracket">}</span>
+  <span class="keyword">function</span> <span class="function">getCount</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> count; <span class="bracket">}</span>
+  
+  <span class="comment">// 揭示公开接口</span>
+  <span class="keyword">return</span> <span class="bracket">{</span>
+    increment<span class="operator">:</span> increment,
+    getCount<span class="operator">:</span> getCount
+  <span class="bracket">}</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：模块模式</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">性能优化</span></div>
+            <div class="question">Q7: 闭包的性能影响和优化？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 增加内存占用和作用域链长度，需要合理使用，避免过度嵌套</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 没有性能影响</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 总是比其他方式快</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不应该使用</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>性能影响：</strong></p>
+                    <ul>
+                        <li>内存：外部变量无法释放</li>
+                        <li>查找：作用域链更长，变量查找更慢</li>
+                        <li>创建：函数创建有开销</li>
+                    </ul>
+                    
+                    <p><strong>优化建议：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 不好：每次调用都创建闭包</span>
+<span class="keyword">function</span> <span class="function">onClick</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> data <span class="operator">=</span> <span class="function">getData</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">process</span><span class="bracket">(</span>data<span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 好：复用闭包</span>
+<span class="keyword">var</span> handler <span class="operator">=</span> <span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> data <span class="operator">=</span> <span class="function">getData</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">process</span><span class="bracket">(</span>data<span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">this绑定</span></div>
+            <div class="question">Q8: 闭包中的this指向问题？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 内部函数的this不继承外部，需要保存外部this或使用箭头函数</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 自动继承</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 总是window</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 总是undefined</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 问题：this不继承</span>
+<span class="keyword">var</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+  name<span class="operator">:</span> <span class="string">'obj'</span>,
+  <span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>; <span class="comment">// undefined（this是window）</span>
+    <span class="bracket">}</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 解决方案1：保存this</span>
+<span class="keyword">var</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+  name<span class="operator">:</span> <span class="string">'obj'</span>,
+  <span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">var</span> self <span class="operator">=</span> <span class="keyword">this</span>; <span class="comment">// 保存this</span>
+    <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>self.<span class="property">name</span><span class="bracket">)</span>; <span class="comment">// 'obj'</span>
+    <span class="bracket">}</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 解决方案2：箭头函数</span>
+<span class="keyword">var</span> obj <span class="operator">=</span> <span class="bracket">{</span>
+  name<span class="operator">:</span> <span class="string">'obj'</span>,
+  <span class="function">method</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+      <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="keyword">this</span>.<span class="property">name</span><span class="bracket">)</span>; <span class="comment">// 'obj'（继承外层this）</span>
+    <span class="bracket">}</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：this绑定</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">实际应用</span></div>
+            <div class="question">Q9: 闭包的实际应用场景？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 模块化、防抖节流、柯里化、缓存、私有变量、回调函数</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能做计数器</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 没有实际用途</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 仅用于面试</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>1. 防抖（Debounce）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">debounce</span><span class="bracket">(</span>fn, delay<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">let</span> timer <span class="operator">=</span> <span class="keyword">null</span>;
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="function">clearTimeout</span><span class="bracket">(</span>timer<span class="bracket">)</span>;
+    timer <span class="operator">=</span> <span class="function">setTimeout</span><span class="bracket">(</span><span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="function">fn</span><span class="bracket">(</span><span class="bracket">)</span>, delay<span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>2. 柯里化：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">curry</span><span class="bracket">(</span>fn<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="keyword">function</span> <span class="function">curried</span><span class="bracket">(</span><span class="operator">...</span>args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>args.<span class="property">length</span> <span class="operator">>=</span> fn.<span class="property">length</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> <span class="function">fn</span><span class="bracket">(</span><span class="operator">...</span>args<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    <span class="keyword">return</span> <span class="bracket">(</span><span class="operator">...</span>nextArgs<span class="bracket">)</span> <span class="operator">=></span> <span class="function">curried</span><span class="bracket">(</span><span class="operator">...</span>args, <span class="operator">...</span>nextArgs<span class="bracket">)</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>3. 缓存：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">memoize</span><span class="bracket">(</span>fn<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">const</span> cache <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span>;
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="operator">...</span>args<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> key <span class="operator">=</span> <span class="property">JSON</span>.<span class="function">stringify</span><span class="bracket">(</span>args<span class="bracket">)</span>;
+    <span class="keyword">if</span> <span class="bracket">(</span>cache.<span class="function">has</span><span class="bracket">(</span>key<span class="bracket">)</span><span class="bracket">)</span> <span class="keyword">return</span> cache.<span class="function">get</span><span class="bracket">(</span>key<span class="bracket">)</span>;
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="function">fn</span><span class="bracket">(</span><span class="operator">...</span>args<span class="bracket">)</span>;
+    cache.<span class="function">set</span><span class="bracket">(</span>key, result<span class="bracket">)</span>;
+    <span class="keyword">return</span> result;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：实际应用</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">综合分析</span></div>
+            <div class="question">Q10: 分析以下闭包的完整执行过程？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 输出0, 1, 2，每个函数保存独立的count</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 输出2, 2, 2</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 报错</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 输出undefined</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">createCounter</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">let</span> count <span class="operator">=</span> <span class="number">0</span>;
+  <span class="keyword">return</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> count<span class="operator">++</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">const</span> counter1 <span class="operator">=</span> <span class="function">createCounter</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">const</span> counter2 <span class="operator">=</span> <span class="function">createCounter</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter1</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 0</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter1</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 1</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">counter2</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// 0</span></code></pre></div>
+                    
+                    <h4>详细分析：</h4>
+                    
+                    <p><strong>1. 第一次调用createCounter()：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 创建执行上下文1</span>
+<span class="comment">// createCounterEC1 = {</span>
+<span class="comment">//   LE: { count: 0 },</span>
+<span class="comment">//   Scope: [createCounterAO1, globalVO]</span>
+<span class="comment">// }</span>
+<span class="comment">// 返回的函数：</span>
+<span class="comment">// counter1.[[Scope]] = [createCounterAO1, globalVO]</span></code></pre></div>
+                    
+                    <p><strong>2. 第二次调用createCounter()：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 创建执行上下文2（独立的）</span>
+<span class="comment">// createCounterEC2 = {</span>
+<span class="comment">//   LE: { count: 0 },</span>
+<span class="comment">//   Scope: [createCounterAO2, globalVO]</span>
+<span class="comment">// }</span>
+<span class="comment">// counter2.[[Scope]] = [createCounterAO2, globalVO]</span></code></pre></div>
+                    
+                    <p><strong>关键：</strong>每次调用createCounter都创建新的执行上下文和词法环境，所以counter1和counter2的count互不影响。</p>
+                </div>
+                <span class="source-tag">📌 来源：综合分析</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="02-scope-chain.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：作用域链</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #f5576c; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

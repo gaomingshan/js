@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器API - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #667eea; background: #f7fafc; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #667eea; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #eef2ff; color: #667eea; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🌐 浏览器API</h1>
+            <p>掌握现代浏览器提供的核心API</p>
+        </div>
+
+        <!-- Q1: Fetch API -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">Fetch API</span>
+            </div>
+            
+            <div class="question">Q1: Fetch API 相比 XMLHttpRequest 的优势？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 基于Promise，语法更简洁，支持流式处理
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 完全相同
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 只能发送GET请求
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 不支持CORS
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Fetch API 详解：</h4>
+                    
+                    <p><strong>基本使用：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// GET请求</span>
+<span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/users'</span><span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span>response <span class="operator">=></span> response.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span>data <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>data<span class="bracket">)</span><span class="bracket">)</span>
+    .<span class="function">catch</span><span class="bracket">(</span>error <span class="operator">=></span> <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span>error<span class="bracket">)</span><span class="bracket">)</span>;
+
+<span class="comment">// POST请求</span>
+<span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/users'</span>, <span class="bracket">{</span>
+    method<span class="operator">:</span> <span class="string">'POST'</span>,
+    headers<span class="operator">:</span> <span class="bracket">{</span> <span class="string">'Content-Type'</span><span class="operator">:</span> <span class="string">'application/json'</span> <span class="bracket">}</span>,
+    body<span class="operator">:</span> <span class="property">JSON</span>.<span class="function">stringify</span><span class="bracket">(</span><span class="bracket">{</span> name<span class="operator">:</span> <span class="string">'Alice'</span> <span class="bracket">}</span><span class="bracket">)</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>错误处理：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ⚠️ fetch只在网络错误时reject</span>
+<span class="comment">// HTTP 404/500不会reject！</span>
+<span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span><span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span>response <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span>response.<span class="property">ok</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="string">`HTTP ${response.<span class="property">status</span>}`</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+        <span class="keyword">return</span> response.<span class="function">json</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>取消请求：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> controller <span class="operator">=</span> <span class="keyword">new</span> <span class="function">AbortController</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="function">fetch</span><span class="bracket">(</span><span class="string">'/api/data'</span>, <span class="bracket">{</span>
+    signal<span class="operator">:</span> controller.<span class="property">signal</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 取消请求</span>
+controller.<span class="function">abort</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Fetch API</span>
+            </div>
+        </div>
+
+        <!-- Q2: Intersection Observer -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">Observer</span>
+            </div>
+            
+            <div class="question">Q2: IntersectionObserver 的作用和应用场景？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 监听元素可见性，实现懒加载、无限滚动、曝光统计
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 只能监听点击事件
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 已被废弃
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 只能用于监听滚动
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>IntersectionObserver 详解：</h4>
+                    
+                    <p><strong>懒加载图片：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">IntersectionObserver</span><span class="bracket">(</span><span class="bracket">(</span>entries<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    entries.<span class="function">forEach</span><span class="bracket">(</span>entry <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>entry.<span class="property">isIntersecting</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">const</span> img <span class="operator">=</span> entry.<span class="property">target</span>;
+            img.<span class="property">src</span> <span class="operator">=</span> img.<span class="property">dataset</span>.<span class="property">src</span>;
+            observer.<span class="function">unobserve</span><span class="bracket">(</span>img<span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+document.<span class="function">querySelectorAll</span><span class="bracket">(</span><span class="string">'img[data-src]'</span><span class="bracket">)</span>.<span class="function">forEach</span><span class="bracket">(</span>img <span class="operator">=></span> <span class="bracket">{</span>
+    observer.<span class="function">observe</span><span class="bracket">(</span>img<span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>无限滚动：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> sentinel <span class="operator">=</span> document.<span class="function">querySelector</span><span class="bracket">(</span><span class="string">'.sentinel'</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">IntersectionObserver</span><span class="bracket">(</span><span class="bracket">(</span>entries<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>entries<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span>.<span class="property">isIntersecting</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="function">loadMoreData</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>, <span class="bracket">{</span> threshold<span class="operator">:</span> <span class="number">1.0</span> <span class="bracket">}</span><span class="bracket">)</span>;
+
+observer.<span class="function">observe</span><span class="bracket">(</span>sentinel<span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>曝光统计：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">IntersectionObserver</span><span class="bracket">(</span><span class="bracket">(</span>entries<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    entries.<span class="function">forEach</span><span class="bracket">(</span>entry <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>entry.<span class="property">intersectionRatio</span> <span class="operator">>=</span> <span class="number">0.5</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="function">trackExposure</span><span class="bracket">(</span>entry.<span class="property">target</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>, <span class="bracket">{</span> threshold<span class="operator">:</span> <span class="number">0.5</span> <span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Intersection Observer API</span>
+            </div>
+        </div>
+
+        <!-- Q3: Geolocation -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">Geolocation</span>
+            </div>
+            
+            <div class="question">Q3: 如何获取用户的地理位置？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用navigator.geolocation.getCurrentPosition()
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 无法获取
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 只能通过IP地址推测
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 必须使用第三方库
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Geolocation API 详解：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 获取当前位置</span>
+navigator.<span class="property">geolocation</span>.<span class="function">getCurrentPosition</span><span class="bracket">(</span>
+    <span class="bracket">(</span>position<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">const</span> <span class="bracket">{</span> latitude, longitude <span class="bracket">}</span> <span class="operator">=</span> position.<span class="property">coords</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`纬度: ${latitude}, 经度: ${longitude}`</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>,
+    <span class="bracket">(</span>error<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'无法获取位置'</span>, error<span class="bracket">)</span>;
+    <span class="bracket">}</span>,
+    <span class="bracket">{</span>
+        enableHighAccuracy<span class="operator">:</span> <span class="keyword">true</span>,  <span class="comment">// 高精度</span>
+        timeout<span class="operator">:</span> <span class="number">5000</span>,             <span class="comment">// 超时时间</span>
+        maximumAge<span class="operator">:</span> <span class="number">0</span>              <span class="comment">// 不使用缓存</span>
+    <span class="bracket">}</span>
+<span class="bracket">)</span>;
+
+<span class="comment">// 持续监听位置变化</span>
+<span class="keyword">const</span> watchId <span class="operator">=</span> navigator.<span class="property">geolocation</span>.<span class="function">watchPosition</span><span class="bracket">(</span>callback<span class="bracket">)</span>;
+<span class="comment">// 停止监听</span>
+navigator.<span class="property">geolocation</span>.<span class="function">clearWatch</span><span class="bracket">(</span>watchId<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Geolocation API</span>
+            </div>
+        </div>
+
+        <!-- Q4: Notification -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">通知</span>
+            </div>
+            
+            <div class="question">Q4: 如何实现浏览器桌面通知？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用Notification API，需要用户授权
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 直接显示，不需要授权
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 只能在移动端使用
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 浏览器不支持
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Notification API 详解：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 1. 请求权限</span>
+<span class="keyword">if</span> <span class="bracket">(</span><span class="property">Notification</span>.<span class="property">permission</span> <span class="operator">===</span> <span class="string">'default'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">await</span> <span class="property">Notification</span>.<span class="function">requestPermission</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 2. 显示通知</span>
+<span class="keyword">if</span> <span class="bracket">(</span><span class="property">Notification</span>.<span class="property">permission</span> <span class="operator">===</span> <span class="string">'granted'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">new</span> <span class="function">Notification</span><span class="bracket">(</span><span class="string">'新消息'</span>, <span class="bracket">{</span>
+        body<span class="operator">:</span> <span class="string">'您有一条新消息'</span>,
+        icon<span class="operator">:</span> <span class="string">'/icon.png'</span>,
+        badge<span class="operator">:</span> <span class="string">'/badge.png'</span>,
+        tag<span class="operator">:</span> <span class="string">'msg-1'</span>,         <span class="comment">// 相同tag会替换</span>
+        requireInteraction<span class="operator">:</span> <span class="keyword">true</span>  <span class="comment">// 不自动关闭</span>
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 3. 监听事件</span>
+<span class="keyword">const</span> notification <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Notification</span><span class="bracket">(</span><span class="string">'标题'</span><span class="bracket">)</span>;
+notification.<span class="property">onclick</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> window.<span class="function">focus</span><span class="bracket">(</span><span class="bracket">)</span>;
+notification.<span class="property">onclose</span> <span class="operator">=</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'关闭'</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Notification API</span>
+            </div>
+        </div>
+
+        <!-- Q5-Q10补充 -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">Clipboard</span></div>
+            <div class="question">Q5: 如何实现复制文本到剪贴板？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用Clipboard API或document.execCommand</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 无法实现</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只能手动复制</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 必须用插件</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 现代方式：Clipboard API</span>
+<span class="keyword">await</span> navigator.<span class="property">clipboard</span>.<span class="function">writeText</span><span class="bracket">(</span><span class="string">'复制的文本'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> text <span class="operator">=</span> <span class="keyword">await</span> navigator.<span class="property">clipboard</span>.<span class="function">readText</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 传统方式：execCommand（已废弃但兼容性好）</span>
+<span class="keyword">const</span> input <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'input'</span><span class="bracket">)</span>;
+input.<span class="property">value</span> <span class="operator">=</span> <span class="string">'文本'</span>;
+document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>input<span class="bracket">)</span>;
+input.<span class="function">select</span><span class="bracket">(</span><span class="bracket">)</span>;
+document.<span class="function">execCommand</span><span class="bracket">(</span><span class="string">'copy'</span><span class="bracket">)</span>;
+document.<span class="property">body</span>.<span class="function">removeChild</span><span class="bracket">(</span>input<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Clipboard API</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header"><span class="difficulty easy">🟢 简单</span><span class="tag">Console</span></div>
+            <div class="question">Q6: console对象有哪些常用方法？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> log、warn、error、table、time、group等</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有log方法</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有三个方法</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不支持调试</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'普通日志'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">warn</span><span class="bracket">(</span><span class="string">'警告'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">error</span><span class="bracket">(</span><span class="string">'错误'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">table</span><span class="bracket">(</span><span class="bracket">[</span><span class="bracket">{</span>a<span class="operator">:</span><span class="number">1</span><span class="bracket">}</span>, <span class="bracket">{</span>a<span class="operator">:</span><span class="number">2</span><span class="bracket">}</span><span class="bracket">]</span><span class="bracket">)</span>; <span class="comment">// 表格展示</span>
+<span class="property">console</span>.<span class="function">time</span><span class="bracket">(</span><span class="string">'计时'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">timeEnd</span><span class="bracket">(</span><span class="string">'计时'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">group</span><span class="bracket">(</span><span class="string">'分组'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">groupEnd</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Console API</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">Performance</span></div>
+            <div class="question">Q7: 如何测量代码执行性能？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用Performance API (performance.now、measure)</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能用Date</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 无法测量</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 必须用工具</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 方法1：performance.now()</span>
+<span class="keyword">const</span> start <span class="operator">=</span> performance.<span class="function">now</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="function">someFunction</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="keyword">const</span> end <span class="operator">=</span> performance.<span class="function">now</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`耗时: ${end <span class="operator">-</span> start}ms`</span><span class="bracket">)</span>;
+
+<span class="comment">// 方法2：mark和measure</span>
+performance.<span class="function">mark</span><span class="bracket">(</span><span class="string">'start'</span><span class="bracket">)</span>;
+<span class="function">someFunction</span><span class="bracket">(</span><span class="bracket">)</span>;
+performance.<span class="function">mark</span><span class="bracket">(</span><span class="string">'end'</span><span class="bracket">)</span>;
+performance.<span class="function">measure</span><span class="bracket">(</span><span class="string">'duration'</span>, <span class="string">'start'</span>, <span class="string">'end'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> measures <span class="operator">=</span> performance.<span class="function">getEntriesByName</span><span class="bracket">(</span><span class="string">'duration'</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：Performance API</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">ResizeObserver</span></div>
+            <div class="question">Q8: 如何监听元素尺寸变化？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用ResizeObserver API</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能用resize事件</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 用轮询检查</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法监听</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">ResizeObserver</span><span class="bracket">(</span><span class="bracket">(</span>entries<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">const</span> entry <span class="keyword">of</span> entries<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> <span class="bracket">{</span> width, height <span class="bracket">}</span> <span class="operator">=</span> entry.<span class="property">contentRect</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`尺寸: ${width} x ${height}`</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+observer.<span class="function">observe</span><span class="bracket">(</span>element<span class="bracket">)</span>;
+<span class="comment">// 停止监听</span>
+observer.<span class="function">unobserve</span><span class="bracket">(</span>element<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：ResizeObserver API</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">Web Workers</span></div>
+            <div class="question">Q9: Web Worker的作用和使用场景？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 在后台线程运行JavaScript，避免阻塞主线程</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能操作DOM</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 已废弃</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 和主线程共享变量</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 主线程</span>
+<span class="keyword">const</span> worker <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Worker</span><span class="bracket">(</span><span class="string">'worker.js'</span><span class="bracket">)</span>;
+worker.<span class="function">postMessage</span><span class="bracket">(</span><span class="bracket">{</span> data<span class="operator">:</span> <span class="string">'处理数据'</span> <span class="bracket">}</span><span class="bracket">)</span>;
+worker.<span class="property">onmessage</span> <span class="operator">=</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>e.<span class="property">data</span><span class="bracket">)</span>;
+
+<span class="comment">// worker.js</span>
+<span class="property">self</span>.<span class="property">onmessage</span> <span class="operator">=</span> <span class="bracket">(</span>e<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="comment">// 处理大量计算</span>
+    <span class="keyword">const</span> result <span class="operator">=</span> <span class="function">heavyComputation</span><span class="bracket">(</span>e.<span class="property">data</span><span class="bracket">)</span>;
+    <span class="property">self</span>.<span class="function">postMessage</span><span class="bracket">(</span>result<span class="bracket">)</span>;
+<span class="bracket">}</span>;</code></pre></div>
+                    <p><strong>适用场景：</strong>图像处理、大数据计算、加密解密、实时数据分析</p>
+                </div>
+                <span class="source-tag">📌 来源：Web Workers API</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">Service Worker</span></div>
+            <div class="question">Q10: Service Worker的主要功能？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 拦截网络请求、实现离线缓存、推送通知</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能操作DOM</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 和Web Worker相同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能发请求</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 注册Service Worker</span>
+<span class="keyword">if</span> <span class="bracket">(</span><span class="string">'serviceWorker'</span> <span class="keyword">in</span> navigator<span class="bracket">)</span> <span class="bracket">{</span>
+    navigator.<span class="property">serviceWorker</span>.<span class="function">register</span><span class="bracket">(</span><span class="string">'/sw.js'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// sw.js - 拦截请求实现缓存</span>
+<span class="property">self</span>.<span class="function">addEventListener</span><span class="bracket">(</span><span class="string">'fetch'</span>, <span class="bracket">(</span>event<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    event.<span class="function">respondWith</span><span class="bracket">(</span>
+        caches.<span class="function">match</span><span class="bracket">(</span>event.<span class="property">request</span><span class="bracket">)</span>.<span class="function">then</span><span class="bracket">(</span>response <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="keyword">return</span> response <span class="operator">||</span> <span class="function">fetch</span><span class="bracket">(</span>event.<span class="property">request</span><span class="bracket">)</span>;
+        <span class="bracket">}</span><span class="bracket">)</span>
+    <span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    <p><strong>核心功能：</strong>PWA离线支持、缓存策略、后台同步、推送通知</p>
+                </div>
+                <span class="source-tag">📌 来源：Service Worker API</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="11-browser-navigation.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：浏览器导航</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

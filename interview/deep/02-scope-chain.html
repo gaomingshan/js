@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作用域链 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #f5576c; }
+        .header h1 { color: #f5576c; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #f5576c; background: #f7fafc; }
+        .option.selected { border-color: #f5576c; background: #fff5f7; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #f5576c; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #f5576c; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #fff5f7; color: #f5576c; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔗 作用域链</h1>
+            <p>理解JavaScript变量查找机制</p>
+        </div>
+
+        <!-- Q1: 作用域链定义 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">基础概念</span>
+            </div>
+            <div class="question">Q1: 什么是作用域链（Scope Chain）？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 由当前执行环境和所有父级执行环境的变量对象组成的链表，用于变量查找</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 函数调用顺序</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 变量声明顺序</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 代码执行顺序</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>作用域链（Scope Chain）：</h4>
+                    <p>作用域链是一个由变量对象组成的链表结构，用于变量查找。</p>
+                    
+                    <p><strong>组成：</strong></p>
+                    <ul>
+                        <li>当前执行上下文的变量对象（AO/VO）</li>
+                        <li>所有父级执行上下文的变量对象</li>
+                        <li>最终指向全局变量对象</li>
+                    </ul>
+                    
+                    <p><strong>查找规则：</strong></p>
+                    <ul>
+                        <li>从作用域链前端开始查找</li>
+                        <li>找到即返回，找不到继续向上</li>
+                        <li>直到全局作用域</li>
+                        <li>仍未找到则ReferenceError</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+
+<span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> y <span class="operator">=</span> <span class="number">20</span>;
+  
+  <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">var</span> z <span class="operator">=</span> <span class="number">30</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x <span class="operator">+</span> y <span class="operator">+</span> z<span class="bracket">)</span>; <span class="comment">// 60</span>
+  <span class="bracket">}</span>
+  
+  <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// inner的作用域链：</span>
+<span class="comment">// [innerAO, outerAO, globalVO]</span>
+<span class="comment">// 查找x：innerAO没有 → outerAO没有 → globalVO找到</span>
+<span class="comment">// 查找y：innerAO没有 → outerAO找到</span>
+<span class="comment">// 查找z：innerAO找到</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：作用域链</span>
+            </div>
+        </div>
+
+        <!-- Q2: 词法作用域 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">词法作用域</span>
+            </div>
+            <div class="question">Q2: 什么是词法作用域（Lexical Scope）？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 函数作用域在函数定义时就确定，不是调用时确定</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 在函数调用时确定</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 可以动态改变</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 和this相同</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>词法作用域（静态作用域）：</h4>
+                    <p>JavaScript采用词法作用域，函数的作用域在<strong>函数定义时</strong>就已经确定，而不是在调用时确定。</p>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+
+<span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">20</span>;
+  <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 输出10，不是20</span>
+<span class="bracket">}</span>
+
+<span class="function">bar</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// foo定义在全局，它的作用域链是：</span>
+<span class="comment">// [fooAO, globalVO]</span>
+<span class="comment">// 所以查找x时找到全局的x=10</span>
+<span class="comment">// 而不是bar中的x=20</span></code></pre></div>
+                    
+                    <p><strong>对比动态作用域：</strong></p>
+                    <ul>
+                        <li>词法作用域（JavaScript）：看函数在哪定义</li>
+                        <li>动态作用域（bash等）：看函数在哪调用</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：词法作用域</span>
+            </div>
+        </div>
+
+        <!-- Q3: [[Scope]]属性 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">内部属性</span>
+            </div>
+            <div class="question">Q3: 函数的[[Scope]]属性是什么？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 函数创建时保存的父级作用域链，用于创建自己的作用域链</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 函数的参数</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 函数的返回值</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 可以直接访问</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>[[Scope]]内部属性：</h4>
+                    <p>每个函数对象都有一个内部属性[[Scope]]，它在函数创建时保存父级作用域链。</p>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+
+<span class="keyword">function</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> y <span class="operator">=</span> <span class="number">20</span>;
+  
+  <span class="comment">// inner函数创建时</span>
+  <span class="keyword">function</span> <span class="function">inner</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">var</span> z <span class="operator">=</span> <span class="number">30</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// inner.[[Scope]] = [outerAO, globalVO]</span>
+  
+  <span class="keyword">return</span> inner;
+<span class="bracket">}</span>
+
+<span class="keyword">var</span> fn <span class="operator">=</span> <span class="function">outer</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// fn调用时的作用域链：</span>
+<span class="comment">// [innerAO] + fn.[[Scope]]</span>
+<span class="comment">// = [innerAO, outerAO, globalVO]</span></code></pre></div>
+                    
+                    <p><strong>作用域链创建过程：</strong></p>
+                    <ol>
+                        <li>函数创建：保存父级作用域链到[[Scope]]</li>
+                        <li>函数调用：创建自己的AO</li>
+                        <li>将AO添加到[[Scope]]前端形成完整作用域链</li>
+                    </ol>
+                </div>
+                <span class="source-tag">📌 来源：[[Scope]]属性</span>
+            </div>
+        </div>
+
+        <!-- Q4-Q10 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">作用域类型</span></div>
+            <div class="question">Q4: JavaScript中有哪些作用域类型？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 全局作用域、函数作用域、块级作用域（ES6）</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有全局和函数作用域</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有块级作用域</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 没有作用域</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 1. 全局作用域</span>
+<span class="keyword">var</span> global <span class="operator">=</span> <span class="string">'global'</span>;
+
+<span class="comment">// 2. 函数作用域</span>
+<span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> func <span class="operator">=</span> <span class="string">'function'</span>;
+  
+  <span class="comment">// 3. 块级作用域（ES6）</span>
+  <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> block <span class="operator">=</span> <span class="string">'block'</span>;
+    <span class="keyword">const</span> <span class="keyword">const</span>Var <span class="operator">=</span> <span class="string">'const'</span>;
+    <span class="keyword">var</span> noBlock <span class="operator">=</span> <span class="string">'no block'</span>; <span class="comment">// 仍在函数作用域</span>
+  <span class="bracket">}</span>
+  
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>block<span class="bracket">)</span>; <span class="comment">// ReferenceError</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>noBlock<span class="bracket">)</span>; <span class="comment">// 'no block'</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：作用域类型</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">块级作用域</span></div>
+            <div class="question">Q5: ES6块级作用域的实现原理？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 通过词法环境实现，let/const创建新的词法环境</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 和var相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不存在块级作用域</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 通过闭包实现</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">let</span> a <span class="operator">=</span> <span class="number">1</span>;
+  
+  <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">let</span> b <span class="operator">=</span> <span class="number">2</span>;
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>a<span class="bracket">)</span>; <span class="comment">// 1</span>
+  <span class="bracket">}</span>
+  
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>b<span class="bracket">)</span>; <span class="comment">// ReferenceError</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 词法环境嵌套：</span>
+<span class="comment">// testLE: { a: 1 }</span>
+<span class="comment">//   ↑</span>
+<span class="comment">// ifBlockLE: { b: 2 }</span></code></pre></div>
+                    <p>每个块级作用域都会创建新的词法环境，形成词法环境链。</p>
+                </div>
+                <span class="source-tag">📌 来源：块级作用域</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">作用域污染</span></div>
+            <div class="question">Q6: 如何避免全局作用域污染？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> IIFE、模块化、命名空间、let/const</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 无法避免</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只用var</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不需要避免</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>避免全局污染的方法：</h4>
+                    
+                    <p><strong>1. IIFE（立即执行函数）：</strong></p>
+                    <div class="code-question"><pre><code><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> privateVar <span class="operator">=</span> <span class="string">'private'</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>2. 模块化：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ES6 Module</span>
+<span class="keyword">export</span> <span class="keyword">const</span> value <span class="operator">=</span> <span class="number">10</span>;</code></pre></div>
+                    
+                    <p><strong>3. 命名空间：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">var</span> MyApp <span class="operator">=</span> <span class="bracket">{</span>
+  utils<span class="operator">:</span> <span class="bracket">{</span><span class="bracket">}</span>,
+  models<span class="operator">:</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                    
+                    <p><strong>4. 块级作用域：</strong></p>
+                    <div class="code-question"><pre><code><span class="bracket">{</span>
+  <span class="keyword">let</span> temp <span class="operator">=</span> <span class="number">10</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：作用域污染</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">作用域查找</span></div>
+            <div class="question">Q7: 变量查找的性能优化？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 缓存全局变量、减少作用域链长度、使用局部变量</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 无法优化</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 都用全局变量</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不需要优化</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 不好：频繁查找全局变量</span>
+<span class="keyword">function</span> <span class="function">process</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">1000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    document.<span class="property">body</span>.<span class="property">innerHTML</span> <span class="operator">+=</span> i;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 好：缓存全局变量</span>
+<span class="keyword">function</span> <span class="function">process</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">const</span> body <span class="operator">=</span> document.<span class="property">body</span>; <span class="comment">// 缓存</span>
+  <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator"><</span> <span class="number">1000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    body.<span class="property">innerHTML</span> <span class="operator">+=</span> i;
+  <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">with语句</span></div>
+            <div class="question">Q8: with语句如何影响作用域链？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 将对象添加到作用域链前端，导致性能问题，不推荐使用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 不影响作用域链</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 推荐使用</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 已废弃</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">var</span> obj <span class="operator">=</span> <span class="bracket">{</span> x<span class="operator">:</span> <span class="number">10</span> <span class="bracket">}</span>;
+
+<span class="keyword">function</span> <span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">20</span>;
+  
+  <span class="keyword">with</span> <span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 作用域链：[obj, fooAO, globalVO]</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>; <span class="comment">// 10（obj.x）</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="function">foo</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>问题：</strong></p>
+                    <ul>
+                        <li>无法在编译时优化作用域链查找</li>
+                        <li>导致性能问题</li>
+                        <li>代码可读性差</li>
+                        <li>严格模式下禁用</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：with语句</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">eval</span></div>
+            <div class="question">Q9: eval如何影响作用域？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 可以修改当前作用域，导致无法优化，严格模式下独立作用域</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 不影响作用域</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 推荐使用</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 安全可靠</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 非严格模式：可以修改当前作用域</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+  <span class="function">eval</span><span class="bracket">(</span><span class="string">'var x = 20'</span><span class="bracket">)</span>;
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>; <span class="comment">// 20</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 严格模式：独立作用域</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="string">'use strict'</span>;
+  <span class="keyword">var</span> x <span class="operator">=</span> <span class="number">10</span>;
+  <span class="function">eval</span><span class="bracket">(</span><span class="string">'var x = 20'</span><span class="bracket">)</span>;
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>x<span class="bracket">)</span>; <span class="comment">// 10</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>问题：</strong></p>
+                    <ul>
+                        <li>安全风险</li>
+                        <li>性能问题</li>
+                        <li>无法优化</li>
+                        <li>不推荐使用</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：eval</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">综合应用</span></div>
+            <div class="question">Q10: 分析以下代码的作用域链？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 输出1, 2, 3，每个函数保存各自的作用域链</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 输出3, 3, 3</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 报错</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 输出undefined</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">var</span> funcs <span class="operator">=</span> <span class="bracket">[</span><span class="bracket">]</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">1</span>; i <span class="operator"><=</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+  funcs.<span class="function">push</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+  <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+funcs<span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 1</span>
+funcs<span class="bracket">[</span><span class="number">1</span><span class="bracket">]</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 2</span>
+funcs<span class="bracket">[</span><span class="number">2</span><span class="bracket">]</span><span class="bracket">(</span><span class="bracket">)</span>; <span class="comment">// 3</span></code></pre></div>
+                    
+                    <h4>分析：</h4>
+                    <p><strong>let声明：</strong>每次循环创建新的块级作用域</p>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 第1次循环：</span>
+<span class="comment">// blockLE1 = { i: 1 }</span>
+<span class="comment">// funcs[0].[[Scope]] = [blockLE1, globalVO]</span>
+
+<span class="comment">// 第2次循环：</span>
+<span class="comment">// blockLE2 = { i: 2 }</span>
+<span class="comment">// funcs[1].[[Scope]] = [blockLE2, globalVO]</span>
+
+<span class="comment">// 第3次循环：</span>
+<span class="comment">// blockLE3 = { i: 3 }</span>
+<span class="comment">// funcs[2].[[Scope]] = [blockLE3, globalVO]</span></code></pre></div>
+                    
+                    <p><strong>对比var：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">var</span> i <span class="operator">=</span> <span class="number">1</span>; i <span class="operator"><=</span> <span class="number">3</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+  funcs.<span class="function">push</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>i<span class="bracket">)</span>;
+  <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+<span class="comment">// 所有函数共享同一个i</span>
+<span class="comment">// 输出：4, 4, 4</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：综合分析</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="01-execution-context.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：执行上下文</a>
+            <a href="03-closure-deep.html" style="padding: 0.75rem 1.5rem; background: #f5576c; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：闭包深入</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #f5576c; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

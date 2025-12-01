@@ -1,0 +1,307 @@
+window.quizData_Deep11 = {
+  "config": {
+    "title": "生成器函数",
+    "icon": "⚙️",
+    "description": "掌握生成器函数的语法、执行机制与核心特性",
+    "primaryColor": "#10b981",
+    "bgGradient": "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+  },
+  "questions": [
+    {
+      "difficulty": "easy",
+      "tags": ["生成器基础"],
+      "question": "什么是生成器函数（Generator Function）？如何定义和使用？",
+      "options": [
+        "使用function*定义，调用返回生成器对象，通过next()逐步执行，在yield处暂停",
+        "使用async function定义",
+        "普通函数的别名",
+        "必须返回Promise"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. 基本语法",
+            "code": "// 定义生成器函数\nfunction* generator() {\n  console.log('开始');\n  yield 1;\n  console.log('继续');\n  yield 2;\n  console.log('结束');\n  return 3;\n}\n\n// 调用返回生成器对象\nconst gen = generator();\nconsole.log(gen.next()); // '开始' {value: 1, done: false}\nconsole.log(gen.next()); // '继续' {value: 2, done: false}\nconsole.log(gen.next()); // '结束' {value: 3, done: true}"
+          },
+          {
+            "title": "2. 核心特征",
+            "points": [
+              "函数名前加*号",
+              "可使用yield暂停执行",
+              "返回生成器对象（迭代器）",
+              "支持双向通信"
+            ]
+          }
+        ]
+      },
+      "source": "生成器函数"
+    },
+    {
+      "difficulty": "easy",
+      "tags": ["yield表达式"],
+      "question": "yield表达式的作用是什么？它有返回值吗？",
+      "options": [
+        "暂停函数执行并产出值；yield表达式的值是下次next()传入的参数",
+        "yield只能产出值，没有返回值",
+        "yield等同于return",
+        "yield只能在async函数中使用"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "yield的双向通信",
+            "code": "function* communication() {\n  console.log('开始');\n  const a = yield 'hello'; // yield产出'hello'\n  console.log('收到:', a);  // a是next传入的值\n  const b = yield 'world';\n  console.log('收到:', b);\n  return 'done';\n}\n\nconst gen = communication();\nconsole.log(gen.next());      // {value: 'hello', done: false}\nconsole.log(gen.next('参数1')); // '收到: 参数1' {value: 'world', done: false}\nconsole.log(gen.next('参数2')); // '收到: 参数2' {value: 'done', done: true}"
+          },
+          {
+            "title": "注意事项",
+            "points": [
+              "第一次next()不接收参数（没有yield等待）",
+              "yield本身不是值，需要赋值才能获取next传入的参数",
+              "yield*可以委托给另一个生成器"
+            ]
+          }
+        ]
+      },
+      "source": "yield表达式"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["生成器方法"],
+      "question": "生成器对象除了next()，还有哪些方法？它们的作用是什么？",
+      "options": [
+        "return()提前结束并返回值；throw()抛出错误并可被内部捕获",
+        "只有next()方法",
+        "reset()重置生成器",
+        "pause()和resume()控制执行"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. return()方法",
+            "code": "function* gen() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\n\nconst g = gen();\nconsole.log(g.next());        // {value: 1, done: false}\nconsole.log(g.return('结束')); // {value: '结束', done: true}\nconsole.log(g.next());        // {value: undefined, done: true}"
+          },
+          {
+            "title": "2. throw()方法",
+            "code": "function* gen() {\n  try {\n    yield 1;\n    yield 2;\n  } catch (e) {\n    console.log('捕获错误:', e);\n    yield 'error handled';\n  }\n  yield 3;\n}\n\nconst g = gen();\nconsole.log(g.next());  // {value: 1, done: false}\nconsole.log(g.throw('出错了')); // '捕获错误: 出错了' {value: 'error handled', done: false}\nconsole.log(g.next());  // {value: 3, done: false}"
+          }
+        ]
+      },
+      "source": "生成器方法"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["yield*委托"],
+      "question": "yield*表达式的作用是什么？与yield有何区别？",
+      "options": [
+        "yield*委托给另一个可迭代对象，逐个产出其元素；yield只产出单个值",
+        "yield*用于异步操作",
+        "yield*是yield的别名",
+        "yield*只能用于数组"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. yield vs yield*",
+            "code": "function* gen1() {\n  yield [1, 2, 3]; // 产出整个数组\n}\n\nfunction* gen2() {\n  yield* [1, 2, 3]; // 逐个产出元素\n}\n\nconsole.log([...gen1()]); // [[1,2,3]]\nconsole.log([...gen2()]); // [1,2,3]"
+          },
+          {
+            "title": "2. 委托给生成器",
+            "code": "function* inner() {\n  yield 2;\n  yield 3;\n  return 'inner done';\n}\n\nfunction* outer() {\n  yield 1;\n  const result = yield* inner(); // 委托\n  console.log(result); // 'inner done'\n  yield 4;\n}\n\nconsole.log([...outer()]); // [1,2,3,4]"
+          },
+          {
+            "title": "3. 应用场景",
+            "points": [
+              "扁平化嵌套结构",
+              "组合多个生成器",
+              "递归遍历树形结构"
+            ]
+          }
+        ]
+      },
+      "source": "yield*委托"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["生成器与迭代器"],
+      "question": "生成器函数返回的生成器对象是迭代器吗？有什么特殊之处？",
+      "options": [
+        "是迭代器且是可迭代对象；[Symbol.iterator]()返回自身",
+        "只是迭代器",
+        "只是可迭代对象",
+        "两者都不是"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "生成器对象特性",
+            "code": "function* gen() {\n  yield 1;\n  yield 2;\n}\n\nconst g = gen();\n\n// 是迭代器（有next方法）\nconsole.log(g.next()); // {value: 1, done: false}\n\n// 是可迭代对象\nconsole.log(g[Symbol.iterator]() === g); // true\n\n// 可用于for...of\nconst g2 = gen();\nfor (const value of g2) {\n  console.log(value); // 1, 2\n}\n\n// 可展开\nconst g3 = gen();\nconsole.log([...g3]); // [1, 2]"
+          },
+          {
+            "title": "生成器是创建迭代器的最佳方式",
+            "code": "// 不使用生成器\nfunction createIterator() {\n  let i = 0;\n  return {\n    next() {\n      return i < 3 ? {value: i++, done: false} : {done: true};\n    },\n    [Symbol.iterator]() { return this; }\n  };\n}\n\n// 使用生成器（更简洁）\nfunction* createIterator() {\n  yield 0;\n  yield 1;\n  yield 2;\n}"
+          }
+        ]
+      },
+      "source": "生成器与迭代器"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["生成器状态"],
+      "question": "生成器函数的执行状态如何管理？每次next()调用发生了什么？",
+      "options": [
+        "生成器维护执行上下文，next()恢复执行直到遇到yield或return，然后暂停并保存状态",
+        "每次next()从头执行",
+        "状态存储在全局变量",
+        "无状态管理"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "生成器执行状态",
+            "code": "function* stateful() {\n  console.log('1. 执行开始');\n  const a = yield 'first';\n  console.log('2. 收到参数:', a);\n  const b = yield 'second';\n  console.log('3. 收到参数:', b);\n  return 'done';\n}\n\nconst gen = stateful();\nconsole.log(gen.next());    // '1. 执行开始' {value:'first'}\nconsole.log(gen.next(10));  // '2. 收到参数: 10' {value:'second'}\nconsole.log(gen.next(20));  // '3. 收到参数: 20' {value:'done'}"
+          },
+          {
+            "title": "状态保持机制",
+            "points": [
+              "局部变量在暂停期间保持",
+              "执行位置被记录",
+              "调用栈帧被保存",
+              "每个生成器对象独立维护状态"
+            ]
+          }
+        ]
+      },
+      "source": "生成器状态"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["无限序列"],
+      "question": "如何使用生成器实现无限序列？有什么优势？",
+      "options": [
+        "生成器惰性求值，只在需要时计算下一个值，可表示无限序列而不占用无限内存",
+        "必须预先生成所有值",
+        "无法实现无限序列",
+        "会导致内存溢出"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. 无限计数器",
+            "code": "function* counter(start = 0) {\n  let count = start;\n  while (true) {\n    yield count++;\n  }\n}\n\nconst c = counter();\nconsole.log(c.next().value); // 0\nconsole.log(c.next().value); // 1\nconsole.log(c.next().value); // 2"
+          },
+          {
+            "title": "2. 斐波那契数列",
+            "code": "function* fibonacci() {\n  let [a, b] = [0, 1];\n  while (true) {\n    yield a;\n    [a, b] = [b, a + b];\n  }\n}\n\n// 取前10个\nfunction take(iterable, n) {\n  const result = [];\n  for (const value of iterable) {\n    if (result.length >= n) break;\n    result.push(value);\n  }\n  return result;\n}\n\nconsole.log(take(fibonacci(), 10));\n// [0,1,1,2,3,5,8,13,21,34]"
+          },
+          {
+            "title": "3. 优势",
+            "points": [
+              "惰性求值，按需计算",
+              "内存效率高",
+              "可表示无限数据流",
+              "便于组合和转换"
+            ]
+          }
+        ]
+      },
+      "source": "无限序列"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["递归生成器"],
+      "question": "如何使用生成器递归遍历树形结构？",
+      "options": [
+        "使用yield*递归调用自身，遍历子节点",
+        "必须先转换为数组",
+        "无法递归",
+        "使用普通递归函数"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "树形结构遍历：",
+        "code": "const tree = {\n  value: 1,\n  children: [\n    {\n      value: 2,\n      children: [\n        { value: 4, children: [] },\n        { value: 5, children: [] }\n      ]\n    },\n    {\n      value: 3,\n      children: [\n        { value: 6, children: [] }\n      ]\n    }\n  ]\n};\n\n// 深度优先遍历\nfunction* traverseTree(node) {\n  yield node.value;\n  for (const child of node.children) {\n    yield* traverseTree(child); // 递归委托\n  }\n}\n\nconsole.log([...traverseTree(tree)]);\n// [1, 2, 4, 5, 3, 6]\n\n// 广度优先遍历\nfunction* traverseBFS(root) {\n  const queue = [root];\n  while (queue.length > 0) {\n    const node = queue.shift();\n    yield node.value;\n    queue.push(...node.children);\n  }\n}\n\nconsole.log([...traverseBFS(tree)]);\n// [1, 2, 3, 4, 5, 6]"
+      },
+      "source": "递归生成器"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["生成器组合"],
+      "question": "如何实现生成器的组合模式（compose、pipe）？",
+      "options": [
+        "使用yield*将多个生成器串联，或创建高阶生成器包装转换逻辑",
+        "无法组合",
+        "必须转为数组",
+        "使用Promise"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. map转换",
+            "code": "function* map(iterable, fn) {\n  for (const item of iterable) {\n    yield fn(item);\n  }\n}\n\nfunction* range(n) {\n  for (let i = 0; i < n; i++) yield i;\n}\n\nconst doubled = map(range(5), x => x * 2);\nconsole.log([...doubled]); // [0,2,4,6,8]"
+          },
+          {
+            "title": "2. filter过滤",
+            "code": "function* filter(iterable, predicate) {\n  for (const item of iterable) {\n    if (predicate(item)) yield item;\n  }\n}\n\nconst evens = filter(range(10), x => x % 2 === 0);\nconsole.log([...evens]); // [0,2,4,6,8]"
+          },
+          {
+            "title": "3. 链式组合",
+            "code": "const result = map(\n  filter(range(10), x => x % 2 === 0),\n  x => x * x\n);\nconsole.log([...result]); // [0,4,16,36,64]"
+          },
+          {
+            "title": "4. pipe管道",
+            "code": "function* pipe(source, ...transforms) {\n  let result = source;\n  for (const transform of transforms) {\n    result = transform(result);\n  }\n  yield* result;\n}\n\nconst pipeline = pipe(\n  range(10),\n  iter => filter(iter, x => x % 2 === 0),\n  iter => map(iter, x => x * x)\n);\nconsole.log([...pipeline]); // [0,4,16,36,64]"
+          }
+        ]
+      },
+      "source": "生成器组合"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["协程"],
+      "question": "生成器如何实现协程（Coroutine）？与线程有何区别？",
+      "options": [
+        "生成器可暂停恢复，多个生成器协作执行；是协作式而非抢占式，单线程执行",
+        "生成器就是多线程",
+        "完全相同",
+        "无关系"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "协程示例",
+            "code": "function* task1() {\n  console.log('Task1: 开始');\n  yield;\n  console.log('Task1: 继续');\n  yield;\n  console.log('Task1: 结束');\n}\n\nfunction* task2() {\n  console.log('Task2: 开始');\n  yield;\n  console.log('Task2: 继续');\n  yield;\n  console.log('Task2: 结束');\n}\n\n// 调度器\nfunction scheduler(...tasks) {\n  const generators = tasks.map(t => t());\n  let active = generators.length;\n  \n  while (active > 0) {\n    for (const gen of generators) {\n      const { done } = gen.next();\n      if (done) active--;\n    }\n  }\n}\n\nscheduler(task1, task2);\n// Task1: 开始\n// Task2: 开始\n// Task1: 继续\n// Task2: 继续\n// Task1: 结束\n// Task2: 结束"
+          },
+          {
+            "title": "协程 vs 线程",
+            "points": [
+              "协程：协作式调度，显式yield交出控制权",
+              "线程：抢占式调度，操作系统控制切换",
+              "协程：单线程，无竞态条件",
+              "线程：可并行，需要同步机制"
+            ]
+          }
+        ]
+      },
+      "source": "协程"
+    }
+  ],
+  "navigation": {
+    "prev": {
+      "title": "迭代器协议",
+      "url": "10-iterator-protocol.html"
+    },
+    "next": {
+      "title": "生成器应用",
+      "url": "12-generator-applications.html"
+    }
+  }
+};

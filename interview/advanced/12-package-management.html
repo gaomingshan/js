@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>包管理 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #667eea; background: #f7fafc; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #667eea; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #eef2ff; color: #667eea; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📦 包管理</h1>
+            <p>掌握npm、yarn、pnpm等包管理工具</p>
+        </div>
+
+        <!-- Q1: package.json -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">package.json</span>
+            </div>
+            <div class="question">Q1: package.json的核心字段和作用？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> name、version、dependencies、scripts等，定义项目元数据和依赖</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有name字段</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 可选的配置文件</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只记录依赖</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>package.json核心字段：</h4>
+                    <div class="code-question"><pre><code><span class="bracket">{</span>
+  <span class="string">"name"</span><span class="operator">:</span> <span class="string">"my-project"</span>,
+  <span class="string">"version"</span><span class="operator">:</span> <span class="string">"1.0.0"</span>,
+  <span class="string">"description"</span><span class="operator">:</span> <span class="string">"项目描述"</span>,
+  <span class="string">"main"</span><span class="operator">:</span> <span class="string">"index.js"</span>,
+  <span class="string">"scripts"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"start"</span><span class="operator">:</span> <span class="string">"node index.js"</span>,
+    <span class="string">"test"</span><span class="operator">:</span> <span class="string">"jest"</span>,
+    <span class="string">"build"</span><span class="operator">:</span> <span class="string">"webpack"</span>
+  <span class="bracket">}</span>,
+  <span class="string">"dependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"react"</span><span class="operator">:</span> <span class="string">"^18.0.0"</span>
+  <span class="bracket">}</span>,
+  <span class="string">"devDependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"webpack"</span><span class="operator">:</span> <span class="string">"^5.0.0"</span>
+  <span class="bracket">}</span>,
+  <span class="string">"engines"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"node"</span><span class="operator">:</span> <span class="string">">=14.0.0"</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    <p><strong>重要字段：</strong></p>
+                    <ul>
+                        <li>name/version: 包标识</li>
+                        <li>main/module/exports: 入口文件</li>
+                        <li>scripts: 脚本命令</li>
+                        <li>dependencies/devDependencies: 依赖管理</li>
+                        <li>peerDependencies: 对等依赖</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：npm文档</span>
+            </div>
+        </div>
+
+        <!-- Q2: 版本号规则 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">语义化版本</span>
+            </div>
+            <div class="question">Q2: npm版本号规则（Semver）？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 主版本.次版本.修订号，^允许次版本更新，~只允许修订号更新</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 随意命名</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有数字</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不需要版本号</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>语义化版本（Semver）：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 格式：主版本.次版本.修订号</span>
+<span class="string">"react": "18.2.0"</span>
+
+<span class="comment">// ^ 允许次版本和修订号更新</span>
+<span class="string">"react": "^18.2.0"</span>  <span class="comment">// 允许 18.2.0 ~ 18.x.x</span>
+
+<span class="comment">// ~ 只允许修订号更新</span>
+<span class="string">"react": "~18.2.0"</span>  <span class="comment">// 允许 18.2.0 ~ 18.2.x</span>
+
+<span class="comment">// * 或 x 任意版本</span>
+<span class="string">"react": "*"</span>        <span class="comment">// 任意版本</span>
+<span class="string">"react": "18.x"</span>     <span class="comment">// 18的任意版本</span>
+
+<span class="comment">// 精确版本</span>
+<span class="string">"react": "18.2.0"</span>   <span class="comment">// 必须是18.2.0</span>
+
+<span class="comment">// 范围</span>
+<span class="string">"react": ">=18.0.0 <19.0.0"</span></code></pre></div>
+                    <p><strong>版本更新规则：</strong></p>
+                    <ul>
+                        <li>主版本(MAJOR): 不兼容的API变更</li>
+                        <li>次版本(MINOR): 向下兼容的功能新增</li>
+                        <li>修订号(PATCH): 向下兼容的bug修复</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：Semver规范</span>
+            </div>
+        </div>
+
+        <!-- Q3: npm vs yarn vs pnpm -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">包管理工具</span>
+            </div>
+            <div class="question">Q3: npm、yarn和pnpm的区别？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> npm最基础，yarn更快有缓存，pnpm节省空间用硬链接</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全相同</strong></div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有命令不同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> yarn已废弃</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>三大包管理器对比：</h4>
+                    
+                    <p><strong>npm：</strong></p>
+                    <ul>
+                        <li>Node.js自带，最基础</li>
+                        <li>嵌套安装（v3前）或扁平化（v3+）</li>
+                        <li>package-lock.json锁定版本</li>
+                    </ul>
+                    
+                    <p><strong>yarn：</strong></p>
+                    <ul>
+                        <li>Facebook开发，更快更可靠</li>
+                        <li>离线缓存、并行安装</li>
+                        <li>yarn.lock锁定版本</li>
+                        <li>工作区（workspaces）支持</li>
+                    </ul>
+                    
+                    <p><strong>pnpm：</strong></p>
+                    <ul>
+                        <li>节省磁盘空间（硬链接+符号链接）</li>
+                        <li>严格的依赖管理（幽灵依赖检测）</li>
+                        <li>更快的安装速度</li>
+                        <li>pnpm-lock.yaml锁定版本</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 常用命令对比</span>
+<span class="comment">// npm</span>
+npm install
+npm install react
+npm uninstall react
+
+<span class="comment">// yarn</span>
+yarn
+yarn add react
+yarn remove react
+
+<span class="comment">// pnpm</span>
+pnpm install
+pnpm add react
+pnpm remove react</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：包管理器对比</span>
+            </div>
+        </div>
+
+        <!-- Q4-Q10 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">依赖类型</span></div>
+            <div class="question">Q4: dependencies、devDependencies和peerDependencies的区别？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 生产依赖、开发依赖、对等依赖，用途和安装时机不同</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只是分类不同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 可以随意放置</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="bracket">{</span>
+  <span class="comment">// 生产依赖：运行时需要</span>
+  <span class="string">"dependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"react"</span><span class="operator">:</span> <span class="string">"^18.0.0"</span>,
+    <span class="string">"axios"</span><span class="operator">:</span> <span class="string">"^1.0.0"</span>
+  <span class="bracket">}</span>,
+  
+  <span class="comment">// 开发依赖：只在开发时需要</span>
+  <span class="string">"devDependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"webpack"</span><span class="operator">:</span> <span class="string">"^5.0.0"</span>,
+    <span class="string">"jest"</span><span class="operator">:</span> <span class="string">"^29.0.0"</span>,
+    <span class="string">"@types/react"</span><span class="operator">:</span> <span class="string">"^18.0.0"</span>
+  <span class="bracket">}</span>,
+  
+  <span class="comment">// 对等依赖：指定宿主需要的依赖版本</span>
+  <span class="string">"peerDependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"react"</span><span class="operator">:</span> <span class="string">">=16.8.0"</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 安装命令</span>
+npm install <span class="operator">--</span>production  <span class="comment">// 只安装dependencies</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：依赖管理</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">锁文件</span></div>
+            <div class="question">Q5: package-lock.json的作用？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 锁定依赖版本，确保团队安装一致的依赖</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 可以删除</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只是缓存</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 和package.json相同</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>作用：</strong></p>
+                    <ul>
+                        <li>锁定依赖的精确版本号</li>
+                        <li>记录完整的依赖树</li>
+                        <li>确保团队和CI环境的一致性</li>
+                        <li>加快安装速度（跳过版本解析）</li>
+                    </ul>
+                    <p><strong>最佳实践：</strong>应该提交到版本控制系统</p>
+                </div>
+                <span class="source-tag">📌 来源：npm文档</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">幽灵依赖</span></div>
+            <div class="question">Q6: 什么是幽灵依赖（Phantom Dependencies）？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 项目可以使用未在package.json声明的依赖，因扁平化导致</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 不存在的依赖</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 已删除的依赖</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 隐藏的依赖</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// package.json只声明了react</span>
+<span class="bracket">{</span>
+  <span class="string">"dependencies"</span><span class="operator">:</span> <span class="bracket">{</span>
+    <span class="string">"react"</span><span class="operator">:</span> <span class="string">"^18.0.0"</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 但可以import react的依赖</span>
+<span class="keyword">import</span> <span class="bracket">{</span> createElement <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'react'</span>;
+<span class="keyword">import</span> scheduler <span class="keyword">from</span> <span class="string">'scheduler'</span>; <span class="comment">// ⚠️ 幽灵依赖</span></code></pre></div>
+                    <p><strong>问题：</strong>依赖未显式声明，可能因版本变化而失效</p>
+                    <p><strong>解决：</strong>使用pnpm的严格模式检测</p>
+                </div>
+                <span class="source-tag">📌 来源：依赖管理问题</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">Monorepo</span></div>
+            <div class="question">Q7: Monorepo和Workspaces的概念？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 单仓库管理多个包，共享依赖，统一版本管理</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 多个独立仓库</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只是文件夹划分</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 已废弃</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 根package.json</span>
+<span class="bracket">{</span>
+  <span class="string">"name"</span><span class="operator">:</span> <span class="string">"my-monorepo"</span>,
+  <span class="string">"private"</span><span class="operator">:</span> <span class="keyword">true</span>,
+  <span class="string">"workspaces"</span><span class="operator">:</span> <span class="bracket">[</span>
+    <span class="string">"packages/*"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 目录结构</span>
+<span class="operator">/</span>my<span class="operator">-</span>monorepo
+  <span class="operator">/</span>packages
+    <span class="operator">/</span><span class="keyword">package</span><span class="operator">-</span>a
+      package<span class="operator">.</span>json
+    <span class="operator">/</span><span class="keyword">package</span><span class="operator">-</span>b
+      package<span class="operator">.</span>json</code></pre></div>
+                    <p><strong>优势：</strong>代码共享、统一工具链、原子化提交</p>
+                </div>
+                <span class="source-tag">📌 来源：Monorepo</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">发布</span></div>
+            <div class="question">Q8: 如何发布npm包？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> npm login登录，npm publish发布，遵循语义化版本</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 直接上传文件</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不需要登录</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能发布公开包</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 1. 登录npm</span>
+npm login
+
+<span class="comment">// 2. 更新版本号</span>
+npm version patch  <span class="comment">// 1.0.0 -> 1.0.1</span>
+npm version minor  <span class="comment">// 1.0.0 -> 1.1.0</span>
+npm version major  <span class="comment">// 1.0.0 -> 2.0.0</span>
+
+<span class="comment">// 3. 发布</span>
+npm publish
+
+<span class="comment">// 发布beta版本</span>
+npm publish <span class="operator">--</span>tag beta
+
+<span class="comment">// 发布私有包（需要付费）</span>
+npm publish <span class="operator">--</span>access restricted</code></pre></div>
+                    <p><strong>注意事项：</strong></p>
+                    <ul>
+                        <li>包名唯一性</li>
+                        <li>.npmignore排除不必要文件</li>
+                        <li>README.md文档</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：npm发布</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">私有源</span></div>
+            <div class="question">Q9: 如何搭建和使用私有npm源？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用Verdaccio等工具搭建，配置.npmrc指定源</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 不能搭建</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只能用官方源</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 必须付费</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 1. 安装Verdaccio</span>
+npm install <span class="operator">-</span>g verdaccio
+
+<span class="comment">// 2. 启动</span>
+verdaccio
+
+<span class="comment">// 3. 配置.npmrc</span>
+registry<span class="operator">=</span>http<span class="operator">:</span><span class="operator">/</span><span class="operator">/</span>localhost<span class="operator">:</span><span class="number">4873</span><span class="operator">/</span>
+
+<span class="comment">// 或使用镜像源</span>
+npm config <span class="keyword">set</span> registry https<span class="operator">:</span><span class="operator">/</span><span class="operator">/</span>registry<span class="operator">.</span>npmmirror<span class="operator">.</span>com
+
+<span class="comment">// 查看当前源</span>
+npm config <span class="keyword">get</span> registry</code></pre></div>
+                    <p><strong>用途：</strong>企业内部包管理、加速下载、缓存</p>
+                </div>
+                <span class="source-tag">📌 来源：私有源</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">最佳实践</span></div>
+            <div class="question">Q10: npm包管理的最佳实践？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 提交锁文件、定期更新依赖、使用精确版本、安全审计</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 随意安装</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不需要管理</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 使用*版本</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>最佳实践：</strong></p>
+                    <ul>
+                        <li>✅ 提交package-lock.json到版本控制</li>
+                        <li>✅ 定期运行npm audit修复漏洞</li>
+                        <li>✅ 使用npm ci代替npm install（CI环境）</li>
+                        <li>✅ 明确区分dependencies和devDependencies</li>
+                        <li>✅ 使用^保持依赖更新，但注意测试</li>
+                        <li>✅ 定期更新依赖：npm outdated检查</li>
+                        <li>✅ 使用.npmrc统一团队配置</li>
+                        <li>✅ 清理未使用的依赖：depcheck工具</li>
+                    </ul>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 安全审计</span>
+npm audit
+npm audit fix
+
+<span class="comment">// CI环境安装（更快更可靠）</span>
+npm ci
+
+<span class="comment">// 检查过期依赖</span>
+npm outdated
+
+<span class="comment">// 清理缓存</span>
+npm cache clean <span class="operator">--</span>force</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：最佳实践</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="12-module-system.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：模块化系统</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

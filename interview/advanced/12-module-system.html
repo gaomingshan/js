@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块化系统 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #667eea; background: #f7fafc; }
+        .option.selected { border-color: #667eea; background: #eef2ff; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #667eea; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #eef2ff; color: #667eea; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📦 模块化系统</h1>
+            <p>掌握JavaScript模块化开发的核心知识</p>
+        </div>
+
+        <!-- Q1: ES6 Modules基础 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">ES6 Modules</span>
+            </div>
+            <div class="question">Q1: ES6 模块的导入导出方式有哪些？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> export/import、export default、命名导出/导入、*导入</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有require和module.exports</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有default导出</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不支持模块化</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>ES6 模块导入导出详解：</h4>
+                    
+                    <p><strong>1. 命名导出/导入：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// math.js - 导出</span>
+<span class="keyword">export</span> <span class="keyword">const</span> PI <span class="operator">=</span> <span class="number">3.14</span>;
+<span class="keyword">export</span> <span class="keyword">function</span> <span class="function">add</span><span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> a <span class="operator">+</span> b; <span class="bracket">}</span>
+
+<span class="comment">// 使用 - 导入</span>
+<span class="keyword">import</span> <span class="bracket">{</span> PI, add <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./math.js'</span>;
+<span class="keyword">import</span> <span class="bracket">{</span> add <span class="keyword">as</span> sum <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./math.js'</span>; <span class="comment">// 重命名</span></code></pre></div>
+                    
+                    <p><strong>2. 默认导出/导入：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// utils.js</span>
+<span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'默认导出'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 导入（可自定义名称）</span>
+<span class="keyword">import</span> myFunc <span class="keyword">from</span> <span class="string">'./utils.js'</span>;</code></pre></div>
+                    
+                    <p><strong>3. 批量导入：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">import</span> <span class="operator">*</span> <span class="keyword">as</span> math <span class="keyword">from</span> <span class="string">'./math.js'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>math.<span class="property">PI</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>math.<span class="function">add</span><span class="bracket">(</span><span class="number">1</span>, <span class="number">2</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>4. 混合导出：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// module.js</span>
+<span class="keyword">export</span> <span class="keyword">const</span> name <span class="operator">=</span> <span class="string">'Alice'</span>;
+<span class="keyword">export</span> <span class="keyword">default</span> <span class="keyword">class</span> <span class="function">User</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 导入</span>
+<span class="keyword">import</span> User, <span class="bracket">{</span> name <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./module.js'</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：ES6 Modules</span>
+            </div>
+        </div>
+
+        <!-- Q2: CommonJS -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">CommonJS</span>
+            </div>
+            <div class="question">Q2: CommonJS模块系统的特点？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用require/module.exports，同步加载，主要用于Node.js</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 异步加载</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 和ES6 Modules完全相同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能在浏览器使用</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>CommonJS详解：</h4>
+                    <div class="code-question"><pre><code><span class="comment">// 导出方式1：module.exports</span>
+module.<span class="property">exports</span> <span class="operator">=</span> <span class="bracket">{</span>
+    add<span class="operator">:</span> <span class="bracket">(</span>a, b<span class="bracket">)</span> <span class="operator">=></span> a <span class="operator">+</span> b,
+    PI<span class="operator">:</span> <span class="number">3.14</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// 导出方式2：exports</span>
+<span class="property">exports</span>.<span class="property">name</span> <span class="operator">=</span> <span class="string">'Alice'</span>;
+<span class="property">exports</span>.<span class="property">age</span> <span class="operator">=</span> <span class="number">25</span>;
+
+<span class="comment">// 导入</span>
+<span class="keyword">const</span> math <span class="operator">=</span> <span class="function">require</span><span class="bracket">(</span><span class="string">'./math'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> <span class="bracket">{</span> add <span class="bracket">}</span> <span class="operator">=</span> <span class="function">require</span><span class="bracket">(</span><span class="string">'./math'</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>特点：</strong></p>
+                    <ul>
+                        <li>同步加载，适合服务端</li>
+                        <li>模块加载时执行，缓存结果</li>
+                        <li>值拷贝，导出的是值的副本</li>
+                        <li>运行时加载</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：CommonJS</span>
+            </div>
+        </div>
+
+        <!-- Q3: ES6 vs CommonJS -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">对比</span>
+            </div>
+            <div class="question">Q3: ES6 Modules和CommonJS的主要区别？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> ES6是编译时加载、值引用、异步；CommonJS是运行时加载、值拷贝、同步</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只有语法不同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> CommonJS更先进</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>核心区别：</h4>
+                    
+                    <p><strong>1. 加载时机：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ES6: 编译时加载（静态分析）</span>
+<span class="keyword">import</span> <span class="bracket">{</span> foo <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./module'</span>; <span class="comment">// 只加载foo</span>
+
+<span class="comment">// CommonJS: 运行时加载（动态）</span>
+<span class="keyword">const</span> module <span class="operator">=</span> <span class="function">require</span><span class="bracket">(</span><span class="string">'./module'</span><span class="bracket">)</span>; <span class="comment">// 加载整个模块</span></code></pre></div>
+                    
+                    <p><strong>2. 值引用 vs 值拷贝：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ES6: 值引用（动态绑定）</span>
+<span class="comment">// counter.js</span>
+<span class="keyword">export</span> <span class="keyword">let</span> count <span class="operator">=</span> <span class="number">0</span>;
+<span class="keyword">export</span> <span class="keyword">function</span> <span class="function">increment</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> count<span class="operator">++</span>; <span class="bracket">}</span>
+
+<span class="comment">// main.js</span>
+<span class="keyword">import</span> <span class="bracket">{</span> count, increment <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./counter'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>count<span class="bracket">)</span>; <span class="comment">// 0</span>
+<span class="function">increment</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>count<span class="bracket">)</span>; <span class="comment">// 1 ✅ 值更新了</span>
+
+<span class="comment">// CommonJS: 值拷贝</span>
+<span class="comment">// counter.js</span>
+<span class="keyword">let</span> count <span class="operator">=</span> <span class="number">0</span>;
+module.<span class="property">exports</span> <span class="operator">=</span> <span class="bracket">{</span>
+    count,
+    increment<span class="operator">:</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> count<span class="operator">++</span>
+<span class="bracket">}</span>;
+
+<span class="comment">// main.js</span>
+<span class="keyword">const</span> <span class="bracket">{</span> count, increment <span class="bracket">}</span> <span class="operator">=</span> <span class="function">require</span><span class="bracket">(</span><span class="string">'./counter'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>count<span class="bracket">)</span>; <span class="comment">// 0</span>
+<span class="function">increment</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>count<span class="bracket">)</span>; <span class="comment">// 0 ❌ 值没变</span></code></pre></div>
+                    
+                    <p><strong>3. 其他区别：</strong></p>
+                    <ul>
+                        <li>ES6支持Tree Shaking，CommonJS不支持</li>
+                        <li>ES6是异步加载，CommonJS是同步</li>
+                        <li>ES6的import是提升的，CommonJS不是</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：模块系统对比</span>
+            </div>
+        </div>
+
+        <!-- Q4-Q10 继续 -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">动态导入</span></div>
+            <div class="question">Q4: ES6动态导入（Dynamic Import）的使用？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 使用import()函数，返回Promise，实现按需加载</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 不支持动态导入</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 和静态import相同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能在Node.js使用</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 动态导入</span>
+<span class="keyword">const</span> modulePath <span class="operator">=</span> <span class="string">'./utils.js'</span>;
+<span class="keyword">import</span><span class="bracket">(</span>modulePath<span class="bracket">)</span>
+    .<span class="function">then</span><span class="bracket">(</span>module <span class="operator">=></span> <span class="bracket">{</span>
+        module.<span class="function">doSomething</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 配合async/await</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">loadModule</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> module <span class="operator">=</span> <span class="keyword">await</span> <span class="keyword">import</span><span class="bracket">(</span><span class="string">'./heavy-module.js'</span><span class="bracket">)</span>;
+    module.<span class="function">init</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 条件加载</span>
+<span class="keyword">if</span> <span class="bracket">(</span>condition<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> module <span class="operator">=</span> <span class="keyword">await</span> <span class="keyword">import</span><span class="bracket">(</span><span class="string">'./module-a.js'</span><span class="bracket">)</span>;
+<span class="bracket">}</span></code></pre></div>
+                    <p><strong>应用场景：</strong>代码分割、懒加载、按需加载</p>
+                </div>
+                <span class="source-tag">📌 来源：Dynamic Import</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">循环依赖</span></div>
+            <div class="question">Q5: 模块循环依赖如何处理？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> ES6和CommonJS都支持，但处理方式不同</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 会报错</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不支持</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 必须避免</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// a.js</span>
+<span class="keyword">import</span> <span class="bracket">{</span> b <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./b.js'</span>;
+<span class="keyword">export</span> <span class="keyword">const</span> a <span class="operator">=</span> <span class="string">'a'</span>;
+
+<span class="comment">// b.js</span>
+<span class="keyword">import</span> <span class="bracket">{</span> a <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./a.js'</span>;
+<span class="keyword">export</span> <span class="keyword">const</span> b <span class="operator">=</span> <span class="string">'b'</span>;
+
+<span class="comment">// ES6: 可以正常工作（静态分析）</span>
+<span class="comment">// CommonJS: 可能得到undefined（动态加载）</span></code></pre></div>
+                    <p><strong>最佳实践：</strong>避免循环依赖，重构代码结构</p>
+                </div>
+                <span class="source-tag">📌 来源：循环依赖</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">Tree Shaking</span></div>
+            <div class="question">Q6: Tree Shaking的原理和条件？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 基于ES6静态分析，移除未使用代码，需要ES6模块</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 运行时删除代码</div>
+                <div class="option" data-answer="C"><strong>C.</strong> CommonJS也支持</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只是压缩代码</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// utils.js</span>
+<span class="keyword">export</span> <span class="keyword">function</span> <span class="function">used</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'used'</span>; <span class="bracket">}</span>
+<span class="keyword">export</span> <span class="keyword">function</span> <span class="function">unused</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span> <span class="keyword">return</span> <span class="string">'unused'</span>; <span class="bracket">}</span>
+
+<span class="comment">// main.js</span>
+<span class="keyword">import</span> <span class="bracket">{</span> used <span class="bracket">}</span> <span class="keyword">from</span> <span class="string">'./utils'</span>;
+<span class="function">used</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="comment">// 打包后unused会被移除 ✅</span></code></pre></div>
+                    <p><strong>条件：</strong>使用ES6模块、无副作用、静态导入导出</p>
+                </div>
+                <span class="source-tag">📌 来源：Tree Shaking</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header"><span class="difficulty medium">🟡 中等</span><span class="tag">模块路径</span></div>
+            <div class="question">Q7: 模块解析规则和路径别名？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 相对路径、绝对路径、node_modules查找，可配置别名</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只支持相对路径</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 不能配置</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 必须写完整路径</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="comment">// 相对路径</span>
+<span class="keyword">import</span> utils <span class="keyword">from</span> <span class="string">'./utils.js'</span>;
+<span class="keyword">import</span> utils <span class="keyword">from</span> <span class="string">'../utils.js'</span>;
+
+<span class="comment">// npm包</span>
+<span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="comment">// 配置别名 (webpack)</span>
+resolve<span class="operator">:</span> <span class="bracket">{</span>
+    alias<span class="operator">:</span> <span class="bracket">{</span>
+        <span class="string">'@'</span><span class="operator">:</span> path.<span class="function">resolve</span><span class="bracket">(</span>__dirname, <span class="string">'src'</span><span class="bracket">)</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 使用别名</span>
+<span class="keyword">import</span> utils <span class="keyword">from</span> <span class="string">'@/utils'</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：模块解析</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">UMD</span></div>
+            <div class="question">Q8: UMD（Universal Module Definition）的作用？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 兼容AMD、CommonJS和全局变量，实现跨平台模块</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只支持浏览器</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 已废弃</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 和ES6相同</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="bracket">(</span><span class="keyword">function</span> <span class="bracket">(</span>root, factory<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">typeof</span> define <span class="operator">===</span> <span class="string">'function'</span> <span class="operator">&&</span> define.<span class="property">amd</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="comment">// AMD</span>
+        <span class="function">define</span><span class="bracket">(</span><span class="bracket">[</span><span class="bracket">]</span>, factory<span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">else</span> <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">typeof</span> module <span class="operator">===</span> <span class="string">'object'</span> <span class="operator">&&</span> module.<span class="property">exports</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="comment">// CommonJS</span>
+        module.<span class="property">exports</span> <span class="operator">=</span> <span class="function">factory</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">else</span> <span class="bracket">{</span>
+        <span class="comment">// 全局变量</span>
+        root.<span class="property">MyLibrary</span> <span class="operator">=</span> <span class="function">factory</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">(</span><span class="keyword">this</span>, <span class="keyword">function</span> <span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="bracket">{</span>
+        name<span class="operator">:</span> <span class="string">'MyLibrary'</span>
+    <span class="bracket">}</span>;
+<span class="bracket">}</span><span class="bracket">)</span><span class="bracket">)</span>;</code></pre></div>
+                    <p><strong>用途：</strong>库的跨平台兼容</p>
+                </div>
+                <span class="source-tag">📌 来源：UMD</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">模块加载</span></div>
+            <div class="question">Q9: 如何实现一个简单的模块加载器？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 管理依赖、缓存模块、执行factory函数</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只需要require</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 无法实现</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 浏览器自动处理</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <div class="code-question"><pre><code><span class="keyword">class</span> <span class="function">ModuleLoader</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="property">cache</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">require</span><span class="bracket">(</span>id<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span><span class="keyword">this</span>.<span class="property">cache</span>.<span class="function">has</span><span class="bracket">(</span>id<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="keyword">return</span> <span class="keyword">this</span>.<span class="property">cache</span>.<span class="function">get</span><span class="bracket">(</span>id<span class="bracket">)</span>.<span class="property">exports</span>;
+        <span class="bracket">}</span>
+        
+        <span class="keyword">const</span> module <span class="operator">=</span> <span class="bracket">{</span> exports<span class="operator">:</span> <span class="bracket">{</span><span class="bracket">}</span> <span class="bracket">}</span>;
+        <span class="keyword">this</span>.<span class="property">cache</span>.<span class="function">set</span><span class="bracket">(</span>id, module<span class="bracket">)</span>;
+        
+        <span class="keyword">const</span> factory <span class="operator">=</span> <span class="keyword">this</span>.<span class="function">getFactory</span><span class="bracket">(</span>id<span class="bracket">)</span>;
+        <span class="function">factory</span><span class="bracket">(</span>module, module.<span class="property">exports</span>, <span class="keyword">this</span>.<span class="property">require</span><span class="bracket">)</span>;
+        
+        <span class="keyword">return</span> module.<span class="property">exports</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：模块加载器</span>
+            </div>
+        </div>
+
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header"><span class="difficulty hard">🔴 困难</span><span class="tag">实战</span></div>
+            <div class="question">Q10: 模块化项目的最佳实践？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 单一职责、依赖注入、避免循环依赖、使用ES6模块</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 所有代码放一个文件</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 随意引用</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不需要规范</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <p><strong>最佳实践：</strong></p>
+                    <ul>
+                        <li>使用ES6模块语法</li>
+                        <li>保持模块单一职责</li>
+                        <li>避免循环依赖</li>
+                        <li>合理使用动态导入</li>
+                        <li>配置路径别名提高可维护性</li>
+                        <li>利用Tree Shaking优化打包</li>
+                        <li>模块化CSS和资源文件</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：最佳实践</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="11-browser-apis.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：浏览器API</a>
+            <a href="12-package-management.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：包管理</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

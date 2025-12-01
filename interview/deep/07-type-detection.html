@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>类型判断 - JavaScript 面试题</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            min-height: 100vh; padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 3rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #fa709a; }
+        .header h1 { color: #fa709a; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .quiz-item { background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 2px solid #e2e8f0; }
+        .quiz-item-header { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .difficulty { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .difficulty.easy { background: #d4edda; color: #155724; }
+        .difficulty.medium { background: #fff3cd; color: #856404; }
+        .difficulty.hard { background: #f8d7da; color: #721c24; }
+        .tag { padding: 0.4rem 1rem; background: #e2e8f0; color: #4a5568; border-radius: 20px; font-size: 0.85rem; }
+        .question { font-size: 1.3rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; }
+        .options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .option { padding: 1.2rem; background: white; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option:hover { border-color: #fa709a; background: #f7fafc; }
+        .option.selected { border-color: #fa709a; background: #fff5f7; }
+        .option.correct { border-color: #48bb78; background: #f0fff4; }
+        .option.wrong { border-color: #f56565; background: #fff5f5; }
+        .btn-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn { padding: 0.75rem 2rem; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #fa709a; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .answer-section { display: none; margin-top: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; border-left: 4px solid #fa709a; }
+        .answer-section.show { display: block; }
+        .answer-label { display: inline-block; padding: 0.5rem 1rem; background: #48bb78; color: white; border-radius: 6px; font-weight: 600; margin-bottom: 1rem; }
+        .explanation { color: #4a5568; line-height: 1.8; }
+        .code-question { background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+        .property { color: #e06c75; }
+        .bracket { color: #abb2bf; }
+        .source-tag { display: inline-block; margin-top: 1rem; padding: 0.3rem 0.8rem; background: #fff5f7; color: #fa709a; border-radius: 4px; font-size: 0.85rem; }
+        .back-link { display: inline-block; margin-bottom: 2rem; color: white; text-decoration: none; font-size: 1.1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        h4 { color: #2d3748; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+        p { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回面试题导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔍 类型判断</h1>
+            <p>深入理解JavaScript中各种类型判断方法</p>
+        </div>
+
+        <!-- Q1: typeof -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">typeof</span>
+            </div>
+            <div class="question">Q1: typeof操作符可以准确判断哪些类型？有什么局限性？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 可判断基本类型（除null）和function；局限：null返回"object"、无法区分对象类型</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 可以准确判断所有类型</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只能判断对象类型</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不能判断function</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>typeof操作符：</h4>
+                    
+                    <p><strong>可以准确判断的类型：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">typeof</span> <span class="string">'hello'</span>       <span class="comment">// "string"</span>
+<span class="keyword">typeof</span> <span class="number">123</span>           <span class="comment">// "number"</span>
+<span class="keyword">typeof</span> <span class="keyword">true</span>          <span class="comment">// "boolean"</span>
+<span class="keyword">typeof</span> <span class="keyword">undefined</span>     <span class="comment">// "undefined"</span>
+<span class="keyword">typeof</span> <span class="property">Symbol</span><span class="bracket">(</span><span class="bracket">)</span>      <span class="comment">// "symbol"</span>
+<span class="keyword">typeof</span> <span class="number">123n</span>          <span class="comment">// "bigint"</span>
+<span class="keyword">typeof</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span>  <span class="comment">// "function"</span></code></pre></div>
+                    
+                    <p><strong>局限性：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. null返回"object"（历史遗留bug）</span>
+<span class="keyword">typeof</span> <span class="keyword">null</span>  <span class="comment">// "object" ❌</span>
+
+<span class="comment">// 2. 无法区分对象的具体类型</span>
+<span class="keyword">typeof</span> []             <span class="comment">// "object"</span>
+<span class="keyword">typeof</span> <span class="bracket">{</span><span class="bracket">}</span>            <span class="comment">// "object"</span>
+<span class="keyword">typeof</span> <span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span>   <span class="comment">// "object"</span>
+<span class="keyword">typeof</span> <span class="keyword">new</span> <span class="function">RegExp</span><span class="bracket">(</span><span class="bracket">)</span> <span class="comment">// "object"</span>
+
+<span class="comment">// 3. 特殊：function可以被识别</span>
+<span class="keyword">typeof</span> <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span>  <span class="comment">// "function" ✓</span>
+<span class="keyword">typeof</span> <span class="property">Array</span>         <span class="comment">// "function" (Array是构造函数)</span></code></pre></div>
+                    
+                    <p><strong>使用建议：</strong></p>
+                    <ul>
+                        <li>适合判断基本类型（除null外）</li>
+                        <li>适合判断是否为function</li>
+                        <li>不适合判断对象的具体类型</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：typeof操作符</span>
+            </div>
+        </div>
+
+        <!-- Q2: instanceof -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 简单</span>
+                <span class="tag">instanceof</span>
+            </div>
+            <div class="question">Q2: instanceof的原理是什么？有什么局限性？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 检查原型链；局限：无法判断基本类型、跨iframe失效、可被修改原型欺骗</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 检查构造函数名称</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 可以判断所有类型</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 只能判断基本类型</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>instanceof原理：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// instanceof检查对象的原型链中是否存在构造函数的prototype</span>
+<span class="keyword">function</span> <span class="function">myInstanceof</span><span class="bracket">(</span>obj, constructor<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">let</span> proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>obj<span class="bracket">)</span>;
+  <span class="keyword">while</span> <span class="bracket">(</span>proto<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>proto <span class="operator">===</span> constructor.<span class="property">prototype</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> <span class="keyword">true</span>;
+    <span class="bracket">}</span>
+    proto <span class="operator">=</span> <span class="property">Object</span>.<span class="function">getPrototypeOf</span><span class="bracket">(</span>proto<span class="bracket">)</span>;
+  <span class="bracket">}</span>
+  <span class="keyword">return</span> <span class="keyword">false</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 示例</span>
+[] <span class="keyword">instanceof</span> Array   <span class="comment">// true</span>
+[] <span class="keyword">instanceof</span> Object  <span class="comment">// true（原型链上有Object.prototype）</span></code></pre></div>
+                    
+                    <p><strong>局限性：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. 无法判断基本类型</span>
+<span class="number">123</span> <span class="keyword">instanceof</span> Number     <span class="comment">// false</span>
+<span class="string">'hello'</span> <span class="keyword">instanceof</span> String <span class="comment">// false</span>
+
+<span class="comment">// 但包装对象可以</span>
+<span class="keyword">new</span> <span class="function">Number</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span> <span class="keyword">instanceof</span> Number <span class="comment">// true</span>
+
+<span class="comment">// 2. 跨iframe问题</span>
+<span class="keyword">const</span> iframe <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'iframe'</span><span class="bracket">)</span>;
+document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>iframe<span class="bracket">)</span>;
+<span class="keyword">const</span> iframeArray <span class="operator">=</span> iframe.<span class="property">contentWindow</span>.<span class="property">Array</span>;
+<span class="keyword">const</span> arr <span class="operator">=</span> <span class="keyword">new</span> <span class="function">iframeArray</span><span class="bracket">(</span><span class="bracket">)</span>;
+arr <span class="keyword">instanceof</span> Array <span class="comment">// false（不同的Array构造函数）</span>
+
+<span class="comment">// 3. 原型可以被修改</span>
+<span class="keyword">function</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Foo</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">Foo</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;  <span class="comment">// 修改原型</span>
+obj <span class="keyword">instanceof</span> Foo <span class="comment">// false</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：instanceof操作符</span>
+            </div>
+        </div>
+
+        <!-- Q3: Object.prototype.toString -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">toString</span>
+            </div>
+            <div class="question">Q3: Object.prototype.toString.call()是如何准确判断类型的？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 返回内部[[Class]]属性；可判断所有内置类型；是最可靠的类型判断方法</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只是转成字符串</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 和typeof相同</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法判断null</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>Object.prototype.toString：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="comment">// 封装类型判断函数</span>
+<span class="keyword">function</span> <span class="function">getType</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">toString</span>.<span class="function">call</span><span class="bracket">(</span>value<span class="bracket">)</span>.<span class="function">slice</span><span class="bracket">(</span><span class="number">8</span>, <span class="operator">-</span><span class="number">1</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 基本类型</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>      <span class="comment">// "Undefined"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>           <span class="comment">// "Null" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>        <span class="comment">// "String"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>            <span class="comment">// "Number"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>           <span class="comment">// "Boolean"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="property">Symbol</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>       <span class="comment">// "Symbol"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="number">123n</span><span class="bracket">)</span>           <span class="comment">// "BigInt"</span>
+
+<span class="comment">// 引用类型</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>             <span class="comment">// "Object"</span>
+<span class="function">getType</span><span class="bracket">(</span>[]<span class="bracket">)</span>             <span class="comment">// "Array" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span> <span class="comment">// "Function"</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>    <span class="comment">// "Date" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="operator">/</span>regex<span class="operator">/</span><span class="bracket">)</span>        <span class="comment">// "RegExp" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Error</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>   <span class="comment">// "Error" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>     <span class="comment">// "Map" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Set</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>     <span class="comment">// "Set" ✓</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">WeakMap</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span> <span class="comment">// "WeakMap" ✓</span></code></pre></div>
+                    
+                    <p><strong>原理：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 返回格式：[object Type]</span>
+<span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">toString</span>.<span class="function">call</span><span class="bracket">(</span>[]<span class="bracket">)</span>  <span class="comment">// "[object Array]"</span>
+
+<span class="comment">// 为什么要用call？</span>
+<span class="comment">// 因为直接调用会调用数组自己的toString方法</span>
+[].<span class="function">toString</span><span class="bracket">(</span><span class="bracket">)</span>  <span class="comment">// ""（Array.prototype.toString）</span>
+
+<span class="comment">// Symbol.toStringTag可以自定义类型标签</span>
+<span class="keyword">class</span> <span class="function">MyClass</span> <span class="bracket">{</span>
+  <span class="keyword">get</span> [<span class="property">Symbol</span>.<span class="property">toStringTag</span>]<span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'MyClass'</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">MyClass</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>  <span class="comment">// "MyClass"</span></code></pre></div>
+                    
+                    <p><strong>优点：</strong></p>
+                    <ul>
+                        <li>可以准确判断所有内置类型</li>
+                        <li>可以判断null和undefined</li>
+                        <li>跨iframe仍然有效</li>
+                        <li>是最可靠的类型判断方法</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：Object.prototype.toString</span>
+            </div>
+        </div>
+
+        <!-- Q4: Array.isArray -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">Array判断</span>
+            </div>
+            <div class="question">Q4: 有哪些方法可以准确判断数组？各有什么特点？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> Array.isArray()最可靠；instanceof有跨iframe问题；constructor可被修改；toString.call最通用</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只有typeof可以判断</div>
+                <div class="option" data-answer="C"><strong>C.</strong> length属性判断</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 都不可靠</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>判断数组的方法：</h4>
+                    
+                    <p><strong>方法1：Array.isArray()（推荐）⭐⭐⭐⭐⭐</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span>[]<span class="bracket">)</span>              <span class="comment">// true</span>
+<span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>             <span class="comment">// false</span>
+<span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Array</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>  <span class="comment">// true</span>
+
+<span class="comment">// 跨iframe也有效</span>
+<span class="keyword">const</span> iframe <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'iframe'</span><span class="bracket">)</span>;
+document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>iframe<span class="bracket">)</span>;
+<span class="keyword">const</span> iframeArray <span class="operator">=</span> iframe.<span class="property">contentWindow</span>.<span class="property">Array</span>;
+<span class="keyword">const</span> arr <span class="operator">=</span> <span class="keyword">new</span> <span class="function">iframeArray</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span>arr<span class="bracket">)</span>  <span class="comment">// true ✓</span></code></pre></div>
+                    
+                    <p><strong>方法2：instanceof（有限制）⭐⭐⭐</strong></p>
+                    <div class="code-question"><pre><code>[] <span class="keyword">instanceof</span> Array  <span class="comment">// true</span>
+
+<span class="comment">// ❌ 跨iframe问题</span>
+<span class="keyword">const</span> iframeArr <span class="operator">=</span> iframe.<span class="property">contentWindow</span>.<span class="property">Array</span>;
+<span class="keyword">new</span> <span class="function">iframeArr</span><span class="bracket">(</span><span class="bracket">)</span> <span class="keyword">instanceof</span> Array  <span class="comment">// false</span></code></pre></div>
+                    
+                    <p><strong>方法3：constructor（不可靠）⭐⭐</strong></p>
+                    <div class="code-question"><pre><code>[].<span class="property">constructor</span> <span class="operator">===</span> Array  <span class="comment">// true</span>
+
+<span class="comment">// ❌ constructor可以被修改</span>
+<span class="keyword">const</span> arr <span class="operator">=</span> [];
+arr.<span class="property">constructor</span> <span class="operator">=</span> Object;
+arr.<span class="property">constructor</span> <span class="operator">===</span> Array  <span class="comment">// false</span></code></pre></div>
+                    
+                    <p><strong>方法4：Object.prototype.toString（最通用）⭐⭐⭐⭐⭐</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">toString</span>.<span class="function">call</span><span class="bracket">(</span>[]<span class="bracket">)</span> <span class="operator">===</span> <span class="string">'[object Array]'</span>  <span class="comment">// true</span>
+
+<span class="comment">// 跨iframe有效，不会被修改影响</span></code></pre></div>
+                    
+                    <p><strong>polyfill：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// Array.isArray的polyfill</span>
+<span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="property">Array</span>.<span class="property">isArray</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">Array</span>.<span class="property">isArray</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span>arg<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">toString</span>.<span class="function">call</span><span class="bracket">(</span>arg<span class="bracket">)</span> <span class="operator">===</span> <span class="string">'[object Array]'</span>;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：数组判断</span>
+            </div>
+        </div>
+
+        <!-- Q5: constructor -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">constructor</span>
+            </div>
+            <div class="question">Q5: 使用constructor判断类型有什么问题？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> constructor可被修改；null和undefined没有constructor；原型重写会丢失constructor</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全可靠</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 所有类型都有constructor</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 不会被修改</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>constructor判断类型：</h4>
+                    
+                    <p><strong>基本用法：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> arr <span class="operator">=</span> [];
+arr.<span class="property">constructor</span> <span class="operator">===</span> Array         <span class="comment">// true</span>
+
+<span class="keyword">const</span> str <span class="operator">=</span> <span class="string">'hello'</span>;
+str.<span class="property">constructor</span> <span class="operator">===</span> String       <span class="comment">// true</span>
+
+<span class="keyword">const</span> num <span class="operator">=</span> <span class="number">123</span>;
+num.<span class="property">constructor</span> <span class="operator">===</span> Number       <span class="comment">// true</span>
+
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+obj.<span class="property">constructor</span> <span class="operator">===</span> Object       <span class="comment">// true</span>
+
+<span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+p.<span class="property">constructor</span> <span class="operator">===</span> Person        <span class="comment">// true</span></code></pre></div>
+                    
+                    <p><strong>问题1：constructor可以被修改</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> arr <span class="operator">=</span> [];
+arr.<span class="property">constructor</span> <span class="operator">=</span> String;
+arr.<span class="property">constructor</span> <span class="operator">===</span> Array   <span class="comment">// false ❌</span>
+arr.<span class="property">constructor</span> <span class="operator">===</span> String  <span class="comment">// true</span>
+
+<span class="comment">// 但实际上arr仍然是数组</span>
+<span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span>arr<span class="bracket">)</span>  <span class="comment">// true</span></code></pre></div>
+                    
+                    <p><strong>问题2：null和undefined没有constructor</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">null</span>.<span class="property">constructor</span>       <span class="comment">// TypeError: Cannot read property 'constructor' of null</span>
+<span class="keyword">undefined</span>.<span class="property">constructor</span>  <span class="comment">// TypeError: Cannot read property 'constructor' of undefined</span></code></pre></div>
+                    
+                    <p><strong>问题3：原型重写会丢失constructor</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span><span class="bracket">}</span>
+
+<span class="comment">// 重写原型</span>
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="property">sayHello</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;
+
+<span class="keyword">const</span> p <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Person</span><span class="bracket">(</span><span class="bracket">)</span>;
+p.<span class="property">constructor</span> <span class="operator">===</span> Person  <span class="comment">// false ❌</span>
+p.<span class="property">constructor</span> <span class="operator">===</span> Object  <span class="comment">// true（指向Object）</span>
+
+<span class="comment">// 修复：手动指定constructor</span>
+<span class="property">Person</span>.<span class="property">prototype</span> <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="property">constructor</span>: Person,  <span class="comment">// ✓ 手动指定</span>
+  <span class="property">sayHello</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'Hello'</span><span class="bracket">)</span>;
+  <span class="bracket">}</span>
+<span class="bracket">}</span>;</code></pre></div>
+                    
+                    <p><strong>结论：</strong></p>
+                    <ul>
+                        <li>constructor不可靠，容易被修改</li>
+                        <li>适合在确定对象来源的场景下使用</li>
+                        <li>关键场景请使用更可靠的方法</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：constructor判断</span>
+            </div>
+        </div>
+
+        <!-- Q6: isNaN vs Number.isNaN -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 中等</span>
+                <span class="tag">NaN判断</span>
+            </div>
+            <div class="question">Q6: isNaN()和Number.isNaN()有什么区别？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> isNaN会进行类型转换；Number.isNaN严格判断，不转换；后者更准确</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 完全相同</div>
+                <div class="option" data-answer="C"><strong>C.</strong> isNaN更准确</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 都不准确</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>NaN判断方法对比：</h4>
+                    
+                    <p><strong>isNaN()（全局方法，会转换）</strong></p>
+                    <div class="code-question"><pre><code><span class="function">isNaN</span><span class="bracket">(</span><span class="property">NaN</span><span class="bracket">)</span>        <span class="comment">// true</span>
+<span class="function">isNaN</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>        <span class="comment">// false</span>
+<span class="function">isNaN</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>    <span class="comment">// true ❌（字符串转数字失败）</span>
+<span class="function">isNaN</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>  <span class="comment">// true ❌（undefined转数字为NaN）</span>
+<span class="function">isNaN</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>         <span class="comment">// true ❌（对象转数字为NaN）</span>
+<span class="function">isNaN</span><span class="bracket">(</span><span class="string">'123'</span><span class="bracket">)</span>      <span class="comment">// false（字符串'123'可转为数字）</span>
+
+<span class="comment">// 原理：先调用Number()转换，再判断</span>
+<span class="function">isNaN</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="operator">===</span> <span class="function">isNaN</span><span class="bracket">(</span><span class="function">Number</span><span class="bracket">(</span>value<span class="bracket">)</span><span class="bracket">)</span></code></pre></div>
+                    
+                    <p><strong>Number.isNaN()（ES6，严格判断）⭐推荐</strong></p>
+                    <div class="code-question"><pre><code><span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="property">NaN</span><span class="bracket">)</span>        <span class="comment">// true</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>        <span class="comment">// false</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>    <span class="comment">// false ✓（不转换，不是NaN）</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>  <span class="comment">// false ✓（不转换）</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>         <span class="comment">// false ✓（不转换）</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span><span class="string">'123'</span><span class="bracket">)</span>      <span class="comment">// false</span>
+
+<span class="comment">// 原理：检查值是否为number类型且值为NaN</span>
+<span class="property">Number</span>.<span class="function">isNaN</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="operator">===</span> <span class="bracket">(</span><span class="keyword">typeof</span> value <span class="operator">===</span> <span class="string">'number'</span> <span class="operator">&amp;&amp;</span> <span class="function">isNaN</span><span class="bracket">(</span>value<span class="bracket">)</span><span class="bracket">)</span></code></pre></div>
+                    
+                    <p><strong>自己判断NaN的方法：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// NaN是唯一一个不等于自身的值</span>
+<span class="keyword">function</span> <span class="function">isNaNValue</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> value <span class="operator">!==</span> value;
+<span class="bracket">}</span>
+
+<span class="function">isNaNValue</span><span class="bracket">(</span><span class="property">NaN</span><span class="bracket">)</span>        <span class="comment">// true</span>
+<span class="function">isNaNValue</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>        <span class="comment">// false</span>
+<span class="function">isNaNValue</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>    <span class="comment">// false</span>
+
+<span class="comment">// Number.isNaN的polyfill</span>
+<span class="keyword">if</span> <span class="bracket">(</span><span class="operator">!</span><span class="property">Number</span>.<span class="property">isNaN</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">Number</span>.<span class="property">isNaN</span> <span class="operator">=</span> <span class="keyword">function</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">typeof</span> value <span class="operator">===</span> <span class="string">'number'</span> <span class="operator">&amp;&amp;</span> value <span class="operator">!==</span> value;
+  <span class="bracket">}</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>推荐使用 Number.isNaN()，更准确、不会误判。</strong></p>
+                </div>
+                <span class="source-tag">📌 来源：NaN判断</span>
+            </div>
+        </div>
+
+        <!-- Q7: 判断空对象 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">空对象判断</span>
+            </div>
+            <div class="question">Q7: 如何判断一个对象是否为空对象？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> Object.keys()、for...in、JSON.stringify()、Reflect.ownKeys()等方法</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只能用Object.keys()</div>
+                <div class="option" data-answer="C"><strong>C.</strong> obj === {}</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法判断</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>判断空对象的方法：</h4>
+                    
+                    <p><strong>方法1：Object.keys()（推荐）⭐⭐⭐⭐⭐</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="property">Object</span>.<span class="function">keys</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span> <span class="operator">===</span> <span class="number">0</span>;
+<span class="bracket">}</span>
+
+<span class="function">isEmpty</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>           <span class="comment">// true</span>
+<span class="function">isEmpty</span><span class="bracket">(</span><span class="bracket">{</span> <span class="property">a</span>: <span class="number">1</span> <span class="bracket">}</span><span class="bracket">)</span>    <span class="comment">// false</span>
+
+<span class="comment">// 注意：只检查可枚举的自有属性</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="property">Object</span>.<span class="function">create</span><span class="bracket">(</span><span class="bracket">{</span> <span class="property">inherited</span>: <span class="keyword">true</span> <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span>  <span class="comment">// true（继承的属性不算）</span></code></pre></div>
+                    
+                    <p><strong>方法2：for...in循环</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> key <span class="keyword">in</span> obj<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// 检查是否为自有属性</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>obj.<span class="function">hasOwnProperty</span><span class="bracket">(</span>key<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> <span class="keyword">false</span>;
+    <span class="bracket">}</span>
+  <span class="bracket">}</span>
+  <span class="keyword">return</span> <span class="keyword">true</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>方法3：JSON.stringify()（简单但有限制）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="property">JSON</span>.<span class="function">stringify</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="operator">===</span> <span class="string">'{}'</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// ❌ 限制：无法序列化的属性会被忽略</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> <span class="property">fn</span>: <span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span> <span class="bracket">}</span>;
+<span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span>  <span class="comment">// true（函数被忽略了）</span></code></pre></div>
+                    
+                    <p><strong>方法4：Object.getOwnPropertyNames()（包含不可枚举属性）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="property">Object</span>.<span class="function">getOwnPropertyNames</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span> <span class="operator">===</span> <span class="number">0</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 可以检测不可枚举属性</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span><span class="bracket">}</span>;
+<span class="property">Object</span>.<span class="function">defineProperty</span><span class="bracket">(</span>obj, <span class="string">'hidden'</span>, <span class="bracket">{</span>
+  <span class="property">value</span>: <span class="number">1</span>,
+  <span class="property">enumerable</span>: <span class="keyword">false</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="property">Object</span>.<span class="function">keys</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span>                   <span class="comment">// 0</span>
+<span class="property">Object</span>.<span class="function">getOwnPropertyNames</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span>  <span class="comment">// 1 ✓</span></code></pre></div>
+                    
+                    <p><strong>方法5：Reflect.ownKeys()（最全面）⭐⭐⭐⭐⭐</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isEmpty</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> <span class="property">Reflect</span>.<span class="function">ownKeys</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span> <span class="operator">===</span> <span class="number">0</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 包含Symbol属性和不可枚举属性</span>
+<span class="keyword">const</span> sym <span class="operator">=</span> <span class="property">Symbol</span><span class="bracket">(</span><span class="string">'key'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> obj <span class="operator">=</span> <span class="bracket">{</span> [sym]: <span class="number">1</span> <span class="bracket">}</span>;
+
+<span class="property">Object</span>.<span class="function">keys</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span>        <span class="comment">// 0（Symbol不可枚举）</span>
+<span class="property">Reflect</span>.<span class="function">ownKeys</span><span class="bracket">(</span>obj<span class="bracket">)</span>.<span class="property">length</span>  <span class="comment">// 1 ✓</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：空对象判断</span>
+            </div>
+        </div>
+
+        <!-- Q8: 判断类数组 -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">类数组</span>
+            </div>
+            <div class="question">Q8: 如何判断一个对象是类数组对象？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 检查length属性是否为有效数字且为对象类型；常见类数组：arguments、NodeList、HTMLCollection</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 检查是否有数组方法</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 使用Array.isArray()</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法判断</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>类数组对象判断：</h4>
+                    
+                    <p><strong>类数组对象特征：</strong></p>
+                    <ul>
+                        <li>具有length属性</li>
+                        <li>length为非负整数</li>
+                        <li>不是真正的数组（没有数组方法）</li>
+                        <li>可以通过索引访问元素</li>
+                    </ul>
+                    
+                    <p><strong>判断函数：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isArrayLike</span><span class="bracket">(</span>obj<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 1. 必须是对象且不为null</span>
+  <span class="keyword">if</span> <span class="bracket">(</span>obj <span class="operator">==</span> <span class="keyword">null</span> <span class="operator">||</span> <span class="keyword">typeof</span> obj <span class="operator">!==</span> <span class="string">'object'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 2. 必须有length属性</span>
+  <span class="keyword">const</span> length <span class="operator">=</span> obj.<span class="property">length</span>;
+  
+  <span class="comment">// 3. length必须是数字且为非负整数</span>
+  <span class="keyword">return</span> <span class="keyword">typeof</span> length <span class="operator">===</span> <span class="string">'number'</span> 
+    <span class="operator">&amp;&amp;</span> length <span class="operator">&gt;=</span> <span class="number">0</span> 
+    <span class="operator">&amp;&amp;</span> length <span class="operator">%</span> <span class="number">1</span> <span class="operator">===</span> <span class="number">0</span>
+    <span class="operator">&amp;&amp;</span> length <span class="operator">&lt;=</span> <span class="property">Number</span>.<span class="property">MAX_SAFE_INTEGER</span>;
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>常见类数组对象：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 1. arguments对象</span>
+<span class="keyword">function</span> <span class="function">test</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="function">isArrayLike</span><span class="bracket">(</span>arguments<span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// true</span>
+  <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="property">Array</span>.<span class="function">isArray</span><span class="bracket">(</span>arguments<span class="bracket">)</span><span class="bracket">)</span>; <span class="comment">// false</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 2. DOM NodeList</span>
+<span class="keyword">const</span> divs <span class="operator">=</span> document.<span class="function">querySelectorAll</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="function">isArrayLike</span><span class="bracket">(</span>divs<span class="bracket">)</span>  <span class="comment">// true</span>
+
+<span class="comment">// 3. HTMLCollection</span>
+<span class="keyword">const</span> forms <span class="operator">=</span> document.<span class="property">forms</span>;
+<span class="function">isArrayLike</span><span class="bracket">(</span>forms<span class="bracket">)</span>  <span class="comment">// true</span>
+
+<span class="comment">// 4. 字符串</span>
+<span class="function">isArrayLike</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>  <span class="comment">// false（typeof为string）</span>
+
+<span class="comment">// 5. 自定义类数组</span>
+<span class="keyword">const</span> arrayLike <span class="operator">=</span> <span class="bracket">{</span>
+  <span class="number">0</span>: <span class="string">'a'</span>,
+  <span class="number">1</span>: <span class="string">'b'</span>,
+  <span class="number">2</span>: <span class="string">'c'</span>,
+  <span class="property">length</span>: <span class="number">3</span>
+<span class="bracket">}</span>;
+<span class="function">isArrayLike</span><span class="bracket">(</span>arrayLike<span class="bracket">)</span>  <span class="comment">// true</span></code></pre></div>
+                    
+                    <p><strong>转换为真正的数组：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 方法1：Array.from()</span>
+<span class="keyword">const</span> arr1 <span class="operator">=</span> <span class="property">Array</span>.<span class="function">from</span><span class="bracket">(</span>arrayLike<span class="bracket">)</span>;
+
+<span class="comment">// 方法2：展开运算符（仅适用于可迭代对象）</span>
+<span class="keyword">const</span> arr2 <span class="operator">=</span> [<span class="operator">...</span>arrayLike];  <span class="comment">// 可能报错</span>
+
+<span class="comment">// 方法3：Array.prototype.slice.call()</span>
+<span class="keyword">const</span> arr3 <span class="operator">=</span> <span class="property">Array</span>.<span class="property">prototype</span>.<span class="property">slice</span>.<span class="function">call</span><span class="bracket">(</span>arrayLike<span class="bracket">)</span>;
+
+<span class="comment">// 方法4：Array.prototype.concat.apply()</span>
+<span class="keyword">const</span> arr4 <span class="operator">=</span> <span class="property">Array</span>.<span class="property">prototype</span>.<span class="property">concat</span>.<span class="function">apply</span><span class="bracket">(</span>[], arrayLike<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：类数组对象</span>
+            </div>
+        </div>
+
+        <!-- Q9: 原始值vs引用值 -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">值类型</span>
+            </div>
+            <div class="question">Q9: 如何判断一个值是原始值还是引用值？</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> typeof判断基本类型；对象类型为引用值；null是特殊的原始值</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只用instanceof</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 看是否有属性</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法判断</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>原始值与引用值：</h4>
+                    
+                    <p><strong>原始值（Primitive Values）：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 7种原始类型</span>
+<span class="number">1</span>. <span class="keyword">undefined</span>
+<span class="number">2</span>. <span class="keyword">null</span>
+<span class="number">3</span>. <span class="string">'string'</span>
+<span class="number">4</span>. <span class="number">123</span> <span class="bracket">(</span>number<span class="bracket">)</span>
+<span class="number">5</span>. <span class="keyword">true</span><span class="operator">/</span><span class="keyword">false</span> <span class="bracket">(</span>boolean<span class="bracket">)</span>
+<span class="number">6</span>. <span class="property">Symbol</span><span class="bracket">(</span><span class="bracket">)</span>
+<span class="number">7</span>. <span class="number">123n</span> <span class="bracket">(</span>bigint<span class="bracket">)</span>
+
+<span class="comment">// 特点：</span>
+<span class="comment">// - 存储在栈中</span>
+<span class="comment">// - 不可变</span>
+<span class="comment">// - 按值传递</span></code></pre></div>
+                    
+                    <p><strong>引用值（Reference Values）：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 对象类型都是引用值</span>
+<span class="operator">-</span> <span class="property">Object</span>
+<span class="operator">-</span> <span class="property">Array</span>
+<span class="operator">-</span> <span class="property">Function</span>
+<span class="operator">-</span> <span class="property">Date</span>
+<span class="operator">-</span> <span class="property">RegExp</span>
+<span class="operator">-</span> <span class="property">Map</span>, <span class="property">Set</span>, <span class="property">WeakMap</span>, <span class="property">WeakSet</span>
+<span class="operator">-</span> etc.
+
+<span class="comment">// 特点：</span>
+<span class="comment">// - 引用存储在栈中，值存储在堆中</span>
+<span class="comment">// - 可变</span>
+<span class="comment">// - 按引用传递</span></code></pre></div>
+                    
+                    <p><strong>判断函数：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isPrimitive</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">return</span> value <span class="operator">!==</span> <span class="property">Object</span><span class="bracket">(</span>value<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 或者更明确的方式</span>
+<span class="keyword">function</span> <span class="function">isPrimitive</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="keyword">const</span> type <span class="operator">=</span> <span class="keyword">typeof</span> value;
+  <span class="keyword">return</span> value <span class="operator">===</span> <span class="keyword">null</span> 
+    <span class="operator">||</span> <span class="bracket">(</span>type <span class="operator">!==</span> <span class="string">'object'</span> <span class="operator">&amp;&amp;</span> type <span class="operator">!==</span> <span class="string">'function'</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 测试</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>           <span class="comment">// true</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>      <span class="comment">// true</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>         <span class="comment">// true</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>    <span class="comment">// true</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="property">Symbol</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>     <span class="comment">// true</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>           <span class="comment">// false</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span>[]<span class="bracket">)</span>           <span class="comment">// false</span>
+<span class="function">isPrimitive</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span> <span class="comment">// false</span></code></pre></div>
+                    
+                    <p><strong>区别示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 原始值不可变</span>
+<span class="keyword">let</span> str <span class="operator">=</span> <span class="string">'hello'</span>;
+str.<span class="function">toUpperCase</span><span class="bracket">(</span><span class="bracket">)</span>;  <span class="comment">// 返回新字符串</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>str<span class="bracket">)</span>;     <span class="comment">// 'hello'（原值未变）</span>
+
+<span class="comment">// 引用值可变</span>
+<span class="keyword">const</span> arr <span class="operator">=</span> [<span class="number">1</span>, <span class="number">2</span>];
+arr.<span class="function">push</span><span class="bracket">(</span><span class="number">3</span><span class="bracket">)</span>;        <span class="comment">// 修改原数组</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>arr<span class="bracket">)</span>;      <span class="comment">// [1, 2, 3]（原值改变）</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：原始值与引用值</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合类型判断 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合应用</span>
+            </div>
+            <div class="question">Q10: 实现一个通用的类型判断函数getType()，要求准确判断所有JavaScript类型</div>
+            <div class="options">
+                <div class="option" data-answer="A"><strong>A.</strong> 结合typeof和Object.prototype.toString，处理特殊情况（null、NaN、基本类型）</div>
+                <div class="option" data-answer="B"><strong>B.</strong> 只用typeof</div>
+                <div class="option" data-answer="C"><strong>C.</strong> 只用instanceof</div>
+                <div class="option" data-answer="D"><strong>D.</strong> 无法实现</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>通用类型判断函数：</h4>
+                    
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">getType</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 1. null特殊处理</span>
+  <span class="keyword">if</span> <span class="bracket">(</span>value <span class="operator">===</span> <span class="keyword">null</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'null'</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 2. 基本类型用typeof</span>
+  <span class="keyword">const</span> type <span class="operator">=</span> <span class="keyword">typeof</span> value;
+  <span class="keyword">if</span> <span class="bracket">(</span>type <span class="operator">!==</span> <span class="string">'object'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> type;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 3. 引用类型用toString</span>
+  <span class="keyword">return</span> <span class="property">Object</span>.<span class="property">prototype</span>.<span class="property">toString</span>
+    .<span class="function">call</span><span class="bracket">(</span>value<span class="bracket">)</span>
+    .<span class="function">slice</span><span class="bracket">(</span><span class="number">8</span>, <span class="operator">-</span><span class="number">1</span><span class="bracket">)</span>
+    .<span class="function">toLowerCase</span><span class="bracket">(</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+<span class="comment">// 测试</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">undefined</span><span class="bracket">)</span>      <span class="comment">// 'undefined'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">null</span><span class="bracket">)</span>           <span class="comment">// 'null'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="number">123</span><span class="bracket">)</span>            <span class="comment">// 'number'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>        <span class="comment">// 'string'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>           <span class="comment">// 'boolean'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="property">Symbol</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>       <span class="comment">// 'symbol'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="number">123n</span><span class="bracket">)</span>           <span class="comment">// 'bigint'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>             <span class="comment">// 'object'</span>
+<span class="function">getType</span><span class="bracket">(</span>[]<span class="bracket">)</span>             <span class="comment">// 'array'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">function</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span> <span class="comment">// 'function'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Date</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>    <span class="comment">// 'date'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="operator">/</span>regex<span class="operator">/</span><span class="bracket">)</span>        <span class="comment">// 'regexp'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Map</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>     <span class="comment">// 'map'</span>
+<span class="function">getType</span><span class="bracket">(</span><span class="keyword">new</span> <span class="function">Set</span><span class="bracket">(</span><span class="bracket">)</span><span class="bracket">)</span>     <span class="comment">// 'set'</span></code></pre></div>
+                    
+                    <p><strong>增强版（判断更多细节）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">getDetailedType</span><span class="bracket">(</span>value<span class="bracket">)</span> <span class="bracket">{</span>
+  <span class="comment">// 基础类型</span>
+  <span class="keyword">const</span> baseType <span class="operator">=</span> <span class="function">getType</span><span class="bracket">(</span>value<span class="bracket">)</span>;
+  
+  <span class="comment">// NaN特殊处理</span>
+  <span class="keyword">if</span> <span class="bracket">(</span>baseType <span class="operator">===</span> <span class="string">'number'</span> <span class="operator">&amp;&amp;</span> <span class="function">isNaN</span><span class="bracket">(</span>value<span class="bracket">)</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> <span class="string">'nan'</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 数组类型细分</span>
+  <span class="keyword">if</span> <span class="bracket">(</span>baseType <span class="operator">===</span> <span class="string">'array'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span>value.<span class="property">length</span> <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="keyword">return</span> <span class="string">'array:empty'</span>;
+    <span class="keyword">return</span> <span class="string">'array'</span>;
+  <span class="bracket">}</span>
+  
+  <span class="comment">// 对象类型细分</span>
+  <span class="keyword">if</span> <span class="bracket">(</span>baseType <span class="operator">===</span> <span class="string">'object'</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="property">Object</span>.<span class="function">keys</span><span class="bracket">(</span>value<span class="bracket">)</span>.<span class="property">length</span> <span class="operator">===</span> <span class="number">0</span><span class="bracket">)</span> <span class="bracket">{</span>
+      <span class="keyword">return</span> <span class="string">'object:empty'</span>;
+    <span class="bracket">}</span>
+  <span class="bracket">}</span>
+  
+  <span class="keyword">return</span> baseType;
+<span class="bracket">}</span>
+
+<span class="comment">// 测试</span>
+<span class="function">getDetailedType</span><span class="bracket">(</span><span class="property">NaN</span><span class="bracket">)</span>        <span class="comment">// 'nan'</span>
+<span class="function">getDetailedType</span><span class="bracket">(</span>[]<span class="bracket">)</span>         <span class="comment">// 'array:empty'</span>
+<span class="function">getDetailedType</span><span class="bracket">(</span>[<span class="number">1</span>]<span class="bracket">)</span>        <span class="comment">// 'array'</span>
+<span class="function">getDetailedType</span><span class="bracket">(</span><span class="bracket">{</span><span class="bracket">}</span><span class="bracket">)</span>        <span class="comment">// 'object:empty'</span>
+<span class="function">getDetailedType</span><span class="bracket">(</span><span class="bracket">{</span> <span class="property">a</span>: <span class="number">1</span> <span class="bracket">}</span><span class="bracket">)</span> <span class="comment">// 'object'</span></code></pre></div>
+                    
+                    <p><strong>使用场景：</strong></p>
+                    <ul>
+                        <li>参数类型验证</li>
+                        <li>数据序列化前的类型判断</li>
+                        <li>调试和日志记录</li>
+                        <li>通用工具函数</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：综合类型判断</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="06-object-creation.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：对象创建模式</a>
+            <a href="08-type-conversion.html" style="padding: 0.75rem 1.5rem; background: #fa709a; color: white; text-decoration: none; border-radius: 6px;">➡️ 下一节：类型转换</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #fa709a; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            if (!selectedOption) { alert('请先选择一个答案！'); return; }
+            const userAnswer = selectedOption.dataset.answer;
+            quizItem.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+                else if (opt === selectedOption) opt.classList.add('wrong');
+            });
+            alert(userAnswer === correctAnswer ? '✅ 回答正确！' : '❌ 回答错误');
+            showAnswer(questionNum);
+        }
+
+        function showAnswer(questionNum) {
+            document.getElementById(`answer-${questionNum}`).classList.add('show');
+        }
+    </script>
+</body>
+</html>

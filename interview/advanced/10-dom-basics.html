@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM 基础操作 面试题 - JavaScript 面试题精选</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .quiz-item {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .quiz-item-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .difficulty {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .difficulty.easy {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .difficulty.medium {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .difficulty.hard {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .tag {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .question {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .code-question {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-question pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .code-question code {
+            font-family: inherit;
+        }
+
+        .keyword { color: #c792ea; }
+        .function { color: #82aaff; }
+        .string { color: #c3e88d; }
+        .number { color: #f78c6c; }
+        .comment { color: #697098; font-style: italic; }
+        .operator { color: #89ddff; }
+        .property { color: #ffcb6b; }
+        .bracket { color: #a6accd; }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .option {
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+            transform: translateX(4px);
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .option.correct {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .option.wrong {
+            border-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .answer-section {
+            display: none;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            border: 2px solid #bee3f8;
+        }
+
+        .answer-section.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-label {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .explanation {
+            color: #2d3748;
+            line-height: 1.8;
+        }
+
+        .explanation h4 {
+            color: #2d3748;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .explanation ul, .explanation ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        .explanation p {
+            margin-bottom: 1rem;
+        }
+
+        .explanation strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .source-tag {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.4rem 0.8rem;
+            background: #edf2f7;
+            color: #4a5568;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 DOM 基础操作 面试题精选</h1>
+        <p class="subtitle">掌握文档对象模型操作 - 10道精选题目</p>
+
+        <!-- Q1: DOM节点类型 -->
+        <div class="quiz-item" data-question="1">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">节点类型</span>
+            </div>
+            
+            <div class="question">Q1: DOM中常见的节点类型（nodeType）有哪些？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 元素节点(1)、属性节点(2)、文本节点(3)、注释节点(8)、文档节点(9)
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 只有元素节点和文本节点
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 元素节点(0)、文本节点(1)、注释节点(2)
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 节点类型只有一种
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(1, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(1)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-1">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>DOM节点类型详解：</h4>
+                    
+                    <table>
+                        <tr>
+                            <th>节点类型</th>
+                            <th>nodeType值</th>
+                            <th>nodeName</th>
+                            <th>nodeValue</th>
+                        </tr>
+                        <tr>
+                            <td>元素节点 ELEMENT_NODE</td>
+                            <td>1</td>
+                            <td>标签名（大写）</td>
+                            <td>null</td>
+                        </tr>
+                        <tr>
+                            <td>属性节点 ATTRIBUTE_NODE</td>
+                            <td>2</td>
+                            <td>属性名</td>
+                            <td>属性值</td>
+                        </tr>
+                        <tr>
+                            <td>文本节点 TEXT_NODE</td>
+                            <td>3</td>
+                            <td>#text</td>
+                            <td>文本内容</td>
+                        </tr>
+                        <tr>
+                            <td>注释节点 COMMENT_NODE</td>
+                            <td>8</td>
+                            <td>#comment</td>
+                            <td>注释内容</td>
+                        </tr>
+                        <tr>
+                            <td>文档节点 DOCUMENT_NODE</td>
+                            <td>9</td>
+                            <td>#document</td>
+                            <td>null</td>
+                        </tr>
+                        <tr>
+                            <td>文档类型节点 DOCUMENT_TYPE_NODE</td>
+                            <td>10</td>
+                            <td>doctype名称</td>
+                            <td>null</td>
+                        </tr>
+                        <tr>
+                            <td>文档片段节点 DOCUMENT_FRAGMENT_NODE</td>
+                            <td>11</td>
+                            <td>#document-fragment</td>
+                            <td>null</td>
+                        </tr>
+                    </table>
+                    
+                    <p><strong>代码示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> div <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">nodeType</span><span class="bracket">)</span>;        <span class="comment">// 1 (元素节点)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">nodeName</span><span class="bracket">)</span>;       <span class="comment">// "DIV"</span>
+
+<span class="keyword">const</span> textNode <span class="operator">=</span> document.<span class="function">createTextNode</span><span class="bracket">(</span><span class="string">'hello'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>textNode.<span class="property">nodeType</span><span class="bracket">)</span>;   <span class="comment">// 3 (文本节点)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>textNode.<span class="property">nodeValue</span><span class="bracket">)</span>;  <span class="comment">// "hello"</span>
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>document.<span class="property">nodeType</span><span class="bracket">)</span>;    <span class="comment">// 9 (文档节点)</span></code></pre></div>
+                    
+                    <p><strong>判断节点类型：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">isElement</span><span class="bracket">(</span>node<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> node.<span class="property">nodeType</span> <span class="operator">===</span> <span class="number">1</span>;
+<span class="bracket">}</span>
+
+<span class="keyword">function</span> <span class="function">isTextNode</span><span class="bracket">(</span>node<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">return</span> node.<span class="property">nodeType</span> <span class="operator">===</span> <span class="number">3</span>;
+<span class="bracket">}</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：DOM节点类型</span>
+            </div>
+        </div>
+
+        <!-- Q2: 元素选择 -->
+        <div class="quiz-item" data-question="2">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">元素选择</span>
+            </div>
+            
+            <div class="question">Q2: 以下哪个方法返回的是动态集合（会自动更新）？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> getElementsByClassName 和 getElementsByTagName
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> querySelectorAll
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> querySelector
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 都是静态集合
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(2, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(2)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-2">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>动态集合 vs 静态集合：</h4>
+                    
+                    <p><strong>动态集合（HTMLCollection）：</strong></p>
+                    <ul>
+                        <li><code>getElementsByClassName()</code></li>
+                        <li><code>getElementsByTagName()</code></li>
+                        <li><code>getElementsByName()</code></li>
+                        <li><code>children</code> 属性</li>
+                    </ul>
+                    
+                    <p><strong>静态集合（NodeList）：</strong></p>
+                    <ul>
+                        <li><code>querySelectorAll()</code></li>
+                        <li><code>childNodes</code> 属性</li>
+                    </ul>
+                    
+                    <p><strong>动态集合示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> divs <span class="operator">=</span> document.<span class="function">getElementsByTagName</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>divs.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 假设为 5</span>
+
+<span class="comment">// 添加新元素</span>
+<span class="keyword">const</span> newDiv <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>newDiv<span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>divs.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 6 - 自动更新！✅</span></code></pre></div>
+                    
+                    <p><strong>静态集合示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> divs <span class="operator">=</span> document.<span class="function">querySelectorAll</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>divs.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 假设为 5</span>
+
+<span class="keyword">const</span> newDiv <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>newDiv<span class="bracket">)</span>;
+
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>divs.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 5 - 不会更新 ❌</span></code></pre></div>
+                    
+                    <p><strong>⚠️ 注意陷阱：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 动态集合遍历陷阱</span>
+<span class="keyword">const</span> divs <span class="operator">=</span> document.<span class="function">getElementsByTagName</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+
+<span class="comment">// ❌ 错误：会陷入死循环！</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> divs.<span class="property">length</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    document.<span class="property">body</span>.<span class="function">appendChild</span><span class="bracket">(</span>document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span><span class="bracket">)</span>;
+    <span class="comment">// divs.length 不断增加！</span>
+<span class="bracket">}</span>
+
+<span class="comment">// ✅ 正确：缓存长度或转为数组</span>
+<span class="keyword">const</span> length <span class="operator">=</span> divs.<span class="property">length</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> length; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="comment">// ...</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 或转为数组</span>
+<span class="property">Array</span>.<span class="function">from</span><span class="bracket">(</span>divs<span class="bracket">)</span>.<span class="function">forEach</span><span class="bracket">(</span>div <span class="operator">=></span> <span class="bracket">{</span><span class="comment">/* ... */</span><span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：元素选择方法</span>
+            </div>
+        </div>
+
+        <!-- Q3: 节点操作 -->
+        <div class="quiz-item" data-question="3">
+            <div class="quiz-item-header">
+                <span class="difficulty easy">🟢 基础</span>
+                <span class="tag">节点操作</span>
+            </div>
+            
+            <div class="question">Q3: appendChild 和 insertBefore 的区别是什么？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> appendChild 添加到末尾，insertBefore 插入到指定节点之前
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 完全相同，只是名字不同
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> appendChild 插入到开头，insertBefore 插入到末尾
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> insertBefore 是 appendChild 的别名
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(3, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(3)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-3">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>节点插入方法详解：</h4>
+                    
+                    <p><strong>appendChild - 添加到末尾：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> parent <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'parent'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> newChild <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+
+<span class="comment">// 添加到parent的最后一个子节点</span>
+parent.<span class="function">appendChild</span><span class="bracket">(</span>newChild<span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>insertBefore - 插入到指定节点之前：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> parent <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'parent'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> newChild <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> refChild <span class="operator">=</span> parent.<span class="property">children</span><span class="bracket">[</span><span class="number">0</span><span class="bracket">]</span>;
+
+<span class="comment">// 插入到refChild之前</span>
+parent.<span class="function">insertBefore</span><span class="bracket">(</span>newChild, refChild<span class="bracket">)</span>;
+
+<span class="comment">// 如果refChild为null，等同于appendChild</span>
+parent.<span class="function">insertBefore</span><span class="bracket">(</span>newChild, <span class="keyword">null</span><span class="bracket">)</span>;  <span class="comment">// 添加到末尾</span></code></pre></div>
+                    
+                    <p><strong>实现 insertAfter：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// DOM没有提供insertAfter，可以自己实现</span>
+<span class="keyword">function</span> <span class="function">insertAfter</span><span class="bracket">(</span>newElement, targetElement<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> parent <span class="operator">=</span> targetElement.<span class="property">parentNode</span>;
+    
+    <span class="keyword">if</span> <span class="bracket">(</span>targetElement.<span class="property">nextSibling</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="comment">// 如果有下一个兄弟节点，插入到它之前</span>
+        parent.<span class="function">insertBefore</span><span class="bracket">(</span>newElement, targetElement.<span class="property">nextSibling</span><span class="bracket">)</span>;
+    <span class="bracket">}</span> <span class="keyword">else</span> <span class="bracket">{</span>
+        <span class="comment">// 否则直接添加到末尾</span>
+        parent.<span class="function">appendChild</span><span class="bracket">(</span>newElement<span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>现代API - before/after：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> target <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'target'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> newElement <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+
+<span class="comment">// 在target之前插入</span>
+target.<span class="function">before</span><span class="bracket">(</span>newElement<span class="bracket">)</span>;
+
+<span class="comment">// 在target之后插入</span>
+target.<span class="function">after</span><span class="bracket">(</span>newElement<span class="bracket">)</span>;
+
+<span class="comment">// 替换target</span>
+target.<span class="function">replaceWith</span><span class="bracket">(</span>newElement<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：节点插入</span>
+            </div>
+        </div>
+
+        <!-- Q4: innerHTML vs textContent -->
+        <div class="quiz-item" data-question="4">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">内容操作</span>
+            </div>
+            
+            <div class="question">Q4: innerHTML、innerText 和 textContent 的区别？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> innerHTML 解析HTML，textContent 纯文本不触发重排，innerText 考虑CSS样式
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 完全相同，可以互换使用
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> innerHTML 最安全，推荐使用
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> textContent 会解析HTML标签
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(4, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(4)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-4">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>三者区别详解：</h4>
+                    
+                    <table>
+                        <tr>
+                            <th>属性</th>
+                            <th>HTML解析</th>
+                            <th>性能</th>
+                            <th>CSS影响</th>
+                            <th>安全性</th>
+                        </tr>
+                        <tr>
+                            <td><strong>innerHTML</strong></td>
+                            <td>✅ 解析HTML</td>
+                            <td>慢（解析+渲染）</td>
+                            <td>❌</td>
+                            <td>⚠️ XSS风险</td>
+                        </tr>
+                        <tr>
+                            <td><strong>innerText</strong></td>
+                            <td>❌ 纯文本</td>
+                            <td>慢（触发重排）</td>
+                            <td>✅ 考虑样式</td>
+                            <td>✅ 安全</td>
+                        </tr>
+                        <tr>
+                            <td><strong>textContent</strong></td>
+                            <td>❌ 纯文本</td>
+                            <td>快</td>
+                            <td>❌ 不考虑样式</td>
+                            <td>✅ 安全</td>
+                        </tr>
+                    </table>
+                    
+                    <p><strong>代码示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;div id="test"&gt;</span>
+<span class="comment">  Hello &lt;span style="display:none"&gt;World&lt;/span&gt;</span>
+<span class="comment">  &lt;script&gt;alert('xss')&lt;/script&gt;</span>
+<span class="comment">&lt;/div&gt;</span>
+
+<span class="keyword">const</span> div <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'test'</span><span class="bracket">)</span>;
+
+<span class="comment">// innerHTML - 返回HTML字符串</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">innerHTML</span><span class="bracket">)</span>;
+<span class="comment">// "Hello &lt;span style="display:none"&gt;World&lt;/span&gt; &lt;script&gt;...&lt;/script&gt;"</span>
+
+<span class="comment">// innerText - 考虑CSS，隐藏元素不显示</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">innerText</span><span class="bracket">)</span>;
+<span class="comment">// "Hello" (World被display:none隐藏)</span>
+
+<span class="comment">// textContent - 不考虑CSS，所有文本</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">textContent</span><span class="bracket">)</span>;
+<span class="comment">// "Hello World alert('xss')" (包含所有文本内容)</span></code></pre></div>
+                    
+                    <p><strong>XSS风险示例：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> userInput <span class="operator">=</span> <span class="string">'&lt;img src=x onerror="alert(\'XSS\')"&gt;'</span>;
+
+<span class="comment">// ❌ 危险！会执行恶意代码</span>
+div.<span class="property">innerHTML</span> <span class="operator">=</span> userInput;
+
+<span class="comment">// ✅ 安全！当作纯文本处理</span>
+div.<span class="property">textContent</span> <span class="operator">=</span> userInput;
+
+<span class="comment">// ✅ 更安全的方式</span>
+<span class="keyword">const</span> text <span class="operator">=</span> document.<span class="function">createTextNode</span><span class="bracket">(</span>userInput<span class="bracket">)</span>;
+div.<span class="function">appendChild</span><span class="bracket">(</span>text<span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>性能对比：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// textContent 最快（不触发重排，不解析HTML）</span>
+element.<span class="property">textContent</span> <span class="operator">=</span> <span class="string">'text'</span>;
+
+<span class="comment">// innerText 较慢（触发重排，考虑CSS）</span>
+element.<span class="property">innerText</span> <span class="operator">=</span> <span class="string">'text'</span>;
+
+<span class="comment">// innerHTML 最慢（解析HTML，触发重排重绘）</span>
+element.<span class="property">innerHTML</span> <span class="operator">=</span> <span class="string">'&lt;span&gt;text&lt;/span&gt;'</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：内容操作</span>
+            </div>
+        </div>
+
+        <!-- Q5: DocumentFragment -->
+        <div class="quiz-item" data-question="5">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">性能优化</span>
+            </div>
+            
+            <div class="question">Q5: DocumentFragment 的作用和优势是什么？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 减少回流重绘，批量操作DOM时性能更好
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 用来创建Shadow DOM
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 只是普通div的别名
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 用于创建iframe
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(5, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(5)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-5">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>DocumentFragment 详解：</h4>
+                    
+                    <p><strong>特点：</strong></p>
+                    <ul>
+                        <li>轻量级文档对象，不属于主DOM树</li>
+                        <li>插入时只插入其子节点，自身不会插入</li>
+                        <li>减少回流重绘次数，提升性能</li>
+                        <li>不能使用innerHTML</li>
+                    </ul>
+                    
+                    <p><strong>❌ 低效方式（每次都触发重排）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">1000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> li <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'li'</span><span class="bracket">)</span>;
+    li.<span class="property">textContent</span> <span class="operator">=</span> <span class="string">`Item ${i}`</span>;
+    ul.<span class="function">appendChild</span><span class="bracket">(</span>li<span class="bracket">)</span>;  <span class="comment">// 触发1000次重排！</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>✅ 使用 DocumentFragment（只触发一次重排）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> fragment <span class="operator">=</span> document.<span class="function">createDocumentFragment</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">1000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> li <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'li'</span><span class="bracket">)</span>;
+    li.<span class="property">textContent</span> <span class="operator">=</span> <span class="string">`Item ${i}`</span>;
+    fragment.<span class="function">appendChild</span><span class="bracket">(</span>li<span class="bracket">)</span>;  <span class="comment">// 在内存中操作</span>
+<span class="bracket">}</span>
+
+ul.<span class="function">appendChild</span><span class="bracket">(</span>fragment<span class="bracket">)</span>;  <span class="comment">// 只触发一次重排！✅</span></code></pre></div>
+                    
+                    <p><strong>与template结合使用：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;template id="item-template"&gt;</span>
+<span class="comment">  &lt;li class="item"&gt;</span>
+<span class="comment">    &lt;span class="title"&gt;&lt;/span&gt;</span>
+<span class="comment">  &lt;/li&gt;</span>
+<span class="comment">&lt;/template&gt;</span>
+
+<span class="keyword">const</span> template <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'item-template'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> fragment <span class="operator">=</span> document.<span class="function">createDocumentFragment</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+items.<span class="function">forEach</span><span class="bracket">(</span>item <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="comment">// 克隆模板</span>
+    <span class="keyword">const</span> clone <span class="operator">=</span> template.<span class="property">content</span>.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+    clone.<span class="function">querySelector</span><span class="bracket">(</span><span class="string">'.title'</span><span class="bracket">)</span>.<span class="property">textContent</span> <span class="operator">=</span> item.<span class="property">title</span>;
+    fragment.<span class="function">appendChild</span><span class="bracket">(</span>clone<span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+ul.<span class="function">appendChild</span><span class="bracket">(</span>fragment<span class="bracket">)</span>;</code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <!-- Q6: 属性操作 -->
+        <div class="quiz-item" data-question="6">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">属性操作</span>
+            </div>
+            
+            <div class="question">Q6: getAttribute/setAttribute 和直接访问属性的区别？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> getAttribute返回字符串，直接访问会类型转换；自定义属性必须用getAttribute
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 完全相同，没有任何区别
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> getAttribute更慢，应该避免使用
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 直接访问只能用于id属性
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(6, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(6)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-6">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>属性操作区别详解：</h4>
+                    
+                    <p><strong>1. 返回值类型不同：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;input type="checkbox" checked&gt;</span>
+
+<span class="keyword">const</span> input <span class="operator">=</span> document.<span class="function">querySelector</span><span class="bracket">(</span><span class="string">'input'</span><span class="bracket">)</span>;
+
+<span class="comment">// getAttribute - 返回字符串</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>input.<span class="function">getAttribute</span><span class="bracket">(</span><span class="string">'checked'</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// "" (空字符串)</span>
+
+<span class="comment">// 直接访问 - 返回布尔值</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>input.<span class="property">checked</span><span class="bracket">)</span>;  <span class="comment">// true</span></code></pre></div>
+                    
+                    <p><strong>2. 自定义属性（data-*）：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;div id="box" data-user-id="123" data-role="admin"&gt;&lt;/div&gt;</span>
+
+<span class="keyword">const</span> box <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'box'</span><span class="bracket">)</span>;
+
+<span class="comment">// 方式1: getAttribute</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>box.<span class="function">getAttribute</span><span class="bracket">(</span><span class="string">'data-user-id'</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// "123"</span>
+
+<span class="comment">// 方式2: dataset (推荐)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>box.<span class="property">dataset</span>.<span class="property">userId</span><span class="bracket">)</span>;  <span class="comment">// "123" (驼峰命名)</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>box.<span class="property">dataset</span>.<span class="property">role</span><span class="bracket">)</span>;     <span class="comment">// "admin"</span>
+
+<span class="comment">// 设置dataset</span>
+box.<span class="property">dataset</span>.<span class="property">status</span> <span class="operator">=</span> <span class="string">'active'</span>;  <span class="comment">// &lt;div data-status="active"&gt;</span></code></pre></div>
+                    
+                    <p><strong>3. href属性特殊情况：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;a id="link" href="/page"&gt;Link&lt;/a&gt;</span>
+
+<span class="keyword">const</span> link <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'link'</span><span class="bracket">)</span>;
+
+<span class="comment">// getAttribute - 返回HTML属性值</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>link.<span class="function">getAttribute</span><span class="bracket">(</span><span class="string">'href'</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// "/page"</span>
+
+<span class="comment">// 直接访问 - 返回完整URL</span>
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>link.<span class="property">href</span><span class="bracket">)</span>;  <span class="comment">// "http://example.com/page"</span></code></pre></div>
+                    
+                    <p><strong>4. class属性：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> div <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'div'</span><span class="bracket">)</span>;
+
+<span class="comment">// getAttribute/setAttribute</span>
+div.<span class="function">setAttribute</span><span class="bracket">(</span><span class="string">'class'</span>, <span class="string">'foo bar'</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="function">getAttribute</span><span class="bracket">(</span><span class="string">'class'</span><span class="bracket">)</span><span class="bracket">)</span>;  <span class="comment">// "foo bar"</span>
+
+<span class="comment">// className属性</span>
+div.<span class="property">className</span> <span class="operator">=</span> <span class="string">'foo bar'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">className</span><span class="bracket">)</span>;  <span class="comment">// "foo bar"</span>
+
+<span class="comment">// classList API (推荐)</span>
+div.<span class="property">classList</span>.<span class="function">add</span><span class="bracket">(</span><span class="string">'baz'</span><span class="bracket">)</span>;
+div.<span class="property">classList</span>.<span class="function">remove</span><span class="bracket">(</span><span class="string">'foo'</span><span class="bracket">)</span>;
+div.<span class="property">classList</span>.<span class="function">toggle</span><span class="bracket">(</span><span class="string">'active'</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>选择建议：</strong></p>
+                    <ul>
+                        <li><strong>标准属性</strong>：直接访问（如 <code>input.value</code>）</li>
+                        <li><strong>自定义属性</strong>：使用 <code>dataset</code></li>
+                        <li><strong>需要原始值</strong>：使用 <code>getAttribute</code></li>
+                        <li><strong>class操作</strong>：使用 <code>classList</code></li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：属性操作</span>
+            </div>
+        </div>
+
+        <!-- Q7: 回流重绘 -->
+        <div class="quiz-item" data-question="7">
+            <div class="quiz-item-header">
+                <span class="difficulty medium">🟡 进阶</span>
+                <span class="tag">性能优化</span>
+            </div>
+            
+            <div class="question">Q7: 以下哪些操作会触发回流（reflow）？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 修改元素尺寸、位置、显示状态，读取offsetTop等属性
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 只有修改color会触发回流
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 修改textContent不会触发回流
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 回流和重绘是相同的概念
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(7, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(7)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-7">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>回流（Reflow）与重绘（Repaint）：</h4>
+                    
+                    <p><strong>回流：重新计算元素的几何属性</strong></p>
+                    <p>触发场景：</p>
+                    <ul>
+                        <li>添加/删除DOM元素</li>
+                        <li>元素尺寸改变（width, height, padding, border, margin）</li>
+                        <li>内容改变（文本或图片尺寸改变）</li>
+                        <li>浏览器窗口resize</li>
+                        <li>获取某些属性（offsetTop, scrollTop, clientWidth等）</li>
+                    </ul>
+                    
+                    <p><strong>重绘：重新绘制元素外观</strong></p>
+                    <p>触发场景：</p>
+                    <ul>
+                        <li>color, background, visibility改变</li>
+                        <li>不影响布局的样式改变</li>
+                    </ul>
+                    
+                    <p><strong>⚠️ 注意：回流必定引起重绘，但重绘不一定引起回流！</strong></p>
+                    
+                    <p><strong>会触发回流的属性读取：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 糟糕的代码 - 多次触发回流</span>
+<span class="keyword">const</span> div <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'box'</span><span class="bracket">)</span>;
+
+div.<span class="property">style</span>.<span class="property">width</span> <span class="operator">=</span> <span class="string">'100px'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">offsetWidth</span><span class="bracket">)</span>;  <span class="comment">// 触发回流</span>
+
+div.<span class="property">style</span>.<span class="property">height</span> <span class="operator">=</span> <span class="string">'100px'</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>div.<span class="property">offsetHeight</span><span class="bracket">)</span>;  <span class="comment">// 又触发回流</span></code></pre></div>
+                    
+                    <p><strong>优化方案1：批量修改样式</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ✅ 方式1: 使用cssText</span>
+div.<span class="property">style</span>.<span class="property">cssText</span> <span class="operator">=</span> <span class="string">'width: 100px; height: 100px;'</span>;
+
+<span class="comment">// ✅ 方式2: 修改class</span>
+div.<span class="property">classList</span>.<span class="function">add</span><span class="bracket">(</span><span class="string">'box-large'</span><span class="bracket">)</span>;
+
+<span class="comment">// ✅ 方式3: 缓存属性值</span>
+<span class="keyword">const</span> width <span class="operator">=</span> div.<span class="property">offsetWidth</span>;  <span class="comment">// 只读一次</span>
+<span class="keyword">const</span> height <span class="operator">=</span> div.<span class="property">offsetHeight</span>;
+<span class="comment">// 使用缓存的值进行计算</span></code></pre></div>
+                    
+                    <p><strong>优化方案2：文档碎片或display:none</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ✅ 离线操作：先隐藏，修改完再显示</span>
+<span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+
+ul.<span class="property">style</span>.<span class="property">display</span> <span class="operator">=</span> <span class="string">'none'</span>;  <span class="comment">// 脱离文档流</span>
+
+<span class="comment">// 进行大量DOM操作...</span>
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">1000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> li <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'li'</span><span class="bracket">)</span>;
+    ul.<span class="function">appendChild</span><span class="bracket">(</span>li<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+ul.<span class="property">style</span>.<span class="property">display</span> <span class="operator">=</span> <span class="string">'block'</span>;  <span class="comment">// 一次性回流</span></code></pre></div>
+                    
+                    <p><strong>优化方案3：使用transform替代top/left</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// ❌ 触发回流</span>
+div.<span class="property">style</span>.<span class="property">left</span> <span class="operator">=</span> <span class="string">'100px'</span>;
+
+<span class="comment">// ✅ 只触发重绘（GPU加速）</span>
+div.<span class="property">style</span>.<span class="property">transform</span> <span class="operator">=</span> <span class="string">'translateX(100px)'</span>;</code></pre></div>
+                    
+                    <p><strong>触发强制同步布局的属性：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 这些属性会强制浏览器立即计算布局</span>
+offsetTop, offsetLeft, offsetWidth, offsetHeight
+scrollTop, scrollLeft, scrollWidth, scrollHeight
+clientTop, clientLeft, clientWidth, clientHeight
+getComputedStyle<span class="bracket">(</span><span class="bracket">)</span>
+getBoundingClientRect<span class="bracket">(</span><span class="bracket">)</span></code></pre></div>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <!-- Q8: MutationObserver -->
+        <div class="quiz-item" data-question="8">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">DOM监听</span>
+            </div>
+            
+            <div class="question">Q8: MutationObserver 的作用是什么？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 监听DOM树的变化（属性、子节点、文本等）
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 监听鼠标事件
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 监听网络请求
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 监听页面滚动
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(8, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(8)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-8">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>MutationObserver 详解：</h4>
+                    
+                    <p><strong>用途：</strong>异步监听DOM树的变化</p>
+                    <p><strong>优势：</strong>相比旧的MutationEvents，性能更好，异步执行</p>
+                    
+                    <p><strong>基本使用：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 创建观察器</span>
+<span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">MutationObserver</span><span class="bracket">(</span><span class="bracket">(</span>mutations<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    mutations.<span class="function">forEach</span><span class="bracket">(</span>mutation <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'变化类型：'</span>, mutation.<span class="property">type</span><span class="bracket">)</span>;
+        <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'目标元素：'</span>, mutation.<span class="property">target</span><span class="bracket">)</span>;
+        
+        <span class="keyword">if</span> <span class="bracket">(</span>mutation.<span class="property">type</span> <span class="operator">===</span> <span class="string">'childList'</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'添加的节点：'</span>, mutation.<span class="property">addedNodes</span><span class="bracket">)</span>;
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'删除的节点：'</span>, mutation.<span class="property">removedNodes</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 配置并开始观察</span>
+<span class="keyword">const</span> target <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'container'</span><span class="bracket">)</span>;
+observer.<span class="function">observe</span><span class="bracket">(</span>target, <span class="bracket">{</span>
+    childList<span class="operator">:</span> <span class="keyword">true</span>,       <span class="comment">// 监听子节点变化</span>
+    attributes<span class="operator">:</span> <span class="keyword">true</span>,      <span class="comment">// 监听属性变化</span>
+    characterData<span class="operator">:</span> <span class="keyword">true</span>,  <span class="comment">// 监听文本内容变化</span>
+    subtree<span class="operator">:</span> <span class="keyword">true</span>,         <span class="comment">// 监听所有后代节点</span>
+    attributeOldValue<span class="operator">:</span> <span class="keyword">true</span>,  <span class="comment">// 记录属性旧值</span>
+    characterDataOldValue<span class="operator">:</span> <span class="keyword">true</span>  <span class="comment">// 记录文本旧值</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+<span class="comment">// 停止观察</span>
+observer.<span class="function">disconnect</span><span class="bracket">(</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>实战示例1：监听DOM变化</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">MutationObserver</span><span class="bracket">(</span><span class="bracket">(</span>mutations<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    <span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">const</span> mutation <span class="keyword">of</span> mutations<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>mutation.<span class="property">type</span> <span class="operator">===</span> <span class="string">'childList'</span><span class="bracket">)</span> <span class="bracket">{</span>
+            mutation.<span class="property">addedNodes</span>.<span class="function">forEach</span><span class="bracket">(</span>node <span class="operator">=></span> <span class="bracket">{</span>
+                <span class="keyword">if</span> <span class="bracket">(</span>node.<span class="property">nodeType</span> <span class="operator">===</span> <span class="number">1</span><span class="bracket">)</span> <span class="bracket">{</span>  <span class="comment">// 元素节点</span>
+                    <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'新增元素：'</span>, node<span class="bracket">)</span>;
+                <span class="bracket">}</span>
+            <span class="bracket">}</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span>
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+observer.<span class="function">observe</span><span class="bracket">(</span>document.<span class="property">body</span>, <span class="bracket">{</span> childList<span class="operator">:</span> <span class="keyword">true</span>, subtree<span class="operator">:</span> <span class="keyword">true</span> <span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>实战示例2：监听特定属性</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> observer <span class="operator">=</span> <span class="keyword">new</span> <span class="function">MutationObserver</span><span class="bracket">(</span><span class="bracket">(</span>mutations<span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+    mutations.<span class="function">forEach</span><span class="bracket">(</span>mutation <span class="operator">=></span> <span class="bracket">{</span>
+        <span class="keyword">if</span> <span class="bracket">(</span>mutation.<span class="property">type</span> <span class="operator">===</span> <span class="string">'attributes'</span><span class="bracket">)</span> <span class="bracket">{</span>
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">`属性 ${mutation.<span class="property">attributeName</span>} 改变了`</span><span class="bracket">)</span>;
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'旧值：'</span>, mutation.<span class="property">oldValue</span><span class="bracket">)</span>;
+            <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'新值：'</span>, mutation.<span class="property">target</span>.<span class="function">getAttribute</span><span class="bracket">(</span>mutation.<span class="property">attributeName</span><span class="bracket">)</span><span class="bracket">)</span>;
+        <span class="bracket">}</span>
+    <span class="bracket">}</span><span class="bracket">)</span>;
+<span class="bracket">}</span><span class="bracket">)</span>;
+
+observer.<span class="function">observe</span><span class="bracket">(</span>element, <span class="bracket">{</span>
+    attributes<span class="operator">:</span> <span class="keyword">true</span>,
+    attributeOldValue<span class="operator">:</span> <span class="keyword">true</span>,
+    attributeFilter<span class="operator">:</span> <span class="bracket">[</span><span class="string">'class'</span>, <span class="string">'style'</span><span class="bracket">]</span>  <span class="comment">// 只监听特定属性</span>
+<span class="bracket">}</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>应用场景：</strong></p>
+                    <ul>
+                        <li>监听第三方库对DOM的修改</li>
+                        <li>实现虚拟滚动的可见性检测</li>
+                        <li>响应式布局调整</li>
+                        <li>表单验证和自动保存</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：DOM监听</span>
+            </div>
+        </div>
+
+        <!-- Q9: cloneNode -->
+        <div class="quiz-item" data-question="9">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">节点克隆</span>
+            </div>
+            
+            <div class="question">Q9: cloneNode(true) 和 cloneNode(false) 的区别？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> true深拷贝（包含后代），false浅拷贝（只拷贝自身），都不拷贝事件监听器
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> true拷贝事件，false不拷贝
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 没有任何区别
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> true拷贝样式，false不拷贝
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(9, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(9)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-9">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>cloneNode 详解：</h4>
+                    
+                    <p><strong>语法：</strong><code>node.cloneNode(deep)</code></p>
+                    <ul>
+                        <li><code>deep = true</code>：深拷贝，复制节点及其所有后代</li>
+                        <li><code>deep = false</code>：浅拷贝，只复制节点自身</li>
+                    </ul>
+                    
+                    <p><strong>示例对比：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;div id="parent"&gt;</span>
+<span class="comment">  &lt;p&gt;Child 1&lt;/p&gt;</span>
+<span class="comment">  &lt;p&gt;Child 2&lt;/p&gt;</span>
+<span class="comment">&lt;/div&gt;</span>
+
+<span class="keyword">const</span> parent <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'parent'</span><span class="bracket">)</span>;
+
+<span class="comment">// 浅拷贝 - 只复制div，不复制子元素</span>
+<span class="keyword">const</span> shallowClone <span class="operator">=</span> parent.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">false</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>shallowClone.<span class="property">children</span>.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 0</span>
+
+<span class="comment">// 深拷贝 - 复制div及所有子元素</span>
+<span class="keyword">const</span> deepClone <span class="operator">=</span> parent.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+<span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span>deepClone.<span class="property">children</span>.<span class="property">length</span><span class="bracket">)</span>;  <span class="comment">// 2</span></code></pre></div>
+                    
+                    <p><strong>⚠️ 重要注意事项：</strong></p>
+                    
+                    <p><strong>1. 事件监听器不会被复制：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> button <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'btn'</span><span class="bracket">)</span>;
+button.<span class="function">addEventListener</span><span class="bracket">(</span><span class="string">'click'</span>, <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="property">console</span>.<span class="function">log</span><span class="bracket">(</span><span class="string">'clicked'</span><span class="bracket">)</span><span class="bracket">)</span>;
+
+<span class="keyword">const</span> clone <span class="operator">=</span> button.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+<span class="comment">// clone没有click事件监听器！需要重新添加</span></code></pre></div>
+                    
+                    <p><strong>2. ID属性会被复制（需要注意）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> original <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'unique'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> clone <span class="operator">=</span> original.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+
+<span class="comment">// ⚠️ clone也有id="unique"，造成ID重复！</span>
+<span class="comment">// 应该移除或修改ID</span>
+clone.<span class="function">removeAttribute</span><span class="bracket">(</span><span class="string">'id'</span><span class="bracket">)</span>;
+<span class="comment">// 或</span>
+clone.<span class="property">id</span> <span class="operator">=</span> <span class="string">'unique-clone'</span>;</code></pre></div>
+                    
+                    <p><strong>3. 内联事件处理器会被复制：</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">&lt;button onclick="alert('hello')"&gt;Click&lt;/button&gt;</span>
+
+<span class="keyword">const</span> button <span class="operator">=</span> document.<span class="function">querySelector</span><span class="bracket">(</span><span class="string">'button'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> clone <span class="operator">=</span> button.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+<span class="comment">// onclick属性会被复制，点击clone也会触发alert ✅</span></code></pre></div>
+                    
+                    <p><strong>完整克隆（包含事件）：</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">function</span> <span class="function">deepCloneWithEvents</span><span class="bracket">(</span>node<span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> clone <span class="operator">=</span> node.<span class="function">cloneNode</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;
+    
+    <span class="comment">// 获取原始节点的所有事件（需要自己维护事件映射）</span>
+    <span class="comment">// 或使用库如jQuery的clone(true)</span>
+    
+    <span class="keyword">return</span> clone;
+<span class="bracket">}</span>
+
+<span class="comment">// jQuery方式（如果使用jQuery）</span>
+<span class="keyword">const</span> clone <span class="operator">=</span> $<span class="bracket">(</span><span class="string">'#original'</span><span class="bracket">)</span>.<span class="function">clone</span><span class="bracket">(</span><span class="keyword">true</span><span class="bracket">)</span>;  <span class="comment">// 包含事件</span></code></pre></div>
+                    
+                    <p><strong>使用场景：</strong></p>
+                    <ul>
+                        <li>复制模板节点创建新元素</li>
+                        <li>实现拖拽副本</li>
+                        <li>表单行的动态添加</li>
+                    </ul>
+                </div>
+                <span class="source-tag">📌 来源：节点克隆</span>
+            </div>
+        </div>
+
+        <!-- Q10: 综合应用 -->
+        <div class="quiz-item" data-question="10">
+            <div class="quiz-item-header">
+                <span class="difficulty hard">🔴 困难</span>
+                <span class="tag">综合应用</span>
+            </div>
+            
+            <div class="question">Q10: 如何高效地将10000个li添加到ul中？</div>
+            
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <strong>A.</strong> 使用DocumentFragment或innerHTML批量添加
+                </div>
+                <div class="option" data-answer="B">
+                    <strong>B.</strong> 使用for循环直接appendChild
+                </div>
+                <div class="option" data-answer="C">
+                    <strong>C.</strong> 每添加一个就读取一次offsetHeight
+                </div>
+                <div class="option" data-answer="D">
+                    <strong>D.</strong> 使用setTimeout逐个添加
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="checkAnswer(10, 'A')">提交答案</button>
+                <button class="btn btn-secondary" onclick="showAnswer(10)">查看解析</button>
+            </div>
+            
+            <div class="answer-section" id="answer-10">
+                <div class="answer-label">✅ 正确答案：A</div>
+                <div class="explanation">
+                    <h4>大量DOM操作优化方案：</h4>
+                    
+                    <p><strong>❌ 方案1：直接appendChild（最慢）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> li <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'li'</span><span class="bracket">)</span>;
+    li.<span class="property">textContent</span> <span class="operator">=</span> <span class="string">`Item ${i}`</span>;
+    ul.<span class="function">appendChild</span><span class="bracket">(</span>li<span class="bracket">)</span>;  <span class="comment">// 触发10000次重排！</span>
+<span class="bracket">}</span></code></pre></div>
+                    
+                    <p><strong>✅ 方案2：DocumentFragment（推荐）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+<span class="keyword">const</span> fragment <span class="operator">=</span> document.<span class="function">createDocumentFragment</span><span class="bracket">(</span><span class="bracket">)</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    <span class="keyword">const</span> li <span class="operator">=</span> document.<span class="function">createElement</span><span class="bracket">(</span><span class="string">'li'</span><span class="bracket">)</span>;
+    li.<span class="property">textContent</span> <span class="operator">=</span> <span class="string">`Item ${i}`</span>;
+    fragment.<span class="function">appendChild</span><span class="bracket">(</span>li<span class="bracket">)</span>;
+<span class="bracket">}</span>
+
+ul.<span class="function">appendChild</span><span class="bracket">(</span>fragment<span class="bracket">)</span>;  <span class="comment">// 只触发一次重排！✅</span></code></pre></div>
+                    
+                    <p><strong>✅ 方案3：innerHTML（性能好但有XSS风险）</strong></p>
+                    <div class="code-question"><pre><code><span class="keyword">const</span> ul <span class="operator">=</span> document.<span class="function">getElementById</span><span class="bracket">(</span><span class="string">'list'</span><span class="bracket">)</span>;
+<span class="keyword">let</span> html <span class="operator">=</span> <span class="string">''</span>;
+
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    html <span class="operator">+=</span> <span class="string">`&lt;li&gt;Item ${i}&lt;/li&gt;`</span>;
+<span class="bracket">}</span>
+
+ul.<span class="property">innerHTML</span> <span class="operator">=</span> html;  <span class="comment">// 一次性渲染</span>
+
+<span class="comment">// 或使用数组join（更快）</span>
+<span class="keyword">const</span> items <span class="operator">=</span> <span class="bracket">[</span><span class="bracket">]</span>;
+<span class="keyword">for</span> <span class="bracket">(</span><span class="keyword">let</span> i <span class="operator">=</span> <span class="number">0</span>; i <span class="operator">&lt;</span> <span class="number">10000</span>; i<span class="operator">++</span><span class="bracket">)</span> <span class="bracket">{</span>
+    items.<span class="function">push</span><span class="bracket">(</span><span class="string">`&lt;li&gt;Item ${i}&lt;/li&gt;`</span><span class="bracket">)</span>;
+<span class="bracket">}</span>
+ul.<span class="property">innerHTML</span> <span class="operator">=</span> items.<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>✅ 方案4：虚拟滚动（最优）</strong></p>
+                    <div class="code-question"><pre><code><span class="comment">// 只渲染可见区域的元素</span>
+<span class="keyword">class</span> <span class="function">VirtualList</span> <span class="bracket">{</span>
+    <span class="function">constructor</span><span class="bracket">(</span>container, items, itemHeight<span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="property">container</span> <span class="operator">=</span> container;
+        <span class="keyword">this</span>.<span class="property">items</span> <span class="operator">=</span> items;
+        <span class="keyword">this</span>.<span class="property">itemHeight</span> <span class="operator">=</span> itemHeight;
+        <span class="keyword">this</span>.<span class="property">visibleCount</span> <span class="operator">=</span> <span class="property">Math</span>.<span class="function">ceil</span><span class="bracket">(</span>container.<span class="property">clientHeight</span> <span class="operator">/</span> itemHeight<span class="bracket">)</span>;
+        
+        <span class="keyword">this</span>.<span class="function">render</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="keyword">this</span>.<span class="function">bindScroll</span><span class="bracket">(</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">render</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">const</span> scrollTop <span class="operator">=</span> <span class="keyword">this</span>.<span class="property">container</span>.<span class="property">scrollTop</span>;
+        <span class="keyword">const</span> startIndex <span class="operator">=</span> <span class="property">Math</span>.<span class="function">floor</span><span class="bracket">(</span>scrollTop <span class="operator">/</span> <span class="keyword">this</span>.<span class="property">itemHeight</span><span class="bracket">)</span>;
+        <span class="keyword">const</span> endIndex <span class="operator">=</span> startIndex <span class="operator">+</span> <span class="keyword">this</span>.<span class="property">visibleCount</span>;
+        
+        <span class="comment">// 只渲染可见部分</span>
+        <span class="keyword">const</span> visibleItems <span class="operator">=</span> <span class="keyword">this</span>.<span class="property">items</span>.<span class="function">slice</span><span class="bracket">(</span>startIndex, endIndex<span class="bracket">)</span>;
+        
+        <span class="keyword">this</span>.<span class="property">container</span>.<span class="property">innerHTML</span> <span class="operator">=</span> visibleItems
+            .<span class="function">map</span><span class="bracket">(</span><span class="bracket">(</span>item, index<span class="bracket">)</span> <span class="operator">=></span> 
+                <span class="string">`&lt;div style="height: ${<span class="keyword">this</span>.<span class="property">itemHeight</span>}px"&gt;${item}&lt;/div&gt;`</span>
+            <span class="bracket">)</span>
+            .<span class="function">join</span><span class="bracket">(</span><span class="string">''</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+    
+    <span class="function">bindScroll</span><span class="bracket">(</span><span class="bracket">)</span> <span class="bracket">{</span>
+        <span class="keyword">this</span>.<span class="property">container</span>.<span class="function">addEventListener</span><span class="bracket">(</span><span class="string">'scroll'</span>, <span class="bracket">(</span><span class="bracket">)</span> <span class="operator">=></span> <span class="bracket">{</span>
+            <span class="keyword">this</span>.<span class="function">render</span><span class="bracket">(</span><span class="bracket">)</span>;
+        <span class="bracket">}</span><span class="bracket">)</span>;
+    <span class="bracket">}</span>
+<span class="bracket">}</span>
+
+<span class="comment">// 使用</span>
+<span class="keyword">const</span> items <span class="operator">=</span> <span class="property">Array</span>.<span class="function">from</span><span class="bracket">(</span><span class="bracket">{</span> length<span class="operator">:</span> <span class="number">10000</span> <span class="bracket">}</span>, <span class="bracket">(</span>_, i<span class="bracket">)</span> <span class="operator">=></span> <span class="string">`Item ${i}`</span><span class="bracket">)</span>;
+<span class="keyword">new</span> <span class="function">VirtualList</span><span class="bracket">(</span>container, items, <span class="number">30</span><span class="bracket">)</span>;</code></pre></div>
+                    
+                    <p><strong>性能对比（10000个元素）：</strong></p>
+                    <table>
+                        <tr>
+                            <th>方案</th>
+                            <th>耗时</th>
+                            <th>内存占用</th>
+                            <th>推荐度</th>
+                        </tr>
+                        <tr>
+                            <td>直接appendChild</td>
+                            <td>~1000ms</td>
+                            <td>高</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td>DocumentFragment</td>
+                            <td>~50ms</td>
+                            <td>高</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td>innerHTML</td>
+                            <td>~30ms</td>
+                            <td>高</td>
+                            <td>⚠️</td>
+                        </tr>
+                        <tr>
+                            <td>虚拟滚动</td>
+                            <td>~5ms</td>
+                            <td>低</td>
+                            <td>✅✅</td>
+                        </tr>
+                    </table>
+                </div>
+                <span class="source-tag">📌 来源：性能优化</span>
+            </div>
+        </div>
+
+        <div class="nav-links" style="margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="09-event-loop.html" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #2d3748; text-decoration: none; border-radius: 6px;">⬅️ 上一节：事件循环</a>
+            <a href="../index.html" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">📋 面试题导航</a>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const parent = this.closest('.quiz-item');
+                parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        function checkAnswer(questionNum, correctAnswer) {
+            const quizItem = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = quizItem.querySelector('.option.selected');
+            
+            if (!selectedOption) {
+                alert('请先选择一个答案！');
+                return;
+            }
+            
+            const userAnswer = selectedOption.getAttribute('data-answer');
+            const allOptions = quizItem.querySelectorAll('.option');
+            
+            allOptions.forEach(option => {
+                const answer = option.getAttribute('data-answer');
+                if (answer === correctAnswer) {
+                    option.classList.add('correct');
+                } else if (answer === userAnswer) {
+                    option.classList.add('wrong');
+                }
+            });
+            
+            setTimeout(() => showAnswer(questionNum), 500);
+        }
+
+        function showAnswer(questionNum) {
+            const answerSection = document.getElementById(`answer-${questionNum}`);
+            answerSection.classList.add('show');
+            answerSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>

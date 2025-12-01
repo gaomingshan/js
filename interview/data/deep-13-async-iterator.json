@@ -1,0 +1,212 @@
+{
+  "config": {
+    "title": "异步迭代器",
+    "icon": "⏳",
+    "description": "理解异步迭代器与for await...of的使用场景",
+    "primaryColor": "#06b6d4",
+    "bgGradient": "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)"
+  },
+  "questions": [
+    {
+      "difficulty": "easy",
+      "tags": ["异步迭代器基础"],
+      "question": "什么是异步迭代器？与普通迭代器有何区别？",
+      "options": [
+        "实现[Symbol.asyncIterator]，next()返回Promise<{value,done}>；用for await...of遍历",
+        "与普通迭代器完全相同",
+        "只能在async函数中使用",
+        "必须返回数组"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. 基本实现",
+            "code": "const asyncIterable = {\n  async *[Symbol.asyncIterator]() {\n    yield await Promise.resolve(1);\n    yield await Promise.resolve(2);\n    yield await Promise.resolve(3);\n  }\n};\n\n// 使用for await...of\nasync function consume() {\n  for await (const value of asyncIterable) {\n    console.log(value); // 1, 2, 3\n  }\n}\n\nconsume();"
+          },
+          {
+            "title": "2. 手动实现",
+            "code": "const asyncIterable = {\n  [Symbol.asyncIterator]() {\n    let i = 0;\n    return {\n      async next() {\n        if (i < 3) {\n          await new Promise(r => setTimeout(r, 1000));\n          return { value: i++, done: false };\n        }\n        return { done: true };\n      }\n    };\n  }\n};"
+          }
+        ]
+      },
+      "source": "异步迭代器"
+    },
+    {
+      "difficulty": "easy",
+      "tags": ["async生成器"],
+      "question": "async function*异步生成器函数有什么特点？",
+      "options": [
+        "可以yield Promise或await表达式，自动实现异步迭代器",
+        "与普通生成器相同",
+        "不能使用await",
+        "必须返回数组"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "异步生成器函数：",
+        "code": "async function* asyncGenerator() {\n  // 可以await\n  const data = await fetch('/api/data');\n  yield data;\n  \n  // 可以yield Promise\n  yield fetch('/api/more');\n  \n  // 延迟yield\n  await new Promise(r => setTimeout(r, 1000));\n  yield 'delayed';\n}\n\n// 使用\nasync function main() {\n  for await (const item of asyncGenerator()) {\n    console.log(item);\n  }\n}\n\nmain();\n\n// 或手动调用\nconst gen = asyncGenerator();\ngen.next().then(result => console.log(result));\n// {value: data, done: false}"
+      },
+      "source": "异步生成器"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["for await...of"],
+      "question": "for await...of循环的执行机制是什么？",
+      "options": [
+        "自动await每次next()返回的Promise，然后获取value，直到done为true",
+        "与for...of完全相同",
+        "不会await",
+        "只能遍历数组"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. for await...of工作原理",
+            "code": "// for await...of\nfor await (const item of asyncIterable) {\n  console.log(item);\n}\n\n// 等价于\nconst iterator = asyncIterable[Symbol.asyncIterator]();\nlet result = await iterator.next();\nwhile (!result.done) {\n  const item = result.value;\n  console.log(item);\n  result = await iterator.next();\n}"
+          },
+          {
+            "title": "2. 处理Promise数组",
+            "code": "const promises = [\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3)\n];\n\n// 串行处理\nfor await (const value of promises) {\n  console.log(value); // 1, 2, 3\n}\n\n// 注意：数组默认没有异步迭代器\n// 但for await会自动将普通迭代器的值await"
+          }
+        ]
+      },
+      "source": "for await...of"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["异步数据流"],
+      "question": "如何使用异步迭代器处理流式数据（如Node.js Stream）？",
+      "options": [
+        "Stream实现了异步迭代器，可直接用for await...of逐块处理",
+        "必须转换为数组",
+        "Stream不支持",
+        "只能用事件监听"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "流式数据处理：",
+        "code": "// Node.js文件读取流\nimport { createReadStream } from 'fs';\n\nasync function processFile(filePath) {\n  const stream = createReadStream(filePath, { encoding: 'utf-8' });\n  \n  for await (const chunk of stream) {\n    console.log('处理数据块:', chunk.length);\n    // 逐块处理，内存占用小\n  }\n  \n  console.log('文件处理完成');\n}\n\n// HTTP响应流\nasync function fetchStream(url) {\n  const response = await fetch(url);\n  const reader = response.body.getReader();\n  \n  const asyncIterable = {\n    async *[Symbol.asyncIterator]() {\n      while (true) {\n        const { done, value } = await reader.read();\n        if (done) break;\n        yield value;\n      }\n    }\n  };\n  \n  for await (const chunk of asyncIterable) {\n    console.log('收到数据:', chunk.length);\n  }\n}"
+      },
+      "source": "异步数据流"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["分页数据"],
+      "question": "如何用异步迭代器实现自动分页数据获取？",
+      "options": [
+        "yield每页数据，自动请求下一页，直到没有更多数据",
+        "必须手动请求每一页",
+        "无法实现",
+        "只能一次性加载"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "分页数据迭代器：",
+        "code": "async function* fetchPaginatedData(url) {\n  let page = 1;\n  let hasMore = true;\n  \n  while (hasMore) {\n    const response = await fetch(`${url}?page=${page}`);\n    const data = await response.json();\n    \n    // yield当前页数据\n    for (const item of data.items) {\n      yield item;\n    }\n    \n    hasMore = data.hasMore;\n    page++;\n  }\n}\n\n// 使用\nasync function loadAllUsers() {\n  for await (const user of fetchPaginatedData('/api/users')) {\n    console.log(user);\n    // 自动获取所有页的数据\n  }\n}\n\n// 或只取前N个\nasync function loadLimitedUsers(limit) {\n  let count = 0;\n  for await (const user of fetchPaginatedData('/api/users')) {\n    console.log(user);\n    if (++count >= limit) break;\n  }\n}"
+      },
+      "source": "分页数据"
+    },
+    {
+      "difficulty": "medium",
+      "tags": ["错误处理"],
+      "question": "异步迭代器中如何处理错误？for await...of如何捕获异常？",
+      "options": [
+        "使用try/catch包裹for await...of；生成器内部也可try/catch",
+        "无法捕获错误",
+        "自动忽略错误",
+        "必须用.catch()"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "sections": [
+          {
+            "title": "1. 外部错误处理",
+            "code": "async function* mayFail() {\n  yield 1;\n  throw new Error('出错了');\n  yield 2; // 不会执行\n}\n\nasync function consume() {\n  try {\n    for await (const value of mayFail()) {\n      console.log(value);\n    }\n  } catch (error) {\n    console.error('捕获错误:', error.message);\n  }\n}\n\nconsume();\n// 输出: 1\n// 输出: 捕获错误: 出错了"
+          },
+          {
+            "title": "2. 内部错误处理",
+            "code": "async function* robustFetch(urls) {\n  for (const url of urls) {\n    try {\n      const response = await fetch(url);\n      const data = await response.json();\n      yield data;\n    } catch (error) {\n      console.error(`请求${url}失败:`, error);\n      yield null; // 继续处理其他URL\n    }\n  }\n}"
+          }
+        ]
+      },
+      "source": "错误处理"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["异步迭代器组合"],
+      "question": "如何实现异步迭代器的map、filter等组合操作？",
+      "options": [
+        "创建async生成器包装原迭代器，在内部await并应用转换",
+        "无法组合",
+        "必须转为数组",
+        "使用Promise.all"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "异步迭代器组合：",
+        "code": "// 异步map\nasync function* asyncMap(iterable, fn) {\n  for await (const item of iterable) {\n    yield await fn(item);\n  }\n}\n\n// 异步filter\nasync function* asyncFilter(iterable, predicate) {\n  for await (const item of iterable) {\n    if (await predicate(item)) {\n      yield item;\n    }\n  }\n}\n\n// 异步take\nasync function* asyncTake(iterable, n) {\n  let count = 0;\n  for await (const item of iterable) {\n    if (count++ >= n) break;\n    yield item;\n  }\n}\n\n// 使用示例\nasync function* dataSource() {\n  for (let i = 1; i <= 10; i++) {\n    await new Promise(r => setTimeout(r, 100));\n    yield i;\n  }\n}\n\nconst pipeline = asyncTake(\n  asyncMap(\n    asyncFilter(\n      dataSource(),\n      async x => x % 2 === 0\n    ),\n    async x => x * x\n  ),\n  3\n);\n\nfor await (const value of pipeline) {\n  console.log(value); // 4, 16, 36\n}"
+      },
+      "source": "异步迭代器组合"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["WebSocket"],
+      "question": "如何用异步迭代器封装WebSocket消息流？",
+      "options": [
+        "监听message事件，将消息推入队列，异步迭代器从队列中yield",
+        "无法实现",
+        "必须用回调",
+        "只能用Promise"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "WebSocket异步迭代器：",
+        "code": "function createWebSocketIterator(url) {\n  const ws = new WebSocket(url);\n  const queue = [];\n  const resolvers = [];\n  let done = false;\n\n  ws.onmessage = (event) => {\n    if (resolvers.length > 0) {\n      const resolve = resolvers.shift();\n      resolve({ value: event.data, done: false });\n    } else {\n      queue.push(event.data);\n    }\n  };\n\n  ws.onclose = () => {\n    done = true;\n    resolvers.forEach(resolve => {\n      resolve({ done: true });\n    });\n  };\n\n  return {\n    [Symbol.asyncIterator]() {\n      return {\n        async next() {\n          if (queue.length > 0) {\n            return { value: queue.shift(), done: false };\n          }\n          if (done) {\n            return { done: true };\n          }\n          return new Promise(resolve => {\n            resolvers.push(resolve);\n          });\n        },\n        async return() {\n          ws.close();\n          return { done: true };\n        }\n      };\n    }\n  };\n}\n\n// 使用\nasync function handleMessages() {\n  const messages = createWebSocketIterator('ws://localhost:8080');\n  \n  for await (const message of messages) {\n    console.log('收到消息:', message);\n    \n    if (message === 'stop') break;\n  }\n  \n  console.log('连接已关闭');\n}"
+      },
+      "source": "WebSocket"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["并发控制"],
+      "question": "如何实现异步迭代器的并发控制（如同时最多3个请求）？",
+      "options": [
+        "维护正在执行的Promise池，达到限制时await最早的Promise完成",
+        "无法控制",
+        "必须串行",
+        "使用Promise.all"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "并发控制实现：",
+        "code": "async function* asyncMapWithConcurrency(iterable, fn, concurrency = 3) {\n  const executing = new Set();\n  const results = [];\n  let index = 0;\n\n  for await (const item of iterable) {\n    const promise = (async () => {\n      const i = index++;\n      const result = await fn(item);\n      return { index: i, result };\n    })();\n\n    executing.add(promise);\n\n    promise.then(() => executing.delete(promise));\n\n    // 达到并发限制，等待最早的完成\n    if (executing.size >= concurrency) {\n      const { index: resultIndex, result } = await Promise.race(executing);\n      results[resultIndex] = result;\n      \n      // yield已完成的结果\n      while (results[0] !== undefined) {\n        yield results.shift();\n      }\n    }\n  }\n\n  // 等待剩余任务完成\n  const remaining = await Promise.all(executing);\n  for (const { result } of remaining.sort((a, b) => a.index - b.index)) {\n    yield result;\n  }\n}\n\n// 使用示例\nasync function* urls() {\n  yield 'https://api.example.com/1';\n  yield 'https://api.example.com/2';\n  yield 'https://api.example.com/3';\n  yield 'https://api.example.com/4';\n  yield 'https://api.example.com/5';\n}\n\nfor await (const data of asyncMapWithConcurrency(urls(), fetch, 2)) {\n  console.log('获取数据:', data);\n  // 最多同时2个请求\n}"
+      },
+      "source": "并发控制"
+    },
+    {
+      "difficulty": "hard",
+      "tags": ["实时数据流"],
+      "question": "如何实现一个支持取消的异步数据流迭代器？",
+      "options": [
+        "使用AbortController配合return()方法，在迭代器关闭时取消请求",
+        "无法取消",
+        "必须完整执行",
+        "使用setTimeout"
+      ],
+      "correctAnswer": "A",
+      "explanation": {
+        "title": "可取消的异步迭代器：",
+        "code": "function createCancelableAsyncIterator(fetcher, interval = 1000) {\n  const abortController = new AbortController();\n  let stopped = false;\n\n  async function* generator() {\n    try {\n      while (!stopped) {\n        const data = await fetcher(abortController.signal);\n        yield data;\n        await new Promise((resolve, reject) => {\n          const timer = setTimeout(resolve, interval);\n          abortController.signal.addEventListener('abort', () => {\n            clearTimeout(timer);\n            reject(new Error('Aborted'));\n          });\n        });\n      }\n    } catch (error) {\n      if (error.name === 'AbortError') {\n        console.log('迭代器已取消');\n      } else {\n        throw error;\n      }\n    }\n  }\n\n  const iterator = generator();\n\n  return {\n    [Symbol.asyncIterator]() {\n      return {\n        next: () => iterator.next(),\n        return: async () => {\n          stopped = true;\n          abortController.abort();\n          return { done: true };\n        }\n      };\n    }\n  };\n}\n\n// 使用\nasync function monitorData() {\n  const dataStream = createCancelableAsyncIterator(\n    async (signal) => {\n      const response = await fetch('/api/data', { signal });\n      return response.json();\n    },\n    2000\n  );\n\n  try {\n    for await (const data of dataStream) {\n      console.log('数据:', data);\n      \n      if (data.shouldStop) {\n        break; // 触发return()，取消请求\n      }\n    }\n  } catch (error) {\n    console.error('错误:', error);\n  }\n}"
+      },
+      "source": "可取消迭代器"
+    }
+  ],
+  "navigation": {
+    "prev": {
+      "title": "生成器应用",
+      "url": "12-generator-applications.html"
+    },
+    "next": null
+  }
+}
