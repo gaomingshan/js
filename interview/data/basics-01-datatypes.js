@@ -1,355 +1,394 @@
 window.quizData_Basics01Datatypes = {
   "config": {
     "title": "数据类型",
-    "icon": "🎲",
-    "description": "掌握JavaScript的基本数据类型与引用类型",
-    "primaryColor": "#4facfe",
-    "bgGradient": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+    "icon": "🔢",
+    "description": "JavaScript的8种数据类型详解",
+    "primaryColor": "#667eea",
+    "bgGradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
   },
   "questions": [
+    // 第1题：简单 - 单选题
     {
       "difficulty": "easy",
-      "tags": ["基本类型"],
-      "question": "JavaScript有哪些基本数据类型（原始类型）？",
+      "tags": ["基础概念"],
+      "question": "JavaScript有多少种数据类型？",
       "options": [
-        "Number、String、Boolean、Null、Undefined、Symbol、BigInt",
-        "Number、String、Boolean、Object、Array",
-        "只有Number、String、Boolean",
-        "Int、Float、String、Boolean"
+        "8种（7种基本类型 + Object）",
+        "6种",
+        "5种",
+        "9种"
       ],
       "correctAnswer": "A",
       "explanation": {
-        "title": "JavaScript 7种基本类型：",
+        "title": "JavaScript的8种数据类型",
         "sections": [
           {
-            "title": "基本类型（Primitive Types）",
+            "title": "7种基本类型（Primitive）",
             "points": [
-              "Number：数字（包括整数和浮点数）",
-              "String：字符串",
-              "Boolean：布尔值（true/false）",
-              "Null：空值",
-              "Undefined：未定义",
-              "Symbol：唯一标识符（ES6）",
-              "BigInt：大整数（ES2020）"
+              "String（字符串）",
+              "Number（数字）",
+              "Boolean（布尔值）",
+              "Undefined",
+              "Null",
+              "Symbol（ES6新增）",
+              "BigInt（ES2020新增）"
             ]
           },
           {
-            "title": "引用类型",
+            "title": "1种引用类型",
             "points": [
-              "Object：对象（包括普通对象、数组、函数、日期等）"
+              "Object（对象）",
+              "包括：Object、Array、Function、Date、RegExp等"
             ]
           },
           {
             "title": "示例",
-            "code": "// 基本类型\nconst num = 42;\nconst str = 'hello';\nconst bool = true;\nconst n = null;\nconst u = undefined;\nconst sym = Symbol('id');\nconst big = 9007199254740991n;\n\n// 引用类型\nconst obj = {};\nconst arr = [];\nconst func = function() {};"
+            "code": "// 基本类型\nconst str = 'hello';        // String\nconst num = 42;             // Number\nconst bool = true;          // Boolean\nconst undef = undefined;    // Undefined\nconst nul = null;           // Null\nconst sym = Symbol('id');   // Symbol\nconst big = 9007199254740991n; // BigInt\n\n// 引用类型\nconst obj = {};             // Object\nconst arr = [];             // Array（是Object的子类型）\nconst fn = function() {};   // Function（也是Object）"
           }
         ]
       },
       "source": "数据类型"
     },
+
+    // 第2题：简单 - 判断题
     {
       "difficulty": "easy",
+      "type": "true-false",
       "tags": ["typeof"],
-      "question": "typeof操作符有哪些返回值？",
-      "options": [
-        "'undefined'、'boolean'、'number'、'string'、'symbol'、'bigint'、'function'、'object'",
-        "只返回'object'",
-        "返回具体的类型名",
-        "返回类的构造函数"
-      ],
-      "correctAnswer": "A",
+      "question": "typeof null 的结果是 'null'。",
+      "options": ["正确", "错误"],
+      "correctAnswer": "B",
       "explanation": {
-        "title": "typeof返回值：",
+        "title": "typeof null的历史bug",
+        "content": "这是错误的。typeof null 返回 'object'，这是JavaScript的一个历史遗留bug。",
         "sections": [
           {
-            "title": "所有可能的返回值",
-            "code": "typeof undefined; // 'undefined'\ntypeof true; // 'boolean'\ntypeof 42; // 'number'\ntypeof 'hello'; // 'string'\ntypeof Symbol(); // 'symbol'\ntypeof 123n; // 'bigint'\ntypeof function(){}; // 'function'\ntypeof {}; // 'object'\ntypeof []; // 'object'\ntypeof null; // 'object' (历史遗留bug)"
+            "title": "typeof的结果",
+            "code": "typeof null          // 'object' ❌（bug）\ntypeof undefined     // 'undefined'\ntypeof true          // 'boolean'\ntypeof 42            // 'number'\ntypeof 'hello'       // 'string'\ntypeof Symbol()      // 'symbol'\ntypeof 10n           // 'bigint'\ntypeof {}            // 'object'\ntypeof []            // 'object'\ntypeof function(){}  // 'function'"
           },
           {
-            "title": "特殊情况",
-            "points": [
-              "typeof null返回'object'是JavaScript的bug",
-              "typeof数组返回'object'",
-              "typeof函数返回'function'而非'object'"
-            ]
+            "title": "为什么是bug？",
+            "content": "在JavaScript的早期版本中，值的类型标签存储在32位单元的低位。null被表示为全0（0x00），而对象的类型标签也是0，导致typeof null返回'object'。"
+          },
+          {
+            "title": "正确检测null",
+            "code": "// 方法1：直接比较\nif (value === null) {\n  console.log('是null');\n}\n\n// 方法2：组合判断\nif (typeof value === 'object' && value === null) {\n  console.log('是null');\n}"
           }
         ]
       },
       "source": "typeof"
     },
+
+    // 第3题：中等 - 多选题
     {
       "difficulty": "medium",
-      "tags": ["Number类型"],
-      "question": "JavaScript中的Number类型有哪些特殊值？",
+      "type": "multiple",
+      "tags": ["基本类型", "引用类型"],
+      "question": "以下哪些是基本类型（Primitive Type）？",
       "options": [
-        "Infinity、-Infinity、NaN",
-        "只有NaN",
-        "Null、Undefined",
-        "MAX_VALUE、MIN_VALUE"
+        "String",
+        "Number",
+        "Array",
+        "Symbol"
       ],
-      "correctAnswer": "A",
+      "correctAnswer": ["A", "B", "D"],
       "explanation": {
-        "title": "Number特殊值：",
+        "title": "基本类型 vs 引用类型",
         "sections": [
           {
-            "title": "1. Infinity（无穷大）",
-            "code": "console.log(1 / 0); // Infinity\nconsole.log(-1 / 0); // -Infinity\nconsole.log(Infinity > 1000000); // true\nconsole.log(typeof Infinity); // 'number'"
+            "title": "基本类型（选项A、B、D正确）",
+            "points": [
+              "String、Number、Boolean、Undefined、Null、Symbol、BigInt",
+              "存储在栈内存",
+              "按值访问",
+              "不可变（immutable）"
+            ]
           },
           {
-            "title": "2. NaN（Not a Number）",
-            "code": "console.log(0 / 0); // NaN\nconsole.log('abc' - 1); // NaN\nconsole.log(NaN === NaN); // false\nconsole.log(isNaN(NaN)); // true\nconsole.log(Number.isNaN(NaN)); // true"
+            "title": "Array是引用类型（选项C错误）",
+            "content": "Array是Object的子类型，属于引用类型。",
+            "code": "const arr = [1, 2, 3];\ntypeof arr;  // 'object'\nArray.isArray(arr);  // true\narr instanceof Object;  // true"
           },
           {
-            "title": "3. 安全整数范围",
-            "code": "console.log(Number.MAX_SAFE_INTEGER); // 2^53 - 1\nconsole.log(Number.MIN_SAFE_INTEGER); // -(2^53 - 1)\nconsole.log(Number.isSafeInteger(9007199254740991)); // true"
+            "title": "区别演示",
+            "code": "// 基本类型：按值传递\nlet a = 10;\nlet b = a;\nb = 20;\nconsole.log(a);  // 10（不受影响）\n\n// 引用类型：按引用传递\nlet obj1 = { x: 10 };\nlet obj2 = obj1;\nobj2.x = 20;\nconsole.log(obj1.x);  // 20（受影响）"
           }
         ]
       },
-      "source": "Number特殊值"
+      "source": "数据类型分类"
     },
+
+    // 第4题：中等 - 代码输出题
     {
       "difficulty": "medium",
-      "tags": ["Null vs Undefined"],
-      "question": "Null和Undefined有什么区别？",
+      "type": "code-output",
+      "tags": ["类型判断"],
+      "question": "以下代码的输出是什么？",
+      "code": "console.log(typeof typeof 1);",
       "options": [
-        "Undefined表示未定义，Null表示空对象指针，都表示'没有值'但含义不同",
-        "完全相同",
-        "Null是对象，Undefined不是",
-        "没有区别"
+        "'string'",
+        "'number'",
+        "'undefined'",
+        "'object'"
       ],
       "correctAnswer": "A",
       "explanation": {
-        "title": "Null vs Undefined：",
+        "title": "typeof的嵌套使用",
         "sections": [
           {
-            "title": "Undefined",
-            "points": [
-              "变量声明但未赋值",
-              "访问对象不存在的属性",
-              "函数没有返回值",
-              "函数参数未传值"
-            ],
-            "code": "let x;\nconsole.log(x); // undefined\n\nconst obj = {};\nconsole.log(obj.name); // undefined\n\nfunction fn() {}\nconsole.log(fn()); // undefined"
+            "title": "执行顺序",
+            "code": "// 从内向外执行\ntypeof 1          // 'number'\ntypeof 'number'   // 'string'\n\n// 所以结果是 'string'"
           },
           {
-            "title": "Null",
-            "points": [
-              "表示空对象指针",
-              "需要显式赋值",
-              "表示'没有对象'",
-              "常用于释放对象引用"
-            ],
-            "code": "let obj = null; // 显式赋值\nconsole.log(typeof null); // 'object' (bug)\n\n// 释放引用\nlet data = { large: 'data' };\ndata = null; // 帮助垃圾回收"
+            "title": "原理",
+            "content": "typeof操作符返回的结果总是一个字符串，表示数据类型的名称。所以typeof typeof x的结果一定是'string'。"
           },
           {
-            "title": "比较",
-            "code": "console.log(null == undefined); // true\nconsole.log(null === undefined); // false\n\nconsole.log(typeof null); // 'object'\nconsole.log(typeof undefined); // 'undefined'"
+            "title": "更多示例",
+            "code": "typeof typeof true;      // 'string'\ntypeof typeof {};        // 'string'\ntypeof typeof null;      // 'string'\ntypeof typeof undefined; // 'string'\n\n// 因为：\ntypeof true === 'boolean'  // 第一层\ntypeof 'boolean' === 'string'  // 第二层"
           }
         ]
       },
-      "source": "Null vs Undefined"
+      "source": "typeof"
     },
+
+    // 第5题：中等 - 多选题
     {
       "difficulty": "medium",
+      "type": "multiple",
       "tags": ["Symbol"],
-      "question": "Symbol类型有什么特点和用途？",
+      "question": "关于Symbol，以下说法正确的是？",
       "options": [
-        "创建唯一标识符，即使描述相同也不相等，可作为对象私有属性",
-        "与String类型相同",
-        "可以被隐式转换",
-        "主要用于数字计算"
+        "Symbol是ES6引入的新的基本类型",
+        "每个Symbol值都是唯一的",
+        "Symbol可以用作对象的属性名",
+        "Symbol可以被隐式转换为字符串"
       ],
-      "correctAnswer": "A",
+      "correctAnswer": ["A", "B", "C"],
       "explanation": {
-        "title": "Symbol特性：",
+        "title": "Symbol类型详解",
         "sections": [
           {
-            "title": "1. 唯一性",
-            "code": "const s1 = Symbol('desc');\nconst s2 = Symbol('desc');\nconsole.log(s1 === s2); // false\n\n// 全局Symbol\nconst s3 = Symbol.for('global');\nconst s4 = Symbol.for('global');\nconsole.log(s3 === s4); // true"
+            "title": "选项A、B - 正确",
+            "code": "// 每个Symbol都是唯一的\nconst sym1 = Symbol('desc');\nconst sym2 = Symbol('desc');\n\nconsole.log(sym1 === sym2);  // false\nconsole.log(typeof sym1);    // 'symbol'"
           },
           {
-            "title": "2. 作为对象属性",
-            "code": "const id = Symbol('id');\nconst user = {\n  name: 'John',\n  [id]: 123\n};\n\nconsole.log(user[id]); // 123\nconsole.log(Object.keys(user)); // ['name']\n// Symbol属性不会被枚举"
+            "title": "选项C - 正确",
+            "code": "// Symbol作为属性名\nconst id = Symbol('id');\nconst obj = {\n  [id]: 123,\n  name: 'Tom'\n};\n\nconsole.log(obj[id]);  // 123\n\n// Symbol属性不会被常规方法遍历\nfor (let key in obj) {\n  console.log(key);  // 只输出 'name'\n}\n\nObject.keys(obj);  // ['name']\nObject.getOwnPropertySymbols(obj);  // [Symbol(id)]"
           },
           {
-            "title": "3. 内置Symbol",
-            "code": "// Symbol.iterator\nconst arr = [1, 2, 3];\nconsole.log(arr[Symbol.iterator]);\n\n// Symbol.toStringTag\nclass MyClass {}\nMyClass.prototype[Symbol.toStringTag] = 'MyClass';\nconsole.log(Object.prototype.toString.call(new MyClass()));\n// '[object MyClass]'"
+            "title": "选项D - 错误",
+            "content": "Symbol不能被隐式转换为字符串，必须显式调用toString()。",
+            "code": "const sym = Symbol('test');\n\n// 错误：不能隐式转换\nconsole.log('Symbol: ' + sym);  // TypeError\n\n// 正确：显式转换\nconsole.log('Symbol: ' + sym.toString());  // 'Symbol: Symbol(test)'\nconsole.log('Symbol: ' + String(sym));     // 'Symbol: Symbol(test)'"
+          },
+          {
+            "title": "Symbol的应用",
+            "code": "// 1. 防止属性名冲突\nconst id = Symbol('id');\nobj[id] = 123;\n\n// 2. 定义类的私有属性\nconst _count = Symbol('count');\nclass Counter {\n  constructor() {\n    this[_count] = 0;\n  }\n  increment() {\n    this[_count]++;\n  }\n}\n\n// 3. 定义常量\nconst Color = {\n  RED: Symbol('red'),\n  GREEN: Symbol('green'),\n  BLUE: Symbol('blue')\n};"
           }
         ]
       },
       "source": "Symbol"
     },
+
+    // 第6题：中等 - 代码补全题
     {
       "difficulty": "medium",
+      "type": "code-completion",
       "tags": ["BigInt"],
-      "question": "BigInt用于解决什么问题？如何使用？",
+      "question": "如何创建一个BigInt类型的数？请补全代码。",
+      "code": "const big1 = ______;\nconst big2 = BigInt(9007199254740991);\n\nconsole.log(typeof big1);  // 'bigint'",
       "options": [
-        "解决Number类型整数精度限制，可表示任意大整数",
-        "用于浮点数计算",
-        "用于字符串操作",
-        "没有实际用途"
+        "9007199254740991n",
+        "9007199254740991",
+        "BigInt('9007199254740991')",
+        "Number(9007199254740991)"
       ],
       "correctAnswer": "A",
       "explanation": {
-        "title": "BigInt使用：",
+        "title": "BigInt的创建方式",
         "sections": [
           {
-            "title": "1. Number的限制",
-            "code": "console.log(Number.MAX_SAFE_INTEGER); // 9007199254740991\nconsole.log(9007199254740992 === 9007199254740993); // true (精度丢失)"
+            "title": "两种创建方式",
+            "code": "// 方式1：数字字面量后加n（推荐）\nconst big1 = 9007199254740991n;\n\n// 方式2：使用BigInt()函数\nconst big2 = BigInt(9007199254740991);\nconst big3 = BigInt('9007199254740991');\n\nconsole.log(typeof big1);  // 'bigint'"
           },
           {
-            "title": "2. BigInt声明",
-            "code": "const big1 = 1234567890123456789012345678901234567890n;\nconst big2 = BigInt('1234567890123456789012345678901234567890');\nconst big3 = BigInt(123); // 从Number转换"
+            "title": "为什么需要BigInt？",
+            "content": "Number类型只能安全表示-(2^53-1)到2^53-1之间的整数，超出范围会丢失精度。",
+            "code": "// Number的精度限制\nconst maxSafeInt = Number.MAX_SAFE_INTEGER;  // 9007199254740991\nconsole.log(maxSafeInt + 1);  // 9007199254740992 ✓\nconsole.log(maxSafeInt + 2);  // 9007199254740992 ✗（应该是993）\n\n// BigInt可以表示任意大的整数\nconst bigInt = 9007199254740991n;\nconsole.log(bigInt + 1n);  // 9007199254740992n ✓\nconsole.log(bigInt + 2n);  // 9007199254740993n ✓"
           },
           {
-            "title": "3. BigInt运算",
-            "code": "const a = 10n;\nconst b = 20n;\n\nconsole.log(a + b); // 30n\nconsole.log(a * b); // 200n\nconsole.log(b / a); // 2n (整数除法)\n\n// 不能与Number混用\nconsole.log(10n + 20); // TypeError"
-          },
-          {
-            "title": "4. 注意事项",
-            "points": [
-              "不能与Number类型混合运算",
-              "不支持Math对象方法",
-              "JSON.stringify不支持BigInt",
-              "除法会舍弃小数部分"
-            ]
+            "title": "注意事项",
+            "code": "// 1. BigInt不能与Number混合运算\nconst big = 10n;\nconst num = 10;\nconsole.log(big + num);  // TypeError\nconsole.log(big + BigInt(num));  // 20n ✓\n\n// 2. BigInt不能使用Math对象的方法\nMath.sqrt(4n);  // TypeError\n\n// 3. BigInt不能用于JSON.stringify\nJSON.stringify({ value: 10n });  // TypeError\n\n// 4. 比较运算可以跨类型\n10n === 10;   // false（严格相等）\n10n == 10;    // true（宽松相等）\n10n < 20;     // true"
           }
         ]
       },
       "source": "BigInt"
     },
+
+    // 第7题：困难 - 代码输出题
     {
       "difficulty": "hard",
-      "tags": ["值传递vs引用传递"],
-      "question": "JavaScript中基本类型和引用类型的传递方式有什么区别？",
+      "type": "code-output",
+      "tags": ["类型转换", "隐式转换"],
+      "question": "以下代码的输出是什么？",
+      "code": "console.log([] + []);\nconsole.log([] + {});\nconsole.log({} + []);\nconsole.log({} + {});",
       "options": [
-        "基本类型按值传递，引用类型按共享传递（传递引用的副本）",
-        "都是按值传递",
-        "都是按引用传递",
-        "基本类型按引用，引用类型按值"
+        "'', '[object Object]', '[object Object]', '[object Object][object Object]'",
+        "'', '[object Object]', '0', 'NaN'",
+        "'[]', '[object Object]', '0', '[object Object][object Object]'",
+        "'undefined', 'undefined', 'undefined', 'undefined'"
       ],
-      "correctAnswer": "A",
+      "correctAnswer": "B",
       "explanation": {
-        "title": "传递机制：",
+        "title": "对象和数组的加法运算",
         "sections": [
           {
-            "title": "1. 基本类型（按值传递）",
-            "code": "let a = 10;\nlet b = a; // 复制值\nb = 20;\nconsole.log(a); // 10 (不受影响)\n\nfunction change(x) {\n  x = 100;\n}\nlet num = 50;\nchange(num);\nconsole.log(num); // 50 (不受影响)"
-          },
-          {
-            "title": "2. 引用类型（按共享传递）",
-            "code": "let obj1 = { value: 10 };\nlet obj2 = obj1; // 复制引用\nobj2.value = 20;\nconsole.log(obj1.value); // 20 (受影响)\n\nfunction change(obj) {\n  obj.value = 100; // 修改属性\n}\nlet myObj = { value: 50 };\nchange(myObj);\nconsole.log(myObj.value); // 100 (受影响)"
-          },
-          {
-            "title": "3. 重新赋值不影响原对象",
-            "code": "function change(obj) {\n  obj = { value: 100 }; // 重新赋值\n}\nlet myObj = { value: 50 };\nchange(myObj);\nconsole.log(myObj.value); // 50 (不受影响)"
-          }
-        ]
-      },
-      "source": "传递机制"
-    },
-    {
-      "difficulty": "hard",
-      "tags": ["包装对象"],
-      "question": "什么是包装对象？基本类型为什么可以调用方法？",
-      "options": [
-        "基本类型会临时转换为对应的包装对象（Number/String/Boolean），调用完方法后销毁",
-        "基本类型本身就有方法",
-        "基本类型不能调用方法",
-        "需要手动创建包装对象"
-      ],
-      "correctAnswer": "A",
-      "explanation": {
-        "title": "包装对象机制：",
-        "sections": [
-          {
-            "title": "1. 自动装箱",
-            "code": "const str = 'hello';\nconst result = str.toUpperCase(); // 'HELLO'\n\n// 实际过程：\n// 1. 创建String包装对象: new String('hello')\n// 2. 调用方法: temp.toUpperCase()\n// 3. 返回结果，销毁包装对象"
-          },
-          {
-            "title": "2. 包装对象类型",
+            "title": "转换规则",
             "points": [
-              "Number：数字包装对象",
-              "String：字符串包装对象",
-              "Boolean：布尔包装对象",
-              "Symbol和BigInt没有包装对象"
+              "+ 运算符会将操作数转换为基本类型",
+              "对象转换：先调用valueOf()，如果结果仍是对象，再调用toString()",
+              "数组的toString()：等同于join(',')",
+              "对象的toString()：返回'[object Object]'"
             ]
           },
           {
-            "title": "3. 显式创建包装对象",
-            "code": "const num = 123;\nconst numObj = new Number(123);\n\nconsole.log(typeof num); // 'number'\nconsole.log(typeof numObj); // 'object'\n\nconsole.log(num === 123); // true\nconsole.log(numObj === 123); // false"
+            "title": "逐个分析",
+            "code": "// [] + []\n[].toString();  // ''\n'' + '';        // '' ✓\n\n// [] + {}\n[].toString();  // ''\n({}).toString(); // '[object Object]'\n'' + '[object Object]';  // '[object Object]' ✓\n\n// {} + []\n// 这里{}被解释为代码块，而不是对象！\n// 实际执行的是：+[]\n+[];  // 0 ✓\n\n// {} + {}\n// 同理，第一个{}是代码块\n// 实际执行：+{}\n+{};  // NaN ✓"
           },
           {
-            "title": "4. 注意事项",
-            "code": "const str = 'test';\nstr.prop = 'value';\nconsole.log(str.prop); // undefined\n// 包装对象是临时的，属性不会保留"
+            "title": "避免歧义",
+            "code": "// 使用括号消除歧义\nconsole.log(({}) + []);   // '[object Object]'\nconsole.log(({}) + ({})); // '[object Object][object Object]'\n\n// 或者赋值后再运算\nconst obj = {};\nconst arr = [];\nconsole.log(obj + arr);   // '[object Object]'"
+          },
+          {
+            "title": "实际应用",
+            "code": "// 数组转字符串\n[1, 2, 3] + '';  // '1,2,3'\n\n// 对象转字符串\nconst obj = { toString() { return 'custom'; } };\nobj + '';  // 'custom'\n\n// 快速转换为数字\n+'42';   // 42\n+[];     // 0\n+[5];    // 5\n+[1,2];  // NaN"
+          }
+        ]
+      },
+      "source": "类型转换"
+    },
+
+    // 第8题：困难 - 多选题
+    {
+      "difficulty": "hard",
+      "type": "multiple",
+      "tags": ["包装对象", "自动装箱"],
+      "question": "关于包装对象，以下说法正确的是？",
+      "options": [
+        "基本类型值可以调用方法，是因为自动装箱",
+        "String、Number、Boolean都有对应的包装对象",
+        "包装对象和基本类型值是完全等价的",
+        "使用new String()创建的是包装对象"
+      ],
+      "correctAnswer": ["A", "B", "D"],
+      "explanation": {
+        "title": "包装对象与自动装箱",
+        "sections": [
+          {
+            "title": "选项A、B - 正确",
+            "content": "基本类型没有属性和方法，但可以调用方法，是因为JavaScript引擎会自动装箱。",
+            "code": "// 自动装箱\nconst str = 'hello';\nstr.toUpperCase();  // 'HELLO'\n\n// 等价于：\nconst temp = new String('hello');  // 临时创建包装对象\ntemp.toUpperCase();  // 调用方法\n// temp被销毁\n\n// 所以无法给基本类型添加属性\nstr.foo = 'bar';\nconsole.log(str.foo);  // undefined（临时对象已销毁）"
+          },
+          {
+            "title": "选项C - 错误",
+            "content": "包装对象和基本类型值不是完全等价的。",
+            "code": "const str = 'hello';           // 基本类型\nconst obj = new String('hello'); // 包装对象\n\nconsole.log(typeof str);  // 'string'\nconsole.log(typeof obj);  // 'object'\n\nconsole.log(str == obj);   // true（值相等）\nconsole.log(str === obj);  // false（类型不同）\n\n// 布尔值转换\nif (str) { }  // true（非空字符串）\nif (obj) { }  // true（对象总是true）\n\nconst falsy = new Boolean(false);\nif (falsy) {\n  console.log('执行');  // 会执行！对象总是truthy\n}"
+          },
+          {
+            "title": "选项D - 正确",
+            "code": "// 使用new创建包装对象\nconst str1 = new String('hello');  // 对象\nconst str2 = String('hello');      // 基本类型（类型转换）\n\nconsole.log(typeof str1);  // 'object'\nconsole.log(typeof str2);  // 'string'\n\n// 推荐：不要使用new创建包装对象\nconst num = new Number(42);  // ✗ 不推荐\nconst num = 42;              // ✓ 推荐"
+          },
+          {
+            "title": "自动装箱的三种包装类型",
+            "code": "// String包装对象\nconst str = 'test';\nstr.length;  // 4（自动装箱）\nstr.substring(0, 2);  // 'te'\n\n// Number包装对象\nconst num = 42;\nnum.toFixed(2);  // '42.00'\nnum.toString(2);  // '101010'（二进制）\n\n// Boolean包装对象\nconst bool = true;\nbool.toString();  // 'true'\n\n// 注意：null和undefined没有包装对象\nnull.toString();  // TypeError\nundefined.toString();  // TypeError"
           }
         ]
       },
       "source": "包装对象"
     },
+
+    // 第9题：困难 - 代码补全题
     {
       "difficulty": "hard",
+      "type": "code-completion",
       "tags": ["类型检测"],
-      "question": "如何准确判断一个值的类型？",
+      "question": "如何准确判断一个值的类型？请补全最可靠的方法。",
+      "code": "function getType(value) {\n  return ______.call(value).slice(8, -1).toLowerCase();\n}\n\ngetType([]);        // 'array'\ngetType({});        // 'object'\ngetType(null);      // 'null'\ngetType(undefined); // 'undefined'",
       "options": [
-        "typeof判断基本类型，instanceof判断对象类型，Object.prototype.toString最准确",
-        "只用typeof",
-        "只用instanceof",
-        "只用constructor"
+        "Object.prototype.toString",
+        "typeof",
+        "value.constructor",
+        "value.toString"
       ],
       "correctAnswer": "A",
       "explanation": {
-        "title": "类型检测方法：",
+        "title": "准确的类型检测",
         "sections": [
           {
-            "title": "1. typeof",
-            "code": "typeof 123; // 'number'\ntypeof 'str'; // 'string'\ntypeof true; // 'boolean'\ntypeof undefined; // 'undefined'\ntypeof null; // 'object' (bug)\ntypeof {}; // 'object'\ntypeof []; // 'object'\ntypeof function(){}; // 'function'"
+            "title": "Object.prototype.toString（最准确）",
+            "code": "// 这是最可靠的类型检测方法\nfunction getType(value) {\n  return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();\n}\n\ngetType([]);           // 'array'\ngetType({});           // 'object'\ngetType(null);         // 'null'\ngetType(undefined);    // 'undefined'\ngetType(42);           // 'number'\ngetType('hello');      // 'string'\ngetType(true);         // 'boolean'\ngetType(Symbol());     // 'symbol'\ngetType(10n);          // 'bigint'\ngetType(new Date());   // 'date'\ngetType(/regex/);      // 'regexp'\ngetType(function(){}); // 'function'"
           },
           {
-            "title": "2. instanceof",
-            "code": "[] instanceof Array; // true\n({}) instanceof Object; // true\nfunction fn(){}\nfn instanceof Function; // true\n\n// 原型链检测\nfunction Person(){}\nconst p = new Person();\np instanceof Person; // true"
+            "title": "为什么要用call？",
+            "code": "// Object.prototype.toString 返回 [object Type]\nObject.prototype.toString.call([]);  // '[object Array]'\n\n// 如果直接调用，会被覆盖\n[].toString();  // '' （Array重写了toString）\n\n// 必须用call指定this\nconst toString = Object.prototype.toString;\ntoString.call([]);  // '[object Array]' ✓"
           },
           {
-            "title": "3. Object.prototype.toString",
-            "code": "Object.prototype.toString.call(123); // '[object Number]'\nObject.prototype.toString.call('str'); // '[object String]'\nObject.prototype.toString.call(true); // '[object Boolean]'\nObject.prototype.toString.call(null); // '[object Null]'\nObject.prototype.toString.call(undefined); // '[object Undefined]'\nObject.prototype.toString.call([]); // '[object Array]'\nObject.prototype.toString.call({}); // '[object Object]'\nObject.prototype.toString.call(function(){}); // '[object Function]'"
+            "title": "其他方法的局限性",
+            "code": "// 1. typeof的局限\ntypeof null;  // 'object' ❌\ntypeof [];    // 'object' ❌（无法区分数组）\n\n// 2. instanceof的局限\n[] instanceof Array;  // true ✓\n// 但跨iframe会失效\n\n// 3. constructor的局限\n[].constructor === Array;  // true\nnull.constructor;  // TypeError ❌\n// 可以被修改\n\n// 4. Array.isArray（专门检测数组）\nArray.isArray([]);  // true ✓\nArray.isArray({});  // false"
           },
           {
-            "title": "4. 特定类型检测",
-            "code": "Array.isArray([]); // true\nNumber.isNaN(NaN); // true\nNumber.isFinite(123); // true"
+            "title": "封装工具函数",
+            "code": "// 完整的类型检测工具\nconst typeUtils = {\n  getType(value) {\n    return Object.prototype.toString.call(value).slice(8, -1).toLowerCase();\n  },\n  isArray(value) {\n    return this.getType(value) === 'array';\n  },\n  isObject(value) {\n    return this.getType(value) === 'object';\n  },\n  isNull(value) {\n    return value === null;\n  },\n  isUndefined(value) {\n    return value === undefined;\n  },\n  isFunction(value) {\n    return typeof value === 'function';\n  }\n};"
           }
         ]
       },
       "source": "类型检测"
     },
+
+    // 第10题：困难 - 多选题
     {
       "difficulty": "hard",
-      "tags": ["浮点数精度"],
-      "question": "为什么0.1 + 0.2 !== 0.3？如何解决浮点数精度问题？",
+      "type": "multiple",
+      "tags": ["null vs undefined"],
+      "question": "关于null和undefined的区别，以下说法正确的是？",
       "options": [
-        "IEEE 754标准导致精度丢失，可用toFixed()或第三方库",
-        "JavaScript的bug",
-        "无法解决",
-        "只有JavaScript有这个问题"
+        "undefined表示变量未定义，null表示空值",
+        "undefined是基本类型，null也是基本类型",
+        "undefined == null 为true，undefined === null 为false",
+        "Number(undefined)为NaN，Number(null)为0"
       ],
-      "correctAnswer": "A",
+      "correctAnswer": ["A", "B", "C", "D"],
       "explanation": {
-        "title": "浮点数精度问题：",
+        "title": "null vs undefined详解",
+        "content": "所有选项都正确！这是两个容易混淆的特殊值。",
         "sections": [
           {
-            "title": "问题演示",
-            "code": "console.log(0.1 + 0.2); // 0.30000000000000004\nconsole.log(0.1 + 0.2 === 0.3); // false\n\nconsole.log(0.1); // 0.1 (显示时四舍五入)\nconsole.log((0.1).toPrecision(21)); // 0.100000000000000005551"
+            "title": "语义区别（选项A）",
+            "points": [
+              "undefined：变量已声明但未赋值，或对象属性不存在",
+              "null：表示\"空对象指针\"，是一个明确的空值",
+              "undefined是系统级的，null是程序级的"
+            ]
           },
           {
-            "title": "原因",
-            "content": "JavaScript使用IEEE 754双精度浮点数标准，某些十进制小数无法精确表示为二进制。"
+            "title": "类型（选项B）",
+            "code": "typeof undefined;  // 'undefined'\ntypeof null;       // 'object'（历史bug）\n\n// 但它们都是基本类型\nundefined instanceof Object;  // false\nnull instanceof Object;       // false"
           },
           {
-            "title": "解决方案",
-            "code": "// 1. toFixed()\nconst result = (0.1 + 0.2).toFixed(2);\nconsole.log(result); // '0.30' (字符串)\n\n// 2. 误差比较\nconst equal = Math.abs(0.1 + 0.2 - 0.3) < Number.EPSILON;\nconsole.log(equal); // true\n\n// 3. 转整数计算\nconst a = 0.1 * 10;\nconst b = 0.2 * 10;\nconst c = (a + b) / 10;\nconsole.log(c); // 0.3\n\n// 4. 使用第三方库\n// decimal.js, big.js, bignumber.js"
+            "title": "相等性比较（选项C）",
+            "code": "undefined == null;   // true（宽松相等）\nundefined === null;  // false（严格相等）\n\n// undefined和null只与自身和对方相等\nundefined == undefined;  // true\nundefined == null;       // true\nundefined == 0;          // false\nundefined == false;      // false\nundefined == '';         // false"
+          },
+          {
+            "title": "数值转换（选项D）",
+            "code": "Number(undefined);  // NaN\nNumber(null);       // 0\n\n+undefined;  // NaN\n+null;       // 0\n\n// 在算术运算中\n1 + undefined;  // NaN\n1 + null;       // 1"
+          },
+          {
+            "title": "使用场景",
+            "code": "// undefined的出现场景\nlet x;  // 声明但未赋值\nconsole.log(x);  // undefined\n\nconst obj = {};\nconsole.log(obj.foo);  // undefined\n\nfunction test() {}\nconst result = test();  // undefined\n\nfunction foo(a) {\n  console.log(a);  // undefined（参数未传）\n}\nfoo();\n\n// null的使用场景\nlet data = null;  // 明确表示空值\nconst element = document.getElementById('notexist');  // null\n\n// 最佳实践\nlet user = null;  // 准备保存用户对象，现在为空\nif (user === null) {\n  user = { name: 'Tom' };  // 赋值\n}"
           }
         ]
       },
-      "source": "浮点数精度"
+      "source": "null vs undefined"
     }
   ],
   "navigation": {
