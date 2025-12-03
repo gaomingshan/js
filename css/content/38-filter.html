@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter滤镜 - CSS 学习</title>
+    <link rel="stylesheet" href="css/content-common.css">
+</head>
+<body>
+    <a href="index.html" class="back-link">⬅️ 返回导航</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1 id="section-title">加载中...</h1>
+        </div>
+
+        <div id="content-container">
+            <!-- 内容将由 content-renderer.js 动态渲染 -->
+        </div>
+
+        <div class="nav-links" id="nav-links">
+            <!-- 导航链接将由 content-renderer.js 动态渲染 -->
+        </div>
+    </div>
+
+    <script src="data/section-38.js"></script>
+    <script src="js/content-renderer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataKeys = Object.keys(window).filter(key => key.startsWith('cssContentData_'));
+            if (dataKeys.length > 0) {
+                ContentRenderer.init(window[dataKeys[0]]);
+            } else {
+                console.error('未找到内容数据');
+            }
+        });
+    </script>
+</body>
+</html>
