@@ -1,0 +1,26 @@
+// 第40章：自定义属性 - 面试题
+window.cssQuizData_Chapter40 = {
+    config: {
+        title: "自定义属性",
+        icon: "💎",
+        description: "变量定义、作用域、继承",
+        primaryColor: "#667eea",
+        bgGradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    },
+    questions: [
+        {type: "single-choice", difficulty: "easy", tags: ["CSS变量基础"], question: "CSS自定义属性的语法是？", options: ["$variable", "@variable", "--variable", "var-name"], correctAnswer: "C", explanation: {title: "变量语法", sections: [{title: "正确答案", content: "CSS自定义属性（CSS变量）使用--作为前缀，如--primary-color。使用时通过var()函数引用。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "easy", tags: ["var函数"], question: "如何使用CSS变量？", options: ["color: --main-color", "color: var(--main-color)", "color: $(--main-color)", "color: @main-color"], correctAnswer: "B", explanation: {title: "变量使用", sections: [{title: "正确答案", content: "使用var()函数引用CSS变量，如color: var(--main-color)。var()还支持第二个参数作为回退值。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "medium", tags: ["变量作用域"], question: "CSS变量定义在:root上有什么作用？", options: ["局部变量", "全局变量", "私有变量", "常量"], correctAnswer: "B", explanation: {title: "全局变量", sections: [{title: "正确答案", content: ":root伪类对应html元素，在其上定义的变量可以在整个文档中使用，相当于全局变量。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "medium", tags: ["变量继承"], question: "CSS变量会继承吗？", options: ["不会", "会", "只在某些元素", "取决于属性"], correctAnswer: "B", explanation: {title: "变量继承", sections: [{title: "正确答案", content: "CSS变量会继承。子元素可以访问父元素定义的变量。这是CSS变量的重要特性，也是与预处理器变量的区别。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "medium", tags: ["回退值"], question: "var(--color, red)中red的作用是？", options: ["默认值", "回退值", "备选值", "以上都对"], correctAnswer: "D", explanation: {title: "回退值", sections: [{title: "正确答案", content: "var()第二个参数是回退值（fallback），当变量未定义或无效时使用。它是默认值、回退值、备选值，三种说法都对。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "medium", tags: ["变量重定义"], question: "子元素可以重新定义父元素的变量吗？", options: ["不可以", "可以，会覆盖", "可以，但不影响父元素", "报错"], correctAnswer: "C", explanation: {title: "变量覆盖", sections: [{title: "正确答案", content: "子元素可以重新定义同名变量，在该元素及其子元素中生效，不影响父元素和兄弟元素。这实现了变量的局部作用域。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "hard", tags: ["变量计算"], question: "CSS变量可以直接参与calc()计算吗？", options: ["不可以", "可以", "需要转换", "只支持数值"], correctAnswer: "B", explanation: {title: "变量与calc", sections: [{title: "正确答案", content: "CSS变量可以直接在calc()中使用，如width: calc(var(--base) * 2)。变量值在运行时解析，非常灵活。"}]}, source: "CSS Custom Properties"},
+        {type: "single-choice", difficulty: "hard", tags: ["JS交互"], question: "如何用JavaScript读取CSS变量？", options: ["element.style.--variable", "getComputedStyle(element).getPropertyValue('--variable')", "element.cssVariable", "document.getVariable()"], correctAnswer: "B", explanation: {title: "JS读取变量", sections: [{title: "正确答案", content: "使用getComputedStyle(element).getPropertyValue('--variable')读取。设置用element.style.setProperty('--variable', value)。"}]}, source: "CSSOM API"},
+        {type: "single-choice", difficulty: "hard", tags: ["变量类型"], question: "CSS变量有类型吗？", options: ["有，强类型", "没有，都是字符串", "有，弱类型", "取决于使用位置"], correctAnswer: "B", explanation: {title: "变量类型", sections: [{title: "正确答案", content: "CSS变量是无类型的，存储的是字符串。解析时根据使用的属性上下文进行类型转换。这与预处理器的有类型变量不同。"}]}, source: "CSS Custom Properties"},
+        {type: "multiple-choice", difficulty: "hard", tags: ["变量综合"], question: "关于CSS变量，以下说法正确的是？（多选）", options: ["支持继承", "可以在媒体查询中改变", "可以在伪类中改变", "可以动画过渡"], correctAnswer: ["A", "B", "C", "D"], explanation: {title: "变量特性", sections: [{title: "正确答案", content: "四个都正确。CSS变量支持继承、可以在媒体查询和伪类中动态改变、支持transition和animation过渡（如颜色变量）。"}]}, source: "CSS Custom Properties"}
+    ],
+    navigation: {
+        prev: { title: "混合模式", url: "39-blend-modes.html" },
+        next: { title: "动态主题实现", url: "41-theme-implementation.html" }
+    }
+};

@@ -1,0 +1,26 @@
+// 第35章：动画性能优化 - 面试题
+window.cssQuizData_Chapter35 = {
+    config: {
+        title: "动画性能优化",
+        icon: "🚀",
+        description: "60fps、requestAnimationFrame",
+        primaryColor: "#667eea",
+        bgGradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    },
+    questions: [
+        {type: "single-choice", difficulty: "easy", tags: ["帧率"], question: "流畅动画的目标帧率是多少？", options: ["30fps", "60fps", "120fps", "越高越好"], correctAnswer: "B", explanation: {title: "60fps目标", sections: [{title: "正确答案", content: "60fps是流畅动画的目标，对应16.67ms一帧。低于60fps会出现卡顿。高刷新率屏幕可以更高，但60fps是标准。"}]}, source: "Web动画性能"},
+        {type: "single-choice", difficulty: "easy", tags: ["RAF"], question: "requestAnimationFrame相比setTimeout的优势是？", options: ["精度更高", "与屏幕刷新率同步", "性能更好", "以上都对"], correctAnswer: "D", explanation: {title: "RAF优势", sections: [{title: "正确答案", content: "requestAnimationFrame与浏览器刷新率同步，不会过度绘制；页面不可见时暂停，节省资源；时机更精确。"}]}, source: "requestAnimationFrame API"},
+        {type: "single-choice", difficulty: "medium", tags: ["性能瓶颈"], question: "动画卡顿的主要原因是？", options: ["代码太多", "内存不足", "单帧执行时间超过16.67ms", "GPU不够强"], correctAnswer: "C", explanation: {title: "帧时间预算", sections: [{title: "正确答案", content: "60fps要求每帧16.67ms内完成。如果JS执行、Layout、Paint等总时间超过，就会掉帧卡顿。"}]}, source: "Web动画性能"},
+        {type: "single-choice", difficulty: "medium", tags: ["动画属性"], question: "以下哪组属性动画性能最差？", options: ["transform + opacity", "left + top", "width + height", "margin + padding"], correctAnswer: "C", explanation: {title: "动画属性性能", sections: [{title: "正确答案", content: "width/height动画触发重排重绘，性能最差。left/top只触发重绘。transform/opacity不触发重排重绘，性能最佳。"}]}, source: "CSS动画性能"},
+        {type: "single-choice", difficulty: "medium", tags: ["will-change时机"], question: "will-change什么时候添加最合适？", options: ["页面加载时", "动画开始前", "动画进行中", "动画结束后"], correctAnswer: "B", explanation: {title: "will-change使用", sections: [{title: "正确答案", content: "will-change应在动画开始前添加（如hover时），变化完成后移除。提前太久会浪费内存。"}]}, source: "CSS will-change"},
+        {type: "single-choice", difficulty: "medium", tags: ["性能监控"], question: "如何检测动画是否掉帧？", options: ["肉眼观察", "使用DevTools Performance", "console.log时间", "无法检测"], correctAnswer: "B", explanation: {title: "性能分析", sections: [{title: "正确答案", content: "Chrome DevTools的Performance面板可以录制和分析帧率，查看每帧时间分布，定位性能瓶颈。"}]}, source: "Chrome DevTools"},
+        {type: "single-choice", difficulty: "hard", tags: ["FLIP技术"], question: "FLIP技术的核心思想是什么？", options: ["加速动画", "先计算最终状态再倒放", "使用GPU", "减少重绘"], correctAnswer: "B", explanation: {title: "FLIP技术", sections: [{title: "正确答案", content: "FLIP（First, Last, Invert, Play）先跳到最终状态，计算差异，然后用transform倒放，避免Layout动画，实现高性能。"}]}, source: "Web动画技术"},
+        {type: "single-choice", difficulty: "hard", tags: ["合成动画"], question: "哪些属性的动画可以完全在合成线程运行？", options: ["所有CSS属性", "transform和opacity", "颜色属性", "长度属性"], correctAnswer: "B", explanation: {title: "合成线程动画", sections: [{title: "正确答案", content: "只有transform和opacity动画可以完全在合成线程运行，不需要主线程参与，不会被JS阻塞，性能最佳。"}]}, source: "浏览器渲染原理"},
+        {type: "single-choice", difficulty: "hard", tags: ["动画降级"], question: "低端设备如何优化动画？", options: ["禁用动画", "减少动画复杂度", "使用prefers-reduced-motion", "以上都可以"], correctAnswer: "D", explanation: {title: "动画降级策略", sections: [{title: "正确答案", content: "可以通过媒体查询检测设备性能，使用prefers-reduced-motion响应用户偏好，或动态调整动画复杂度。"}]}, source: "Web动画最佳实践"},
+        {type: "multiple-choice", difficulty: "hard", tags: ["优化综合"], question: "优化CSS动画性能的方法有哪些？（多选）", options: ["只动画transform和opacity", "使用will-change", "用requestAnimationFrame控制JS动画", "避免动画过多元素"], correctAnswer: ["A", "B", "C", "D"], explanation: {title: "性能优化清单", sections: [{title: "正确答案", content: "四个都是有效的优化方法。优先使用GPU加速属性，合理使用will-change，用RAF同步刷新率，控制动画元素数量。"}]}, source: "Web动画性能优化"}
+    ],
+    navigation: {
+        prev: { title: "Transition与Animation原理", url: "34-transition-animation.html" },
+        next: { title: "2D变换", url: "36-2d-transform.html" }
+    }
+};

@@ -1,0 +1,26 @@
+// 第34章：Transition与Animation原理 - 面试题
+window.cssQuizData_Chapter34 = {
+    config: {
+        title: "Transition与Animation原理",
+        icon: "🔄",
+        description: "过渡算法、关键帧插值",
+        primaryColor: "#fa709a",
+        bgGradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+    },
+    questions: [
+        {type: "single-choice", difficulty: "easy", tags: ["transition基础"], question: "transition可以作用在哪些属性上？", options: ["所有属性", "可动画属性", "数值属性", "长度属性"], correctAnswer: "B", explanation: {title: "可过渡属性", sections: [{title: "正确答案", content: "transition只能作用在可动画（animatable）属性上，如颜色、长度、数值等有中间态的属性。display等离散属性不能过渡。"}]}, source: "CSS Transitions"},
+        {type: "single-choice", difficulty: "easy", tags: ["animation基础"], question: "@keyframes中，from和to分别表示什么？", options: ["开始和结束帧", "0%和100%", "第一帧和最后一帧", "以上都对"], correctAnswer: "D", explanation: {title: "关键帧语法", sections: [{title: "正确答案", content: "from等同于0%，to等同于100%。它们都表示动画的开始和结束状态。"}]}, source: "CSS Animations"},
+        {type: "single-choice", difficulty: "medium", tags: ["timing-function"], question: "ease-in-out缓动函数的特点是？", options: ["匀速", "先快后慢", "先慢后快", "慢-快-慢"], correctAnswer: "D", explanation: {title: "缓动函数", sections: [{title: "正确答案", content: "ease-in-out先慢后快再慢，开始和结束都有缓动效果。ease-in只在开始慢，ease-out只在结束慢。"}]}, source: "CSS Easing Functions"},
+        {type: "single-choice", difficulty: "medium", tags: ["动画触发"], question: "CSS动画何时开始？", options: ["页面加载时", "元素添加到DOM时", "样式应用时", "以上都可能"], correctAnswer: "D", explanation: {title: "动画触发时机", sections: [{title: "正确答案", content: "动画在animation属性应用到元素时开始。可以是页面加载、动态添加、className改变等时机。"}]}, source: "CSS Animations"},
+        {type: "single-choice", difficulty: "medium", tags: ["animation-fill-mode"], question: "animation-fill-mode: forwards的作用是？", options: ["动画向前播放", "保持结束状态", "反向播放", "填充动画"], correctAnswer: "B", explanation: {title: "fill-mode", sections: [{title: "正确答案", content: "forwards使动画结束后保持最后一帧的状态。backwards应用第一帧状态，both两者都应用，none都不应用。"}]}, source: "CSS Animations"},
+        {type: "single-choice", difficulty: "medium", tags: ["贝塞尔曲线"], question: "cubic-bezier(0, 0, 1, 1)等同于哪个缓动函数？", options: ["ease", "linear", "ease-in", "ease-out"], correctAnswer: "B", explanation: {title: "贝塞尔曲线", sections: [{title: "正确答案", content: "cubic-bezier(0, 0, 1, 1)是线性曲线，等同于linear。贝塞尔曲线通过4个点定义缓动曲线。"}]}, source: "CSS Easing Functions"},
+        {type: "single-choice", difficulty: "hard", tags: ["关键帧插值"], question: "缺少中间关键帧时，浏览器如何插值？", options: ["跳过", "线性插值", "根据timing-function插值", "使用默认值"], correctAnswer: "C", explanation: {title: "关键帧插值", sections: [{title: "正确答案", content: "浏览器会根据timing-function在关键帧之间进行插值计算，生成中间状态，实现平滑过渡。"}]}, source: "CSS Animations"},
+        {type: "single-choice", difficulty: "hard", tags: ["transition事件"], question: "transition结束时触发什么事件？", options: ["animationend", "transitionend", "transitioncomplete", "animationcomplete"], correctAnswer: "B", explanation: {title: "过渡事件", sections: [{title: "正确答案", content: "transition结束触发transitionend事件。animation结束触发animationend事件。可以用来链式动画或清理。"}]}, source: "CSS Transitions"},
+        {type: "single-choice", difficulty: "hard", tags: ["动画性能"], question: "animation-iteration-count: infinite会有内存泄漏吗？", options: ["会", "不会", "取决于属性", "取决于浏览器"], correctAnswer: "B", explanation: {title: "无限动画", sections: [{title: "正确答案", content: "无限动画本身不会内存泄漏。但如果动画在不可见元素上运行，应该暂停（display:none会自动停止）以节省CPU/GPU。"}]}, source: "Web动画性能"},
+        {type: "multiple-choice", difficulty: "hard", tags: ["动画综合"], question: "关于transition和animation，以下说法正确的是？（多选）", options: ["transition需要触发条件", "animation可以自动播放", "两者都支持多个属性", "都可以使用cubic-bezier"], correctAnswer: ["A", "B", "C", "D"], explanation: {title: "过渡与动画对比", sections: [{title: "正确答案", content: "四个都正确。transition需要属性变化触发；animation可以自动播放；都支持多属性和自定义缓动函数。"}]}, source: "CSS Animations & Transitions"}
+    ],
+    navigation: {
+        prev: { title: "transform与opacity优化", url: "33-transform-opacity.html" },
+        next: { title: "动画性能优化", url: "35-animation-performance.html" }
+    }
+};

@@ -8,22 +8,16 @@ window.cssQuizData_Chapter27 = {
         bgGradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
     },
     questions: [
-        {
-            type: "single-choice",
-            difficulty: "medium",
-            tags: ["Grid对齐"],
-            question: "justify-items和align-items在Grid中分别控制什么？",
-            options: ["行内轴和块轴", "主轴和交叉轴", "水平和垂直", "列和行"],
-            correctAnswer: "A",
-            explanation: {
-                title: "Grid对齐属性",
-                sections: [{
-                    title: "正确答案",
-                    content: "justify-items控制行内轴（inline axis）对齐，align-items控制块轴（block axis）对齐。在水平书写模式下，行内轴是水平的，块轴是垂直的。"
-                }]
-            },
-            source: "CSS Grid规范"
-        }
+        {type: "single-choice", difficulty: "easy", tags: ["Grid对齐"], question: "justify-items的默认值是？", options: ["start", "center", "stretch", "end"], correctAnswer: "C", explanation: {title: "默认对齐", sections: [{title: "正确答案", content: "justify-items和align-items默认值都是stretch，网格项目会拉伸填满网格区域。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "easy", tags: ["网格项目对齐"], question: "justify-self只对哪些元素有效？", options: ["网格容器", "网格项目", "所有元素", "块级元素"], correctAnswer: "B", explanation: {title: "self属性", sections: [{title: "正确答案", content: "justify-self和align-self用于单个网格项目，覆盖容器的justify-items/align-items设置。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["Grid对齐"], question: "justify-items和align-items在Grid中分别控制什么？", options: ["行内轴和块轴", "主轴和交叉轴", "水平和垂直", "列和行"], correctAnswer: "A", explanation: {title: "Grid对齐轴", sections: [{title: "正确答案", content: "justify-items控制行内轴（inline axis），align-items控制块轴（block axis）。水平模式下对应水平和垂直。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["网格对齐"], question: "justify-content对什么生效？", options: ["网格项目在单元格内的对齐", "网格轨道在容器内的对齐", "网格线的对齐", "网格区域的对齐"], correctAnswer: "B", explanation: {title: "content对齐", sections: [{title: "正确答案", content: "justify-content和align-content控制整个网格轨道在容器内的对齐方式（当网格小于容器时）。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["place属性"], question: "place-items是哪两个属性的简写？", options: ["justify-items和justify-content", "align-items和justify-items", "align-content和justify-content", "align-self和justify-self"], correctAnswer: "B", explanation: {title: "place简写", sections: [{title: "正确答案", content: "place-items是align-items justify-items的简写，一个值时两者相同。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["网格自动放置"], question: "grid-auto-flow: column时，项目如何排列？", options: ["按行填充", "按列填充", "对角线填充", "随机填充"], correctAnswer: "B", explanation: {title: "自动放置方向", sections: [{title: "正确答案", content: "grid-auto-flow: column使自动放置算法按列优先填充，而非默认的按行。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "hard", tags: ["对齐冲突"], question: "网格项目同时设置align-self:center和height:100%，最终效果是？", options: ["居中", "拉伸", "顶部对齐", "height优先"], correctAnswer: "D", explanation: {title: "对齐与尺寸", sections: [{title: "正确答案", content: "显式设置了尺寸（height:100%）后，align-self的stretch失效，但center等其他值仍有效，height: 100%优先。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "hard", tags: ["baseline对齐"], question: "Grid中align-items:baseline时，如何确定基线？", options: ["容器顶部", "第一个项目的基线", "最高项目的基线", "所有项目第一行文字的基线"], correctAnswer: "D", explanation: {title: "Grid基线对齐", sections: [{title: "正确答案", content: "baseline对齐会将同一行所有项目的第一行文字基线对齐，类似Flex的baseline。"}]}, source: "CSS Grid规范"},
+        {type: "single-choice", difficulty: "hard", tags: ["safe对齐"], question: "align-items: safe center中，safe关键字的作用是？", options: ["安全模式", "防止溢出", "防止数据丢失", "兼容降级"], correctAnswer: "C", explanation: {title: "safe关键字", sections: [{title: "正确答案", content: "safe关键字防止因对齐导致内容溢出不可访问（数据丢失）。如果会溢出，则改用start对齐。"}]}, source: "CSS Box Alignment规范"},
+        {type: "multiple-choice", difficulty: "hard", tags: ["Grid对齐综合"], question: "关于Grid对齐，以下说法正确的是？（多选）", options: ["justify-*控制行内轴", "place-*是对应两个属性的简写", "*-self只对网格项目有效", "stretch需要项目没有设置尺寸"], correctAnswer: ["A", "B", "C", "D"], explanation: {title: "对齐综合", sections: [{title: "正确答案", content: "四个都正确。justify控制行内轴，place是简写，self只对项目有效，stretch需要auto尺寸。"}]}, source: "CSS Grid规范"}
     ],
     navigation: {
         prev: { title: "Grid布局算法", url: "26-grid-algorithm.html" },

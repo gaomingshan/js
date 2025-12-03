@@ -8,22 +8,16 @@ window.cssQuizData_Chapter28 = {
         bgGradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
     },
     questions: [
-        {
-            type: "single-choice",
-            difficulty: "easy",
-            tags: ["媒体查询"],
-            question: "@media screen and (min-width: 768px)中，min-width是什么？",
-            options: ["媒体类型", "媒体特性", "逻辑运算符", "断点值"],
-            correctAnswer: "B",
-            explanation: {
-                title: "媒体查询组成",
-                sections: [{
-                    title: "正确答案",
-                    content: "min-width是媒体特性，用于描述设备或环境的特征。screen是媒体类型，and是逻辑运算符，768px是特性值。"
-                }]
-            },
-            source: "CSS媒体查询规范"
-        }
+        {type: "single-choice", difficulty: "easy", tags: ["媒体查询"], question: "@media screen and (min-width: 768px)中，min-width是什么？", options: ["媒体类型", "媒体特性", "逻辑运算符", "断点值"], correctAnswer: "B", explanation: {title: "媒体查询组成", sections: [{title: "正确答案", content: "min-width是媒体特性，用于描述设备或环境特征。screen是媒体类型，and是逻辑运算符，768px是特性值。"}]}, source: "CSS媒体查询规范"},
+        {type: "single-choice", difficulty: "easy", tags: ["媒体类型"], question: "以下哪个不是有效的媒体类型？", options: ["screen", "print", "mobile", "speech"], correctAnswer: "C", explanation: {title: "媒体类型", sections: [{title: "正确答案", content: "有效的媒体类型包括：screen（屏幕）、print（打印）、speech（语音）、all（所有）。mobile不是有效类型。"}]}, source: "CSS媒体查询规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["逻辑运算"], question: "@media (min-width: 768px) and (max-width: 1024px)匹配什么范围？", options: ["小于768px", "768px-1024px", "大于1024px", "所有尺寸"], correctAnswer: "B", explanation: {title: "范围查询", sections: [{title: "正确答案", content: "and运算符要求两个条件都满足，所以匹配768px到1024px之间的视口宽度。"}]}, source: "CSS媒体查询规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["媒体特性"], question: "orientation媒体特性有哪些值？", options: ["horizontal/vertical", "portrait/landscape", "left/right", "up/down"], correctAnswer: "B", explanation: {title: "orientation特性", sections: [{title: "正确答案", content: "orientation: portrait（竖屏，高度>宽度）或landscape（横屏，宽度>高度）。"}]}, source: "CSS媒体查询规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["not运算符"], question: "@media not screen and (color)的含义是？", options: ["非彩色屏幕", "非屏幕且彩色", "非屏幕或非彩色", "非（屏幕且彩色）"], correctAnswer: "D", explanation: {title: "not作用域", sections: [{title: "正确答案", content: "not作用于整个媒体查询，而不是单个特性。not screen and (color)表示非（屏幕且彩色设备）。"}]}, source: "CSS媒体查询规范"},
+        {type: "single-choice", difficulty: "medium", tags: ["媒体查询级联"], question: "当多个@media规则匹配时，CSS如何应用？", options: ["只应用第一个", "只应用最后一个", "按级联顺序全部应用", "优先级最高的"], correctAnswer: "C", explanation: {title: "媒体查询级联", sections: [{title: "正确答案", content: "所有匹配的@media规则都会应用，遵循正常的CSS级联规则（后面的覆盖前面的）。"}]}, source: "CSS级联规范"},
+        {type: "single-choice", difficulty: "hard", tags: ["范围语法"], question: "Media Queries Level 4中，(width >= 768px)等同于什么？", options: ["(min-width: 768px)", "(max-width: 768px)", "(width: 768px)", "(width > 767px)"], correctAnswer: "A", explanation: {title: "范围语法", sections: [{title: "正确答案", content: "MQ4引入范围语法，(width >= 768px)等同于传统的(min-width: 768px)，更直观易读。"}]}, source: "CSS媒体查询Level 4"},
+        {type: "single-choice", difficulty: "hard", tags: ["hover特性"], question: "hover: none表示什么？", options: ["不支持hover", "鼠标悬停无效", "主要输入设备不便于hover", "禁用hover"], correctAnswer: "C", explanation: {title: "hover媒体特性", sections: [{title: "正确答案", content: "hover: none表示主要输入设备不便于hover（如触摸屏）；hover: hover表示可以方便地hover（如鼠标）。"}]}, source: "CSS媒体查询Level 4"},
+        {type: "single-choice", difficulty: "hard", tags: ["prefers媒体特性"], question: "prefers-color-scheme用于什么？", options: ["设置颜色方案", "检测用户偏好的颜色模式", "设置主题色", "颜色校准"], correctAnswer: "B", explanation: {title: "用户偏好查询", sections: [{title: "正确答案", content: "prefers-color-scheme检测用户偏好的颜色模式（light或dark），用于实现深色模式。"}]}, source: "CSS媒体查询Level 5"},
+        {type: "multiple-choice", difficulty: "hard", tags: ["媒体查询综合"], question: "关于媒体查询，以下说法正确的是？（多选）", options: ["可以在@import中使用", "支持嵌套", "not作用于整个媒体查询", "逗号表示or逻辑"], correctAnswer: ["A", "C", "D"], explanation: {title: "媒体查询特性", sections: [{title: "正确答案", content: "A、C、D正确。B错误：CSS3不支持@media嵌套，但CSS Nesting Module可能会支持。"}]}, source: "CSS媒体查询规范"}
     ],
     navigation: {
         prev: { title: "Grid对齐与放置", url: "27-grid-alignment.html" },
