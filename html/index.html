@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 学习系统 - 系统化学习HTML核心知识</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #e96443 0%, #904e95 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 1rem 2rem;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #e96443;
+            border-color: white;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-group {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #2d3748;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #e96443;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .topic-card {
+            position: relative;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            display: block;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(233, 100, 67, 0.2);
+            border-color: #e96443;
+        }
+
+        .topic-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-number {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: #e96443;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .topic-card h3 {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 0.75rem;
+            padding-right: 50px;
+        }
+
+        .topic-card p {
+            color: #718096;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            color: #e96443;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .topic-card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(5px);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 4rem;
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .topics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 HTML 学习系统</h1>
+            <p>从基础到高级，系统掌握HTML核心知识与最佳实践</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('content')">📚 内容学习</button>
+            <button class="tab-btn" onclick="switchTab('quiz')">💡 面试题库</button>
+        </div>
+
+        <!-- 内容学习部分 -->
+        <div id="content-tab" class="content-section active">
+            <!-- 第一部分：HTML基础 -->
+            <div class="section-group">
+                <h2 class="section-title">📘 第一部分：HTML基础 (6章)</h2>
+                <div class="topics-grid">
+                    <a href="content/01-html-intro.html" class="topic-card">
+                        <div class="card-number">1</div>
+                        <h3>HTML简介与历史</h3>
+                        <p>HTML的诞生、版本演进、W3C与WHATWG标准</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/02-document-structure.html" class="topic-card">
+                        <div class="card-number">2</div>
+                        <h3>文档结构与语法</h3>
+                        <p>DOCTYPE声明、html/head/body结构、语法规则</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/03-head-elements.html" class="topic-card">
+                        <div class="card-number">3</div>
+                        <h3>头部元素详解</h3>
+                        <p>title、meta、link、style、script、base标签</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/04-text-content.html" class="topic-card">
+                        <div class="card-number">4</div>
+                        <h3>文本内容标签</h3>
+                        <p>标题、段落、文本格式化、引用、代码展示</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/05-lists.html" class="topic-card">
+                        <div class="card-number">5</div>
+                        <h3>列表与定义</h3>
+                        <p>无序列表、有序列表、定义列表及嵌套</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/06-links-navigation.html" class="topic-card">
+                        <div class="card-number">6</div>
+                        <h3>链接与导航</h3>
+                        <p>a标签详解、锚点链接、download属性、安全性</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第二部分：媒体与嵌入 -->
+            <div class="section-group">
+                <h2 class="section-title">🎬 第二部分：媒体与嵌入 (5章)</h2>
+                <div class="topics-grid">
+                    <a href="content/07-images.html" class="topic-card">
+                        <div class="card-number">7</div>
+                        <h3>图片处理</h3>
+                        <p>img标签、响应式图片、picture元素、懒加载</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/08-audio-video.html" class="topic-card">
+                        <div class="card-number">8</div>
+                        <h3>音频与视频</h3>
+                        <p>audio、video标签、媒体属性、track字幕</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/09-embedding.html" class="topic-card">
+                        <div class="card-number">9</div>
+                        <h3>嵌入内容</h3>
+                        <p>iframe、embed、object、沙箱与安全</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/10-svg-canvas.html" class="topic-card">
+                        <div class="card-number">10</div>
+                        <h3>SVG与Canvas</h3>
+                        <p>内联SVG、canvas基础、使用场景对比</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/11-figures-maps.html" class="topic-card">
+                        <div class="card-number">11</div>
+                        <h3>图形与图表</h3>
+                        <p>figure、figcaption、map、area图像映射</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第三部分：表格与表单 -->
+            <div class="section-group">
+                <h2 class="section-title">📝 第三部分：表格与表单 (6章)</h2>
+                <div class="topics-grid">
+                    <a href="content/12-table-basics.html" class="topic-card">
+                        <div class="card-number">12</div>
+                        <h3>表格基础</h3>
+                        <p>table结构、thead/tbody/tfoot、合并单元格</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/13-table-advanced.html" class="topic-card">
+                        <div class="card-number">13</div>
+                        <h3>表格高级特性</h3>
+                        <p>colgroup、响应式表格、性能优化</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/14-form-basics.html" class="topic-card">
+                        <div class="card-number">14</div>
+                        <h3>表单基础</h3>
+                        <p>form结构、input类型、label、button</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/15-form-controls.html" class="topic-card">
+                        <div class="card-number">15</div>
+                        <h3>表单高级控件</h3>
+                        <p>textarea、select、datalist、progress、meter</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/16-html5-forms.html" class="topic-card">
+                        <div class="card-number">16</div>
+                        <h3>HTML5表单新特性</h3>
+                        <p>新input类型、表单验证、autocomplete</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/17-form-best-practices.html" class="topic-card">
+                        <div class="card-number">17</div>
+                        <h3>表单最佳实践</h3>
+                        <p>设计原则、用户体验、安全性、无障碍</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第四部分：语义化HTML -->
+            <div class="section-group">
+                <h2 class="section-title">🏗️ 第四部分：语义化HTML (5章)</h2>
+                <div class="topics-grid">
+                    <a href="content/18-semantic-elements.html" class="topic-card">
+                        <div class="card-number">18</div>
+                        <h3>HTML5语义化标签</h3>
+                        <p>header、nav、main、section、article、aside、footer</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/19-microdata.html" class="topic-card">
+                        <div class="card-number">19</div>
+                        <h3>微格式与微数据</h3>
+                        <p>Schema.org、itemscope、JSON-LD、富文本摘要</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/20-aria-accessibility.html" class="topic-card">
+                        <div class="card-number">20</div>
+                        <h3>ARIA可访问性</h3>
+                        <p>ARIA角色、属性、状态、键盘导航</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/21-semantic-practice.html" class="topic-card">
+                        <div class="card-number">21</div>
+                        <h3>语义化实战</h3>
+                        <p>博客页面、电商页面、导航系统设计</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/22-seo-optimization.html" class="topic-card">
+                        <div class="card-number">22</div>
+                        <h3>SEO优化</h3>
+                        <p>标题层级、Meta标签、Open Graph、Twitter Card</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第五部分：安全与性能 -->
+            <div class="section-group">
+                <h2 class="section-title">🔒 第五部分：安全与性能 (5章)</h2>
+                <div class="topics-grid">
+                    <a href="content/23-html-security.html" class="topic-card">
+                        <div class="card-number">23</div>
+                        <h3>HTML安全基础</h3>
+                        <p>XSS攻击防护、HTML实体转义、安全DOM操作</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/24-csp.html" class="topic-card">
+                        <div class="card-number">24</div>
+                        <h3>内容安全策略（CSP）</h3>
+                        <p>CSP概念、指令详解、配置实践、报告监控</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/25-cross-origin-security.html" class="topic-card">
+                        <div class="card-number">25</div>
+                        <h3>跨域与安全属性</h3>
+                        <p>CORS、iframe沙箱、rel安全属性、referrerpolicy</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/26-performance-optimization.html" class="topic-card">
+                        <div class="card-number">26</div>
+                        <h3>HTML性能优化</h3>
+                        <p>关键渲染路径、资源预加载、懒加载、骨架屏</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/27-resource-loading.html" class="topic-card">
+                        <div class="card-number">27</div>
+                        <h3>资源加载优化</h3>
+                        <p>script加载策略、preload/prefetch、DNS预解析</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第六部分：现代HTML特性 -->
+            <div class="section-group">
+                <h2 class="section-title">🚀 第六部分：现代HTML特性 (5章)</h2>
+                <div class="topics-grid">
+                    <a href="content/28-web-components.html" class="topic-card">
+                        <div class="card-number">28</div>
+                        <h3>Web Components基础</h3>
+                        <p>Custom Elements、Shadow DOM、Templates、Slots</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/29-html5-apis.html" class="topic-card">
+                        <div class="card-number">29</div>
+                        <h3>HTML5 API集成</h3>
+                        <p>本地存储、地理位置、拖放、History API</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/30-offline-pwa.html" class="topic-card">
+                        <div class="card-number">30</div>
+                        <h3>离线与PWA</h3>
+                        <p>manifest清单、Service Worker、离线缓存</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/31-responsive-html.html" class="topic-card">
+                        <div class="card-number">31</div>
+                        <h3>响应式HTML</h3>
+                        <p>viewport设置、响应式图片、设备适配</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/32-emerging-features.html" class="topic-card">
+                        <div class="card-number">32</div>
+                        <h3>新兴HTML特性</h3>
+                        <p>dialog、details/summary、search、Popover API</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 第七部分：工程化与最佳实践 -->
+            <div class="section-group">
+                <h2 class="section-title">🛠️ 第七部分：工程化与最佳实践 (4章)</h2>
+                <div class="topics-grid">
+                    <a href="content/33-code-standards.html" class="topic-card">
+                        <div class="card-number">33</div>
+                        <h3>HTML代码规范</h3>
+                        <p>代码风格、命名规范、格式化、Linter工具</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/34-template-engines.html" class="topic-card">
+                        <div class="card-number">34</div>
+                        <h3>HTML模板引擎</h3>
+                        <p>Handlebars、EJS、Pug、服务端渲染、静态生成</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/35-build-tools.html" class="topic-card">
+                        <div class="card-number">35</div>
+                        <h3>HTML构建工具</h3>
+                        <p>压缩优化、验证工具、自动化测试、CI/CD</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="content/36-best-practices.html" class="topic-card">
+                        <div class="card-number">36</div>
+                        <h3>HTML最佳实践总结</h3>
+                        <p>可维护性、性能、可访问性、安全、兼容性</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面试题部分 -->
+        <div id="quiz-tab" class="content-section">
+            <!-- 第一部分面试题 -->
+            <div class="section-group">
+                <h2 class="section-title">📘 第一部分：HTML基础 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/01-html-intro-quiz.html" class="topic-card">
+                        <div class="card-number">1</div>
+                        <h3>HTML简介与历史</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="quiz/02-document-structure-quiz.html" class="topic-card">
+                        <div class="card-number">2</div>
+                        <h3>文档结构与语法</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="quiz/03-head-elements-quiz.html" class="topic-card">
+                        <div class="card-number">3</div>
+                        <h3>头部元素详解</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="quiz/04-text-content-quiz.html" class="topic-card">
+                        <div class="card-number">4</div>
+                        <h3>文本内容标签</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="quiz/05-lists-quiz.html" class="topic-card">
+                        <div class="card-number">5</div>
+                        <h3>列表与定义</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+
+                    <a href="quiz/06-links-navigation-quiz.html" class="topic-card">
+                        <div class="card-number">6</div>
+                        <h3>链接与导航</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 其他部分面试题省略，结构相同 -->
+            <div class="section-group">
+                <h2 class="section-title">🎬 第二部分：媒体与嵌入 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/07-images-quiz.html" class="topic-card">
+                        <div class="card-number">7</div>
+                        <h3>图片处理</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/08-audio-video-quiz.html" class="topic-card">
+                        <div class="card-number">8</div>
+                        <h3>音频与视频</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/09-embedding-quiz.html" class="topic-card">
+                        <div class="card-number">9</div>
+                        <h3>嵌入内容</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/10-svg-canvas-quiz.html" class="topic-card">
+                        <div class="card-number">10</div>
+                        <h3>SVG与Canvas</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/11-figures-maps-quiz.html" class="topic-card">
+                        <div class="card-number">11</div>
+                        <h3>图形与图表</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-group">
+                <h2 class="section-title">📝 第三部分：表格与表单 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/12-table-basics-quiz.html" class="topic-card">
+                        <div class="card-number">12</div>
+                        <h3>表格基础</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/13-table-advanced-quiz.html" class="topic-card">
+                        <div class="card-number">13</div>
+                        <h3>表格高级特性</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/14-form-basics-quiz.html" class="topic-card">
+                        <div class="card-number">14</div>
+                        <h3>表单基础</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/15-form-controls-quiz.html" class="topic-card">
+                        <div class="card-number">15</div>
+                        <h3>表单高级控件</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/16-html5-forms-quiz.html" class="topic-card">
+                        <div class="card-number">16</div>
+                        <h3>HTML5表单新特性</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/17-form-best-practices-quiz.html" class="topic-card">
+                        <div class="card-number">17</div>
+                        <h3>表单最佳实践</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-group">
+                <h2 class="section-title">🏗️ 第四部分：语义化HTML - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/18-semantic-elements-quiz.html" class="topic-card">
+                        <div class="card-number">18</div>
+                        <h3>HTML5语义化标签</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/19-microdata-quiz.html" class="topic-card">
+                        <div class="card-number">19</div>
+                        <h3>微格式与微数据</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/20-aria-accessibility-quiz.html" class="topic-card">
+                        <div class="card-number">20</div>
+                        <h3>ARIA可访问性</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/21-semantic-practice-quiz.html" class="topic-card">
+                        <div class="card-number">21</div>
+                        <h3>语义化实战</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/22-seo-optimization-quiz.html" class="topic-card">
+                        <div class="card-number">22</div>
+                        <h3>SEO优化</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-group">
+                <h2 class="section-title">🔒 第五部分：安全与性能 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/23-html-security-quiz.html" class="topic-card">
+                        <div class="card-number">23</div>
+                        <h3>HTML安全基础</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/24-csp-quiz.html" class="topic-card">
+                        <div class="card-number">24</div>
+                        <h3>内容安全策略（CSP）</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/25-cross-origin-security-quiz.html" class="topic-card">
+                        <div class="card-number">25</div>
+                        <h3>跨域与安全属性</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/26-performance-optimization-quiz.html" class="topic-card">
+                        <div class="card-number">26</div>
+                        <h3>HTML性能优化</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/27-resource-loading-quiz.html" class="topic-card">
+                        <div class="card-number">27</div>
+                        <h3>资源加载优化</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-group">
+                <h2 class="section-title">🚀 第六部分：现代HTML特性 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/28-web-components-quiz.html" class="topic-card">
+                        <div class="card-number">28</div>
+                        <h3>Web Components基础</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/29-html5-apis-quiz.html" class="topic-card">
+                        <div class="card-number">29</div>
+                        <h3>HTML5 API集成</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/30-offline-pwa-quiz.html" class="topic-card">
+                        <div class="card-number">30</div>
+                        <h3>离线与PWA</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/31-responsive-html-quiz.html" class="topic-card">
+                        <div class="card-number">31</div>
+                        <h3>响应式HTML</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/32-emerging-features-quiz.html" class="topic-card">
+                        <div class="card-number">32</div>
+                        <h3>新兴HTML特性</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-group">
+                <h2 class="section-title">🛠️ 第七部分：工程化与最佳实践 - 面试题</h2>
+                <div class="topics-grid">
+                    <a href="quiz/33-code-standards-quiz.html" class="topic-card">
+                        <div class="card-number">33</div>
+                        <h3>HTML代码规范</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/34-template-engines-quiz.html" class="topic-card">
+                        <div class="card-number">34</div>
+                        <h3>HTML模板引擎</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/35-build-tools-quiz.html" class="topic-card">
+                        <div class="card-number">35</div>
+                        <h3>HTML构建工具</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                    <a href="quiz/36-best-practices-quiz.html" class="topic-card">
+                        <div class="card-number">36</div>
+                        <h3>HTML最佳实践总结</h3>
+                        <p>10道精选面试题</p>
+                        <span class="card-arrow">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="font-size: 1.1rem; margin-bottom: 15px;">🎯 当前进度：36/36章完成</p>
+            <p style="opacity: 0.9;">从基础语法到工程实践，系统掌握HTML核心知识</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">💡 360道精选面试题，助你轻松应对面试</p>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            // 切换按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 切换内容
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+    </script>
+</body>
+</html>
