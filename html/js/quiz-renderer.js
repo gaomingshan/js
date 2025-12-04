@@ -92,13 +92,13 @@ const QuizRenderer = {
                     <span class="tag">📝 单选题</span>
                     ${question.tags ? question.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
-                <div class="question">Q${number}: ${question.question}</div>
+                <div class="question">Q${number}: ${this.escapeHtml(question.question)}</div>
                 ${question.code ? `<div class="code-block">${this.escapeHtml(question.code)}</div>` : ''}
                 <div class="options">
                     ${question.options.map((opt, i) => {
                         const letter = String.fromCharCode(65 + i);
                         return `<div class="option" data-answer="${letter}">
-                            <strong>${letter}.</strong> ${opt}
+                            <strong>${letter}.</strong> ${this.escapeHtml(opt)}
                         </div>`;
                     }).join('')}
                 </div>
@@ -137,14 +137,14 @@ const QuizRenderer = {
                     <span class="tag">☑️ 多选题</span>
                     ${question.tags ? question.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
-                <div class="question">Q${number}: ${question.question}</div>
+                <div class="question">Q${number}: ${this.escapeHtml(question.question)}</div>
                 <div class="tip" style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">💡 提示：请选择所有正确答案</div>
                 <div class="options" data-multiple="true">
                     ${question.options.map((opt, i) => {
                         const letter = String.fromCharCode(65 + i);
                         return `<div class="option" data-answer="${letter}">
                             <input type="checkbox" id="q${number}-${letter}" style="margin-right: 8px;">
-                            <label for="q${number}-${letter}"><strong>${letter}.</strong> ${opt}</label>
+                            <label for="q${number}-${letter}"><strong>${letter}.</strong> ${this.escapeHtml(opt)}</label>
                         </div>`;
                     }).join('')}
                 </div>
@@ -182,13 +182,13 @@ const QuizRenderer = {
                     <span class="tag">💻 代码输出题</span>
                     ${question.tags ? question.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
-                <div class="question">Q${number}: ${question.question}</div>
+                <div class="question">Q${number}: ${this.escapeHtml(question.question)}</div>
                 ${question.code ? `<div class="code-block">${this.escapeHtml(question.code)}</div>` : ''}
                 <div class="options">
                     ${question.options.map((opt, i) => {
                         const letter = String.fromCharCode(65 + i);
                         return `<div class="option" data-answer="${letter}">
-                            <strong>${letter}.</strong> <code>${opt}</code>
+                            <strong>${letter}.</strong> <code>${this.escapeHtml(opt)}</code>
                         </div>`;
                     }).join('')}
                 </div>
@@ -226,7 +226,7 @@ const QuizRenderer = {
                     <span class="tag">✔️ 判断题</span>
                     ${question.tags ? question.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
-                <div class="question">Q${number}: ${question.question}</div>
+                <div class="question">Q${number}: ${this.escapeHtml(question.question)}</div>
                 ${question.code ? `<div class="code-block">${this.escapeHtml(question.code)}</div>` : ''}
                 <div class="options">
                     <div class="option" data-answer="A">
@@ -270,13 +270,13 @@ const QuizRenderer = {
                     <span class="tag">🔧 代码补全题</span>
                     ${question.tags ? question.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
-                <div class="question">Q${number}: ${question.question}</div>
+                <div class="question">Q${number}: ${this.escapeHtml(question.question)}</div>
                 ${question.code ? `<div class="code-block">${this.escapeHtml(question.code)}</div>` : ''}
                 <div class="options">
                     ${question.options.map((opt, i) => {
                         const letter = String.fromCharCode(65 + i);
                         return `<div class="option" data-answer="${letter}">
-                            <strong>${letter}.</strong> <code>${opt}</code>
+                            <strong>${letter}.</strong> <code>${this.escapeHtml(opt)}</code>
                         </div>`;
                     }).join('')}
                 </div>
