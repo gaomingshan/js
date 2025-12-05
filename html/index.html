@@ -782,19 +782,47 @@
     </div>
 
     <script>
+        // 切换标签页（更新 URL hash）
         function switchTab(tab) {
-            // 切换按钮状态
+            window.location.hash = tab;
+        }
+
+        // 根据 hash 更新页面显示
+        function updateTabFromHash() {
+            // 获取当前 hash，默认为 'content'
+            let hash = window.location.hash.slice(1) || 'content';
+            
+            // 如果 hash 不是有效的标签页，默认显示 content
+            if (hash !== 'content' && hash !== 'quiz') {
+                hash = 'content';
+            }
+
+            // 更新按钮状态
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            const activeBtn = hash === 'content' 
+                ? document.querySelector('.tab-btn:first-child')
+                : document.querySelector('.tab-btn:last-child');
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
 
-            // 切换内容
+            // 更新内容区域
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            document.getElementById(tab + '-tab').classList.add('active');
+            const activeSection = document.getElementById(hash + '-tab');
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
         }
+
+        // 监听 hash 变化（浏览器前进/后退）
+        window.addEventListener('hashchange', updateTabFromHash);
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', updateTabFromHash);
     </script>
 </body>
 </html>
