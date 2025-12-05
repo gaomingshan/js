@@ -300,23 +300,23 @@ const QuizRenderer = {
      */
     renderExplanation(explanation) {
         if (typeof explanation === 'string') {
-            return `<p>${explanation}</p>`;
+            return `<p>${this.escapeHtml(explanation)}</p>`;
         }
         
         let html = '';
         
         if (explanation.title) {
-            html += `<h4>${explanation.title}</h4>`;
+            html += `<h4>${this.escapeHtml(explanation.title)}</h4>`;
         }
         
         if (explanation.description) {
-            html += `<p>${explanation.description}</p>`;
+            html += `<p>${this.escapeHtml(explanation.description)}</p>`;
         }
         
         if (explanation.points) {
             html += '<ul>';
             explanation.points.forEach(point => {
-                html += `<li>${point}</li>`;
+                html += `<li>${this.escapeHtml(point)}</li>`;
             });
             html += '</ul>';
         }
@@ -327,9 +327,9 @@ const QuizRenderer = {
         
         if (explanation.sections) {
             explanation.sections.forEach(section => {
-                html += `<h4>${section.title}</h4>`;
+                html += `<h4>${this.escapeHtml(section.title)}</h4>`;
                 if (section.content) {
-                    html += `<p>${section.content}</p>`;
+                    html += `<p>${this.escapeHtml(section.content)}</p>`;
                 }
                 if (section.code) {
                     html += `<div class="code-block">${this.escapeHtml(section.code)}</div>`;
@@ -337,7 +337,7 @@ const QuizRenderer = {
                 if (section.points) {
                     html += '<ul>';
                     section.points.forEach(point => {
-                        html += `<li>${point}</li>`;
+                        html += `<li>${this.escapeHtml(point)}</li>`;
                     });
                     html += '</ul>';
                 }
