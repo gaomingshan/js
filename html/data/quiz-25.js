@@ -360,7 +360,7 @@ window.htmlQuizData_25 = {
         }
     ],
     navigation: {
-        prev: { title: "Web存储", url: "24-storage-quiz.html" },
-        next: { title: "地理定位", url: "26-geolocation-quiz.html" }
+        prev: { title: "Web存储", url: "quiz.html?chapter=24" },
+        next: { title: "地理定位", url: "quiz.html?chapter=26" }
     }
 };

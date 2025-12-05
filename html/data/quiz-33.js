@@ -385,7 +385,7 @@ window.htmlQuizData_33 = {
         }
     ],
     navigation: {
-        prev: { title: "响应式设计", url: "32-responsive-quiz.html" },
-        next: { title: "打印优化", url: "34-print-quiz.html" }
+        prev: { title: "响应式设计", url: "quiz.html?chapter=32" },
+        next: { title: "打印优化", url: "quiz.html?chapter=34" }
     }
 };

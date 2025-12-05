@@ -340,7 +340,7 @@ window.htmlQuizData_27 = {
         }
     ],
     navigation: {
-        prev: { title: "地理定位", url: "26-geolocation-quiz.html" },
-        next: { title: "离线应用", url: "28-offline-quiz.html" }
+        prev: { title: "地理定位", url: "quiz.html?chapter=26" },
+        next: { title: "离线应用", url: "quiz.html?chapter=28" }
     }
 };

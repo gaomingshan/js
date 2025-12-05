@@ -571,7 +571,7 @@ window.htmlQuizData_04 = {
         }
     ],
     navigation: {
-        prev: { title: "头部元素详解", url: "03-head-elements-quiz.html" },
-        next: { title: "列表与定义", url: "05-lists-quiz.html" }
+        prev: { title: "头部元素详解", url: "quiz.html?chapter=03" },
+        next: { title: "列表与定义", url: "quiz.html?chapter=05" }
     }
 };

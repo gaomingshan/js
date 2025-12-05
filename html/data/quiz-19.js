@@ -355,7 +355,7 @@ window.htmlQuizData_19 = {
         }
     ],
     navigation: {
-        prev: { title: "最佳实践", url: "18-best-practices-quiz.html" },
-        next: { title: "浏览器渲染原理", url: "20-rendering-quiz.html" }
+        prev: { title: "最佳实践", url: "quiz.html?chapter=18" },
+        next: { title: "浏览器渲染原理", url: "quiz.html?chapter=20" }
     }
 };

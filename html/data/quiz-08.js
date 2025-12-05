@@ -661,7 +661,7 @@ window.htmlQuizData_08 = {
         }
     ],
     navigation: {
-        prev: { title: "图片处理", url: "07-images-quiz.html" },
-        next: { title: "表格", url: "09-tables-quiz.html" }
+        prev: { title: "图片处理", url: "quiz.html?chapter=07" },
+        next: { title: "表格", url: "quiz.html?chapter=09" }
     }
 };

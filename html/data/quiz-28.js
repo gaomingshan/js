@@ -280,7 +280,7 @@ window.htmlQuizData_28 = {
         }
     ],
     navigation: {
-        prev: { title: "多媒体控制", url: "27-media-quiz.html" },
-        next: { title: "Web Workers", url: "29-workers-quiz.html" }
+        prev: { title: "多媒体控制", url: "quiz.html?chapter=27" },
+        next: { title: "Web Workers", url: "quiz.html?chapter=29" }
     }
 };

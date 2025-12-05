@@ -667,7 +667,7 @@ window.htmlQuizData_10 = {
         }
     ],
     navigation: {
-        prev: { title: "表格", url: "09-tables-quiz.html" },
-        next: { title: "表单高级", url: "11-forms-advanced-quiz.html" }
+        prev: { title: "表格", url: "quiz.html?chapter=09" },
+        next: { title: "表单高级", url: "quiz.html?chapter=11" }
     }
 };

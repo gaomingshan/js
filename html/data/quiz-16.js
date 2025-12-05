@@ -500,7 +500,7 @@ window.htmlQuizData_16 = {
         }
     ],
     navigation: {
-        prev: { title: "可访问性", url: "15-accessibility-quiz.html" },
-        next: { title: "性能优化", url: "17-performance-quiz.html" }
+        prev: { title: "可访问性", url: "quiz.html?chapter=15" },
+        next: { title: "性能优化", url: "quiz.html?chapter=17" }
     }
 };

@@ -325,7 +325,7 @@ window.htmlQuizData_26 = {
         }
     ],
     navigation: {
-        prev: { title: "拖放API", url: "25-drag-drop-quiz.html" },
-        next: { title: "多媒体控制", url: "27-media-quiz.html" }
+        prev: { title: "拖放API", url: "quiz.html?chapter=25" },
+        next: { title: "多媒体控制", url: "quiz.html?chapter=27" }
     }
 };

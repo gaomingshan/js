@@ -370,7 +370,7 @@ window.htmlQuizData_36 = {
         }
     ],
     navigation: {
-        prev: { title: "邮件HTML", url: "35-email-quiz.html" },
+        prev: { title: "邮件HTML", url: "quiz.html?chapter=35" },
         next: null
     }
 };

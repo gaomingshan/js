@@ -245,7 +245,7 @@ window.htmlQuizData_21 = {
         }
     ],
     navigation: {
-        prev: { title: "浏览器渲染原理", url: "20-rendering-quiz.html" },
-        next: { title: "Canvas基础", url: "22-canvas-quiz.html" }
+        prev: { title: "浏览器渲染原理", url: "quiz.html?chapter=20" },
+        next: { title: "Canvas基础", url: "quiz.html?chapter=22" }
     }
 };

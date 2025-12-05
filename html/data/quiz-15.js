@@ -496,7 +496,7 @@ window.htmlQuizData_15 = {
         }
     ],
     navigation: {
-        prev: { title: "HTML5 API（下）", url: "14-html5-api-2-quiz.html" },
-        next: { title: "SEO优化", url: "16-seo-quiz.html" }
+        prev: { title: "HTML5 API（下）", url: "quiz.html?chapter=14" },
+        next: { title: "SEO优化", url: "quiz.html?chapter=16" }
     }
 };

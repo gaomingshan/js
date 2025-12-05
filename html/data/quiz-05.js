@@ -491,7 +491,7 @@ window.htmlQuizData_05 = {
         }
     ],
     navigation: {
-        prev: { title: "文本内容标签", url: "04-text-content-quiz.html" },
-        next: { title: "链接与导航", url: "06-links-navigation-quiz.html" }
+        prev: { title: "文本内容标签", url: "quiz.html?chapter=04" },
+        next: { title: "链接与导航", url: "quiz.html?chapter=06" }
     }
 };

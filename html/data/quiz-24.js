@@ -150,7 +150,7 @@ window.htmlQuizData_24 = {
         }
     ],
     navigation: {
-        prev: { title: "SVG基础", url: "23-svg-quiz.html" },
-        next: { title: "拖放API", url: "25-drag-drop-quiz.html" }
+        prev: { title: "SVG基础", url: "quiz.html?chapter=23" },
+        next: { title: "拖放API", url: "quiz.html?chapter=25" }
     }
 };

@@ -161,7 +161,7 @@ window.htmlQuizData_22 = {
         }
     ],
     navigation: {
-        prev: { title: "事件系统", url: "21-events-quiz.html" },
-        next: { title: "SVG基础", url: "23-svg-quiz.html" }
+        prev: { title: "事件系统", url: "quiz.html?chapter=21" },
+        next: { title: "SVG基础", url: "quiz.html?chapter=23" }
     }
 };

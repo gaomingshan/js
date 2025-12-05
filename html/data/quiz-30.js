@@ -13,5 +13,5 @@ window.htmlQuizData_30 = {
         { difficulty: "medium", tags: ["应用"], question: "WebSocket应用场景？", type: "multiple-choice", options: ["即时聊天", "实时推送", "在线游戏", "协同编辑"], correctAnswer: ["A","B","C","D"], explanation: { title: "应用场景", sections: [{ title: "典型场景", code: '/* 聊天室 */\nws.send(JSON.stringify({type: "message", text: "hi"}));\n\n/* 实时数据 */\nws.onmessage = (e) => updateChart(JSON.parse(e.data));', content: "实时通信场景。" }] }, source: "Use Cases" },
         { difficulty: "easy", tags: ["关闭"], question: "关闭WebSocket？", type: "single-choice", options: ["ws.close()", "ws.disconnect()", "ws.terminate()", "ws.end()"], correctAnswer: "A", explanation: { title: "关闭连接", sections: [{ title: "关闭", code: 'ws.close();\n// 或指定代码和原因\nws.close(1000, "Normal closure");', content: "正常关闭连接。" }] }, source: "Close" }
     ],
-    navigation: { prev: { title: "Web Workers", url: "29-workers-quiz.html" }, next: { title: "跨域通信", url: "31-cors-quiz.html" } }
+    navigation: { prev: { title: "Web Workers", url: "quiz.html?chapter=29" }, next: { title: "跨域通信", url: "quiz.html?chapter=31" } }
 };

@@ -371,7 +371,7 @@ window.htmlQuizData_35 = {
         }
     ],
     navigation: {
-        prev: { title: "打印优化", url: "34-print-quiz.html" },
-        next: { title: "未来趋势", url: "36-future-quiz.html" }
+        prev: { title: "打印优化", url: "quiz.html?chapter=34" },
+        next: { title: "未来趋势", url: "quiz.html?chapter=36" }
     }
 };

@@ -375,7 +375,7 @@ window.htmlQuizData_14 = {
         }
     ],
     navigation: {
-        prev: { title: "HTML5 API（上）", url: "13-html5-api-1-quiz.html" },
-        next: { title: "可访问性", url: "15-accessibility-quiz.html" }
+        prev: { title: "HTML5 API（上）", url: "quiz.html?chapter=13" },
+        next: { title: "可访问性", url: "quiz.html?chapter=15" }
     }
 };

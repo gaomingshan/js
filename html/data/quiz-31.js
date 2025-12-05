@@ -13,5 +13,5 @@ window.htmlQuizData_31 = {
         { difficulty: "easy", tags: ["WebSocket"], question: "WebSocket受同源限制吗？", type: "single-choice", options: ["不受限制", "完全受限", "部分受限", "取决于浏览器"], correctAnswer: "A", explanation: { title: "WebSocket跨域", sections: [{ title: "不受限", code: '// WebSocket可以跨域\nconst ws = new WebSocket("ws://other-domain.com");\n// 服务器验证Origin头', content: "天然支持跨域。" }] }, source: "WebSocket" },
         { difficulty: "hard", tags: ["综合"], question: "跨域解决方案选择？", type: "multiple-choice", options: ["现代：CORS", "简单：JSONP(仅GET)", "复杂：代理", "实时：WebSocket"], correctAnswer: ["A","B","C","D"], explanation: { title: "方案对比", sections: [{ title: "选择", code: '/* 推荐顺序 */\n1. CORS - 标准方案\n2. 代理 - 无法配置服务器时\n3. postMessage - 跨窗口\n4. WebSocket - 实时通信', content: "根据场景选择。" }] }, source: "Solutions" }
     ],
-    navigation: { prev: { title: "WebSocket", url: "30-websocket-quiz.html" }, next: { title: "响应式设计", url: "32-responsive-quiz.html" } }
+    navigation: { prev: { title: "WebSocket", url: "quiz.html?chapter=30" }, next: { title: "响应式设计", url: "quiz.html?chapter=32" } }
 };

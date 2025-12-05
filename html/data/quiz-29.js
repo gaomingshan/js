@@ -13,5 +13,5 @@ window.htmlQuizData_29 = {
         { difficulty: "hard", tags: ["Worker池"], question: "实现Worker池？", type: "multiple-choice", options: ["创建多个Worker", "队列管理", "复用Worker", "限制并发"], correctAnswer: ["A","B","C","D"], explanation: { title: "Worker池", sections: [{ title: "线程池", code: 'class Pool {\n  constructor(size) {\n    this.workers = Array(size).fill(null).map(() => new Worker("w.js"));\n  }\n}', content: "管理多个Worker。" }] }, source: "Pool" },
         { difficulty: "medium", tags: ["调试"], question: "调试Worker？", type: "multiple-choice", options: ["DevTools", "console.log", "debugger", "Sources面板"], correctAnswer: ["A","B","C","D"], explanation: { title: "调试", sections: [{ title: "方法", code: 'console.log("info");\ndebugger;\n// Sources > Threads', content: "开发者工具。" }] }, source: "Debug" }
     ],
-    navigation: { prev: { title: "离线应用", url: "28-offline-quiz.html" }, next: { title: "WebSocket", url: "30-websocket-quiz.html" } }
+    navigation: { prev: { title: "离线应用", url: "quiz.html?chapter=28" }, next: { title: "WebSocket", url: "quiz.html?chapter=30" } }
 };

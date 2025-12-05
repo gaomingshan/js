@@ -629,7 +629,7 @@ window.htmlQuizData_07 = {
         }
     ],
     navigation: {
-        prev: { title: "链接与导航", url: "06-links-navigation-quiz.html" },
-        next: { title: "多媒体标签", url: "08-multimedia-quiz.html" }
+        prev: { title: "链接与导航", url: "quiz.html?chapter=06" },
+        next: { title: "多媒体标签", url: "quiz.html?chapter=08" }
     }
 };

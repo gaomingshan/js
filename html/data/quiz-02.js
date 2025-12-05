@@ -506,7 +506,7 @@ window.htmlQuizData_02 = {
         }
     ],
     navigation: {
-        prev: { title: "HTML简介与历史", url: "01-html-intro-quiz.html" },
-        next: { title: "头部元素详解", url: "03-head-elements-quiz.html" }
+        prev: { title: "HTML简介与历史", url: "quiz.html?chapter=01" },
+        next: { title: "头部元素详解", url: "quiz.html?chapter=03" }
     }
 };

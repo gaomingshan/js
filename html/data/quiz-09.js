@@ -590,7 +590,7 @@ window.htmlQuizData_09 = {
         }
     ],
     navigation: {
-        prev: { title: "多媒体标签", url: "08-multimedia-quiz.html" },
-        next: { title: "表单基础", url: "10-forms-basic-quiz.html" }
+        prev: { title: "多媒体标签", url: "quiz.html?chapter=08" },
+        next: { title: "表单基础", url: "quiz.html?chapter=10" }
     }
 };

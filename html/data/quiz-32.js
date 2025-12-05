@@ -13,5 +13,5 @@ window.htmlQuizData_32 = {
         { difficulty: "medium", tags: ["特性查询"], question: "@supports作用？", type: "single-choice", options: ["检测CSS特性支持", "检测浏览器", "媒体查询", "导入样式"], correctAnswer: "A", explanation: { title: "特性检测", sections: [{ title: "@supports", code: '@supports (display: grid) {\n  .layout { display: grid; }\n}\n\n@supports not (display: grid) {\n  .layout { display: flex; }\n}', content: "CSS特性检测。" }] }, source: "Feature Queries" },
         { difficulty: "hard", tags: ["综合"], question: "响应式设计原则？", type: "multiple-choice", options: ["流式布局", "弹性图片", "媒体查询", "移动优先"], correctAnswer: ["A","B","C","D"], explanation: { title: "设计原则", sections: [{ title: "核心原则", code: '/* 1. 流式布局 */\nwidth: 100%; max-width: 1200px;\n\n/* 2. 弹性图片 */\nimg { max-width: 100%; height: auto; }\n\n/* 3. 媒体查询 */\n@media (min-width: 768px) { /* ... */ }\n\n/* 4. 移动优先 */\n/* 基础样式 → 逐步增强 */', content: "四大原则。" }] }, source: "Principles" }
     ],
-    navigation: { prev: { title: "跨域通信", url: "31-cors-quiz.html" }, next: { title: "设备适配", url: "33-device-quiz.html" } }
+    navigation: { prev: { title: "跨域通信", url: "quiz.html?chapter=31" }, next: { title: "设备适配", url: "quiz.html?chapter=33" } }
 };

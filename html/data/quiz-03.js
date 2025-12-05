@@ -534,7 +534,7 @@ window.htmlQuizData_03 = {
         }
     ],
     navigation: {
-        prev: { title: "文档结构与语法", url: "02-document-structure-quiz.html" },
-        next: { title: "文本内容标签", url: "04-text-content-quiz.html" }
+        prev: { title: "文档结构与语法", url: "quiz.html?chapter=02" },
+        next: { title: "文本内容标签", url: "quiz.html?chapter=04" }
     }
 };

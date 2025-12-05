@@ -635,7 +635,7 @@ window.htmlQuizData_11 = {
         }
     ],
     navigation: {
-        prev: { title: "表单基础", url: "10-forms-basic-quiz.html" },
-        next: { title: "语义化标签", url: "12-semantic-html-quiz.html" }
+        prev: { title: "表单基础", url: "quiz.html?chapter=10" },
+        next: { title: "语义化标签", url: "quiz.html?chapter=12" }
     }
 };

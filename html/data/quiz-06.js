@@ -673,7 +673,7 @@ window.htmlQuizData_06 = {
         }
     ],
     navigation: {
-        prev: { title: "列表与定义", url: "05-lists-quiz.html" },
-        next: { title: "图片处理", url: "07-images-quiz.html" }
+        prev: { title: "列表与定义", url: "quiz.html?chapter=05" },
+        next: { title: "图片处理", url: "quiz.html?chapter=07" }
     }
 };

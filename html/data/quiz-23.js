@@ -205,7 +205,7 @@ window.htmlQuizData_23 = {
         }
     ],
     navigation: {
-        prev: { title: "Canvas基础", url: "22-canvas-quiz.html" },
-        next: { title: "Web存储", url: "24-storage-quiz.html" }
+        prev: { title: "Canvas基础", url: "quiz.html?chapter=22" },
+        next: { title: "Web存储", url: "quiz.html?chapter=24" }
     }
 };

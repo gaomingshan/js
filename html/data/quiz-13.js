@@ -540,7 +540,7 @@ window.htmlQuizData_13 = {
         }
     ],
     navigation: {
-        prev: { title: "语义化标签", url: "12-semantic-html-quiz.html" },
-        next: { title: "HTML5 API（下）", url: "14-html5-api-2-quiz.html" }
+        prev: { title: "语义化标签", url: "quiz.html?chapter=12" },
+        next: { title: "HTML5 API（下）", url: "quiz.html?chapter=14" }
     }
 };

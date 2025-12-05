@@ -297,7 +297,7 @@ window.htmlQuizData_20 = {
         }
     ],
     navigation: {
-        prev: { title: "元数据管理", url: "19-metadata-quiz.html" },
-        next: { title: "事件系统", url: "21-events-quiz.html" }
+        prev: { title: "元数据管理", url: "quiz.html?chapter=19" },
+        next: { title: "事件系统", url: "quiz.html?chapter=21" }
     }
 };

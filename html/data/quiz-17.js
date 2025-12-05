@@ -457,7 +457,7 @@ window.htmlQuizData_17 = {
         }
     ],
     navigation: {
-        prev: { title: "SEO优化", url: "16-seo-quiz.html" },
-        next: { title: "最佳实践", url: "18-best-practices-quiz.html" }
+        prev: { title: "SEO优化", url: "quiz.html?chapter=16" },
+        next: { title: "最佳实践", url: "quiz.html?chapter=18" }
     }
 };

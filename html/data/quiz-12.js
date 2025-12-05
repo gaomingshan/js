@@ -592,7 +592,7 @@ window.htmlQuizData_12 = {
         }
     ],
     navigation: {
-        prev: { title: "表单高级", url: "11-forms-advanced-quiz.html" },
-        next: { title: "HTML5 API（上）", url: "13-html5-api-1-quiz.html" }
+        prev: { title: "表单高级", url: "quiz.html?chapter=11" },
+        next: { title: "HTML5 API（上）", url: "quiz.html?chapter=13" }
     }
 };

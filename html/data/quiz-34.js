@@ -380,7 +380,7 @@ window.htmlQuizData_34 = {
         }
     ],
     navigation: {
-        prev: { title: "设备适配", url: "33-device-quiz.html" },
-        next: { title: "邮件HTML", url: "35-email-quiz.html" }
+        prev: { title: "设备适配", url: "quiz.html?chapter=33" },
+        next: { title: "邮件HTML", url: "quiz.html?chapter=35" }
     }
 };

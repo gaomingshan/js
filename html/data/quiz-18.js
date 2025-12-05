@@ -473,7 +473,7 @@ window.htmlQuizData_18 = {
         }
     ],
     navigation: {
-        prev: { title: "性能优化", url: "17-performance-quiz.html" },
-        next: { title: "元数据管理", url: "19-metadata-quiz.html" }
+        prev: { title: "性能优化", url: "quiz.html?chapter=17" },
+        next: { title: "元数据管理", url: "quiz.html?chapter=19" }
     }
 };
