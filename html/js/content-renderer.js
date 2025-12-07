@@ -22,10 +22,10 @@ const ContentRenderer = {
 
     renderContent() {
         const container = document.getElementById('content-container');
-        if (!container || !this.data.section.topics) return;
+        if (!container || !this.data.topics) return;
 
         let html = '';
-        this.data.section.topics.forEach(topic => {
+        this.data.topics.forEach(topic => {
             html += this.renderTopic(topic);
         });
 
@@ -54,20 +54,20 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section concept-section">
-                <h2 class="topic-title">${title}</h2>
+                <h2 class="topic-title">${this.escapeHtml(title)}</h2>
                 <div class="concept-content">
-                    <p class="description">${content.description}</p>
+                    <p class="description">${this.escapeHtml(content.description)}</p>
                     ${content.keyPoints ? `
                         <div class="key-points">
                             <h3>核心要点</h3>
                             <ul>
-                                ${content.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                                ${content.keyPoints.map(point => `<li>${this.escapeHtml(point)}</li>`).join('')}
                             </ul>
                         </div>
                     ` : ''}
                     ${content.mdn ? `
                         <div class="mdn-link">
-                            <a href="${content.mdn}" target="_blank" rel="noopener">📖 MDN文档</a>
+                            <a href="${this.escapeHtml(content.mdn)}" target="_blank" rel="noopener">📖 MDN文档</a>
                         </div>
                     ` : ''}
                 </div>
@@ -79,22 +79,22 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section code-section">
-                <h2 class="topic-title">${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.examples.map(example => `
                     <div class="example-block">
-                        <h3 class="example-title">${example.title}</h3>
+                        <h3 class="example-title">${this.escapeHtml(example.title)}</h3>
                         <div class="code-block">
                             <pre><code>${this.escapeHtml(example.code)}</code></pre>
                         </div>
                         ${example.result ? `
                             <div class="result-box">
-                                <strong>效果：</strong>${example.result}
+                                <strong>效果：</strong>${this.escapeHtml(example.result)}
                             </div>
                         ` : ''}
                         ${example.notes ? `
                             <div class="notes-box">
-                                <strong>说明：</strong>${example.notes}
+                                <strong>说明：</strong>${this.escapeHtml(example.notes)}
                             </div>
                         ` : ''}
                     </div>
@@ -107,19 +107,19 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section principle-section">
-                <h2 class="topic-title">${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.mechanism ? `
                     <div class="mechanism-box">
                         <h3>工作机制</h3>
-                        <p>${content.mechanism}</p>
+                        <p>${this.escapeHtml(content.mechanism)}</p>
                     </div>
                 ` : ''}
                 ${content.keyPoints ? `
                     <div class="key-points">
                         <h3>核心要点</h3>
                         <ul>
-                            ${content.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                            ${content.keyPoints.map(point => `<li>${this.escapeHtml(point)}</li>`).join('')}
                         </ul>
                     </div>
                 ` : ''}
@@ -131,17 +131,17 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section comparison-section">
-                <h2 class="topic-title">${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 <div class="comparison-grid">
                     ${content.items.map(item => `
                         <div class="comparison-item">
-                            <h3 class="item-name">${item.name}</h3>
+                            <h3 class="item-name">${this.escapeHtml(item.name)}</h3>
                             ${item.pros ? `
                                 <div class="pros">
                                     <h4>✅ 优势</h4>
                                     <ul>
-                                        ${item.pros.map(pro => `<li>${pro}</li>`).join('')}
+                                        ${item.pros.map(pro => `<li>${this.escapeHtml(pro)}</li>`).join('')}
                                     </ul>
                                 </div>
                             ` : ''}
@@ -149,7 +149,7 @@ const ContentRenderer = {
                                 <div class="cons">
                                     <h4>❌ 劣势</h4>
                                     <ul>
-                                        ${item.cons.map(con => `<li>${con}</li>`).join('')}
+                                        ${item.cons.map(con => `<li>${this.escapeHtml(con)}</li>`).join('')}
                                     </ul>
                                 </div>
                             ` : ''}
@@ -164,14 +164,14 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section best-practice-section">
-                <h2 class="topic-title">💡 ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">💡 ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.practices ? `
                     <div class="practices-list">
                         ${content.practices.map((practice, index) => `
                             <div class="practice-item">
-                                <h3>${index + 1}. ${practice.title}</h3>
-                                <p>${practice.description}</p>
+                                <h3>${index + 1}. ${this.escapeHtml(practice.title)}</h3>
+                                <p>${this.escapeHtml(practice.description)}</p>
                                 ${practice.example ? `
                                     <div class="code-block">
                                         <pre><code>${this.escapeHtml(practice.example)}</code></pre>
@@ -189,13 +189,13 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section security-section">
-                <h2 class="topic-title">🔒 ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">🔒 ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.risks ? `
                     <div class="risks-box">
                         <h3>⚠️ 安全风险</h3>
                         <ul>
-                            ${content.risks.map(risk => `<li>${risk}</li>`).join('')}
+                            ${content.risks.map(risk => `<li>${this.escapeHtml(risk)}</li>`).join('')}
                         </ul>
                     </div>
                 ` : ''}
@@ -203,7 +203,7 @@ const ContentRenderer = {
                     <div class="solutions-box">
                         <h3>✅ 防护方案</h3>
                         <ul>
-                            ${content.solutions.map(solution => `<li>${solution}</li>`).join('')}
+                            ${content.solutions.map(solution => `<li>${this.escapeHtml(solution)}</li>`).join('')}
                         </ul>
                     </div>
                 ` : ''}
@@ -211,12 +211,12 @@ const ContentRenderer = {
                     <div class="security-examples">
                         ${content.examples.map(example => `
                             <div class="example-block">
-                                <h4>${example.title}</h4>
+                                <h4>${this.escapeHtml(example.title)}</h4>
                                 <div class="code-block">
                                     <pre><code>${this.escapeHtml(example.code)}</code></pre>
                                 </div>
                                 ${example.explanation ? `
-                                    <p class="explanation">${example.explanation}</p>
+                                    <p class="explanation">${this.escapeHtml(example.explanation)}</p>
                                 ` : ''}
                             </div>
                         `).join('')}
@@ -230,20 +230,20 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section accessibility-section">
-                <h2 class="topic-title">♿ ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">♿ ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.guidelines ? `
                     <div class="guidelines-box">
                         <h3>可访问性指南</h3>
                         <ul>
-                            ${content.guidelines.map(guide => `<li>${guide}</li>`).join('')}
+                            ${content.guidelines.map(guide => `<li>${this.escapeHtml(guide)}</li>`).join('')}
                         </ul>
                     </div>
                 ` : ''}
                 ${content.examples ? `
                     ${content.examples.map(example => `
                         <div class="example-block">
-                            <h4>${example.title}</h4>
+                            <h4>${this.escapeHtml(example.title)}</h4>
                             <div class="code-block">
                                 <pre><code>${this.escapeHtml(example.good)}</code></pre>
                             </div>
@@ -264,14 +264,14 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section compatibility-section">
-                <h2 class="topic-title">🌐 ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">🌐 ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.support ? `
                     <div class="support-table">
                         <h3>浏览器支持</h3>
                         <ul>
                             ${Object.entries(content.support).map(([browser, version]) => 
-                                `<li><strong>${browser}:</strong> ${version}</li>`
+                                `<li><strong>${this.escapeHtml(browser)}:</strong> ${this.escapeHtml(version)}</li>`
                             ).join('')}
                         </ul>
                     </div>
@@ -279,7 +279,7 @@ const ContentRenderer = {
                 ${content.fallback ? `
                     <div class="fallback-box">
                         <h3>降级方案</h3>
-                        <p>${content.fallback}</p>
+                        <p>${this.escapeHtml(content.fallback)}</p>
                     </div>
                 ` : ''}
             </div>
@@ -290,15 +290,15 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section checklist-section">
-                <h2 class="topic-title">✓ ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">✓ ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.items ? `
                     <div class="checklist">
                         ${content.items.map(item => `
                             <div class="checklist-item">
-                                <input type="checkbox" id="${item.id || ''}">
-                                <label for="${item.id || ''}">${item.text}</label>
-                                ${item.description ? `<p class="item-desc">${item.description}</p>` : ''}
+                                <input type="checkbox" id="${this.escapeHtml(item.id || '')}">
+                                <label for="${this.escapeHtml(item.id || '')}">${this.escapeHtml(item.text)}</label>
+                                ${item.description ? `<p class="item-desc">${this.escapeHtml(item.description)}</p>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -311,17 +311,17 @@ const ContentRenderer = {
         const { title, content } = topic;
         return `
             <div class="topic-section demo-section">
-                <h2 class="topic-title">🎮 ${title}</h2>
-                <p class="description">${content.description}</p>
+                <h2 class="topic-title">🎮 ${this.escapeHtml(title)}</h2>
+                <p class="description">${this.escapeHtml(content.description)}</p>
                 ${content.demoUrl ? `
                     <div class="demo-container">
-                        <iframe src="${content.demoUrl}" frameborder="0"></iframe>
+                        <iframe src="${this.escapeHtml(content.demoUrl)}" frameborder="0"></iframe>
                     </div>
                 ` : ''}
                 ${content.instructions ? `
                     <div class="instructions">
                         <h3>使用说明</h3>
-                        <p>${content.instructions}</p>
+                        <p>${this.escapeHtml(content.instructions)}</p>
                     </div>
                 ` : ''}
             </div>
@@ -346,11 +346,11 @@ const ContentRenderer = {
 
         if (prev) {
             html += `
-                <a href="${prev.url}" class="nav-button prev-button">
+                <a href="${this.escapeHtml(prev.url)}" class="nav-button prev-button">
                     <span class="nav-arrow">←</span>
                     <span class="nav-text">
                         <span class="nav-label">上一章</span>
-                        <span class="nav-title">${prev.title}</span>
+                        <span class="nav-title">${this.escapeHtml(prev.title)}</span>
                     </span>
                 </a>
             `;
@@ -360,10 +360,10 @@ const ContentRenderer = {
 
         if (next) {
             html += `
-                <a href="${next.url}" class="nav-button next-button">
+                <a href="${this.escapeHtml(next.url)}" class="nav-button next-button">
                     <span class="nav-text">
                         <span class="nav-label">下一章</span>
-                        <span class="nav-title">${next.title}</span>
+                        <span class="nav-title">${this.escapeHtml(next.title)}</span>
                     </span>
                     <span class="nav-arrow">→</span>
                 </a>

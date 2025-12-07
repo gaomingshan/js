@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML学习内容</title>
+    <link rel="stylesheet" href="css/content-style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="content-header">
+            <a href="index.html#content" class="back-link">← 返回目录</a>
+            <h1 id="section-title">Loading...</h1>
+        </header>
+
+        <main id="content-container" class="content-main">
+            <div class="loading">正在加载内容...</div>
+        </main>
+
+        <footer id="nav-links" class="content-footer">
+            <!-- 导航链接将在这里动态生成 -->
+        </footer>
+    </div>
+
+    <script>
+        // 获取章节号
+        const params = new URLSearchParams(window.location.search);
+        const chapter = params.get('chapter');
+
+        if (!chapter) {
+            document.getElementById('content-container').innerHTML = 
+                '<div class="error">❌ 错误：缺少章节参数。请从目录页面访问。</div>';
+        } else {
+            // 动态加载数据文件
+            const script = document.createElement('script');
+            script.src = `data/content-${chapter}.js`;
+            script.onerror = () => {
+                document.getElementById('content-container').innerHTML = 
+                    `<div class="error">❌ 错误：无法加载第 ${chapter} 章的数据文件。</div>`;
+            };
+            script.onload = () => {
+                // 数据文件应该定义 window.htmlContentData_XX
+                const dataVarName = `htmlContentData_${chapter}`;
+                const contentData = window[dataVarName];
+                
+                if (!contentData) {
+                    document.getElementById('content-container').innerHTML = 
+                        `<div class="error">❌ 错误：数据文件中未找到 ${dataVarName}。</div>`;
+                    return;
+                }
+                
+                // 加载渲染器
+                const rendererScript = document.createElement('script');
+                rendererScript.src = 'js/content-renderer.js';
+                rendererScript.onload = () => {
+                    // 初始化渲染器
+                    if (typeof ContentRenderer !== 'undefined') {
+                        ContentRenderer.init(contentData);
+                    } else {
+                        document.getElementById('content-container').innerHTML = 
+                            '<div class="error">❌ 错误：渲染器加载失败。</div>';
+                    }
+                };
+                rendererScript.onerror = () => {
+                    document.getElementById('content-container').innerHTML = 
+                        '<div class="error">❌ 错误：无法加载渲染器。</div>';
+                };
+                document.head.appendChild(rendererScript);
+            };
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>
