@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">内容学习</title>
+    
+    <!-- 通用样式 -->
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/content-types.css">
+    <link rel="stylesheet" href="../styles/quiz-types.css">
+    
+    <!-- 主题样式 (动态加载) -->
+    <link rel="stylesheet" id="theme-style" href="">
+</head>
+<body>
+    <!-- 返回链接 -->
+    <a href="../index.html" class="back-link">← 返回目录</a>
+    
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 章节标题 -->
+        <header class="content-header">
+            <h1 id="section-title"></h1>
+        </header>
+        
+        <!-- 内容区域 -->
+        <main id="content-container">
+            <!-- 动态渲染的内容 -->
+        </main>
+        
+        <!-- 导航区域 -->
+        <nav id="nav-links">
+            <!-- 动态渲染的导航 -->
+        </nav>
+    </div>
+    
+    <!-- 核心渲染器 -->
+    <script src="../core/universal-renderer-v2.js"></script>
+    
+    <!-- 配置和数据加载 -->
+    <script>
+        (function() {
+            // 从URL获取参数
+            const params = new URLSearchParams(window.location.search);
+            const subject = params.get('subject') || 'html';  // 学科
+            const chapter = params.get('chapter') || '01';     // 章节
+            const type = params.get('type') || 'content';      // 类型: content | quiz
+            
+            // 动态加载主题样式
+            const themeStyle = document.getElementById('theme-style');
+            themeStyle.href = `../styles/themes/${subject}-theme.css`;
+            
+            // 构建数据文件路径
+            const dataPath = `../../${subject}/data/${type}-${chapter}.js`;
+            
+            // 动态加载数据文件
+            const script = document.createElement('script');
+            script.src = dataPath;
+            script.onerror = function() {
+                document.getElementById('content-container').innerHTML = `
+                    <div style="text-align: center; padding: 100px 20px;">
+                        <h2 style="color: #f56565;">❌ 数据文件未找到</h2>
+                        <p style="color: #718096; margin-top: 20px;">
+                            路径: ${dataPath}<br>
+                            请检查文件是否存在
+                        </p>
+                        <a href="../index.html" style="display: inline-block; margin-top: 30px; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px;">
+                            返回目录
+                        </a>
+                    </div>
+                `;
+            };
+            
+            script.onload = function() {
+                // 数据加载成功，初始化渲染器
+                initRenderer(subject, type, chapter);
+            };
+            
+            document.head.appendChild(script);
+            
+            /**
+             * 初始化渲染器
+             */
+            function initRenderer(subject, type, chapter) {
+                // 构建数据变量名
+                const namespace = `${subject}ContentData_${type === 'quiz' ? 'quiz_' : ''}${chapter}`;
+                const contentData = window[namespace];
+                
+                if (!contentData) {
+                    console.error(`数据变量 ${namespace} 未定义`);
+                    return;
+                }
+                
+                // 设置页面标题
+                document.getElementById('page-title').textContent = 
+                    `${contentData.section.icon || ''} ${contentData.section.title} | ${subject.toUpperCase()}学习`;
+                
+                // 渲染器配置
+                const config = getRendererConfig(subject);
+                
+                // 创建并初始化渲染器
+                const renderer = new UniversalRendererV2(config);
+                renderer.init(contentData);
+            }
+            
+            /**
+             * 获取渲染器配置
+             */
+            function getRendererConfig(subject) {
+                const configs = {
+                    html: {
+                        subject: 'html',
+                        namespace: 'htmlContentData',
+                        theme: {
+                            primary: '#667eea',
+                            secondary: '#764ba2',
+                            icon: '📘'
+                        }
+                    },
+                    
+                    css: {
+                        subject: 'css',
+                        namespace: 'cssContentData',
+                        theme: {
+                            primary: '#f093fb',
+                            secondary: '#f5576c',
+                            icon: '🎨'
+                        }
+                    },
+                    
+                    js: {
+                        subject: 'js',
+                        namespace: 'jsContentData',
+                        theme: {
+                            primary: '#f7d f59',
+                            secondary: '#ffd966',
+                            icon: '📗'
+                        }
+                    },
+                    
+                    vue: {
+                        subject: 'vue',
+                        namespace: 'vueContentData',
+                        theme: {
+                            primary: '#42b883',
+                            secondary: '#35495e',
+                            icon: '💚'
+                        },
+                        customTypes: {
+                            // Vue特有类型可以在这里扩展
+                        }
+                    },
+                    
+                    react: {
+                        subject: 'react',
+                        namespace: 'reactContentData',
+                        theme: {
+                            primary: '#61dafb',
+                            secondary: '#282c34',
+                            icon: '⚛️'
+                        },
+                        customTypes: {
+                            // React特有类型可以在这里扩展
+                        }
+                    }
+                };
+                
+                return configs[subject] || configs.html;
+            }
+        })();
+    </script>
+</body>
+</html>

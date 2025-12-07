@@ -1,0 +1,622 @@
+/**
+ * 内容类型专用样式
+ * 为不同的 topic type 提供独特的视觉效果
+ */
+
+/* ==================== Concept - 概念讲解 ==================== */
+.concept-section {
+    border-left-color: #667eea;
+}
+
+.concept-content .mdn-link {
+    margin-top: 1.5rem;
+}
+
+.concept-content .mdn-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.concept-content .mdn-link a:hover {
+    color: #5a67d8;
+}
+
+/* ==================== Code Example - 代码示例 ==================== */
+.code-section {
+    border-left-color: #48bb78;
+}
+
+.example-block {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.example-title {
+    color: #2d3748;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.result-box,
+.notes-box {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.result-box {
+    background: #f0fff4;
+    border-left: 3px solid #48bb78;
+    color: #22543d;
+}
+
+.notes-box {
+    background: #fffaf0;
+    border-left: 3px solid #ed8936;
+    color: #7c2d12;
+}
+
+/* ==================== Principle - 原理讲解 ==================== */
+.principle-section {
+    border-left-color: #9f7aea;
+}
+
+.mechanism-box {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border: 2px dashed #cbd5e0;
+}
+
+.mechanism-box h3 {
+    color: #9f7aea;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ==================== Comparison - 对比 ==================== */
+.comparison-section {
+    border-left-color: #ed8936;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.comparison-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+}
+
+.item-name {
+    color: #2d3748;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.pros, .cons {
+    margin-top: 1rem;
+}
+
+.pros h4 {
+    color: #48bb78;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.cons h4 {
+    color: #f56565;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.pros ul, .cons ul {
+    padding-left: 1.5rem;
+}
+
+.pros li::before {
+    content: "✓";
+    color: #48bb78;
+}
+
+.cons li::before {
+    content: "✗";
+    color: #f56565;
+}
+
+/* ==================== Best Practice - 最佳实践 ==================== */
+.best-practice-section {
+    border-left-color: #4299e1;
+    background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%);
+}
+
+.practices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.practice-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.practice-item h3 {
+    color: #4299e1;
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ==================== Checklist - 检查清单 ==================== */
+.checklist-section {
+    border-left-color: #38b2ac;
+}
+
+.checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.checklist-item:hover {
+    background: #e6fffa;
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+
+.checklist-item label {
+    flex: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ==================== Live Code - 实时代码 ==================== */
+.live-code-section {
+    border-left-color: #f093fb;
+}
+
+.live-code-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.code-editors {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.editor-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-header {
+    background: #1a202c;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px 6px 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.code-editor {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    border-radius: 0 0 6px 6px;
+    resize: vertical;
+}
+
+.preview-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f7fafc;
+    padding: 0.5rem 1rem;
+    border-radius: 6px 6px 0 0;
+    border: 2px solid #e2e8f0;
+    border-bottom: none;
+}
+
+.preview-header span {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.preview-header .btn-run {
+    width: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.preview-frame {
+    flex: 1;
+    min-height: 300px;
+    border: 2px solid #e2e8f0;
+    border-radius: 0 0 6px 6px;
+    background: white;
+}
+
+/* ==================== Split View - 分屏对比 ==================== */
+.split-view-section {
+    border-left-color: #f6ad55;
+}
+
+.split-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.split-pane {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+}
+
+.pane-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+}
+
+.pane-content {
+    padding: 1.25rem;
+}
+
+.pane-content pre {
+    margin: 0;
+}
+
+/* ==================== Tab Content - 标签页 ==================== */
+.tab-section {
+    border-left-color: #805ad5;
+}
+
+.tab-headers {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.tab-header {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #718096;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-header:hover {
+    color: #4a5568;
+    background: #f7fafc;
+}
+
+.tab-header.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.tab-content {
+    display: none;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    animation: fadeIn 0.3s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== Visual Demo - 可视化演示 ==================== */
+.visual-demo-section {
+    border-left-color: #ed64a6;
+}
+
+.visual-demo-wrapper {
+    margin-top: 1.5rem;
+}
+
+.demo-controls {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.control-group {
+    margin-bottom: 1.25rem;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group label {
+    display: block;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #667eea;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.control-value {
+    display: inline-block;
+    margin-left: 1rem;
+    color: #667eea;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.demo-preview {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 2px dashed #cbd5e0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== Color Palette - 调色板 ==================== */
+.color-palette-section {
+    border-left-color: #f6ad55;
+}
+
+.color-palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.color-item {
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color-item:hover {
+    transform: translateY(-5px);
+}
+
+.color-swatch {
+    width: 100%;
+    height: 100px;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s;
+}
+
+.color-item:hover .color-swatch {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.color-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.color-value {
+    font-family: 'Courier New', monospace;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+/* ==================== Component Demo - 组件演示 ==================== */
+.component-demo-section {
+    border-left-color: #38b2ac;
+}
+
+.component-preview {
+    background: white;
+    padding: 2rem;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.component-code {
+    margin-top: 1.5rem;
+}
+
+.code-tabs {
+    display: flex;
+    gap: 0.25rem;
+    background: #2d3748;
+    padding: 0.5rem 0.5rem 0;
+    border-radius: 8px 8px 0 0;
+}
+
+.code-tabs button {
+    padding: 0.5rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.code-tabs button:hover {
+    background: #3c4758;
+    color: #cbd5e0;
+}
+
+.code-tabs button.active {
+    background: #1a202c;
+    color: white;
+}
+
+.code-panel {
+    display: none;
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 0 0 8px 8px;
+    overflow-x: auto;
+}
+
+.code-panel.active {
+    display: block;
+}
+
+.code-panel code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+}
+
+/* ==================== Props Table - 属性表格 ==================== */
+.props-table-section {
+    border-left-color: #4c51bf;
+}
+
+.props-table-wrapper {
+    margin-top: 1.5rem;
+    overflow-x: auto;
+}
+
+.props-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.props-table thead {
+    background: #f7fafc;
+}
+
+.props-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.props-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+}
+
+.props-table tr:last-child td {
+    border-bottom: none;
+}
+
+.props-table tr:hover {
+    background: #f7fafc;
+}
+
+.props-table code {
+    background: #f7fafc;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #667eea;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 768px) {
+    .live-code-container,
+    .split-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .color-palette-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}

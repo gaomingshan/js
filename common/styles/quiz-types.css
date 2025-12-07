@@ -1,0 +1,471 @@
+/**
+ * 测验/面试题类型样式
+ * 支持单选、多选、判断、代码题等多种题型
+ */
+
+/* ==================== Quiz 通用样式 ==================== */
+.quiz-section {
+    border-left-color: #ed8936;
+    background: linear-gradient(135deg, #fffaf0 0%, #fef5e7 100%);
+}
+
+.quiz-code-section {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.difficulty-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.difficulty-badge.easy {
+    background: #d4edda;
+    color: #155724;
+}
+
+.difficulty-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.difficulty-badge.hard {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ==================== Quiz Question ==================== */
+.quiz-question {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.question-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* ==================== Quiz Options ==================== */
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.quiz-option:hover {
+    border-color: #cbd5e0;
+    background: #edf2f7;
+}
+
+.quiz-option input[type="radio"],
+.quiz-option input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.quiz-option span {
+    flex: 1;
+    color: #2d3748;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* 选中状态 */
+.quiz-option:has(input:checked) {
+    border-color: #667eea;
+    background: #eef2ff;
+}
+
+/* 正确答案状态 */
+.quiz-option.correct {
+    border-color: #48bb78;
+    background: #f0fff4;
+}
+
+.quiz-option.correct span {
+    color: #22543d;
+    font-weight: 600;
+}
+
+/* 错误答案状态 */
+.quiz-option.wrong {
+    border-color: #f56565;
+    background: #fff5f5;
+}
+
+.quiz-option.wrong span {
+    color: #742a2a;
+    font-weight: 600;
+}
+
+/* ==================== Quiz Feedback ==================== */
+.quiz-feedback {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.quiz-feedback.correct {
+    background: #f0fff4;
+    border: 2px solid #48bb78;
+}
+
+.quiz-feedback.incorrect {
+    background: #fff5f5;
+    border: 2px solid #f56565;
+}
+
+.feedback-content {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.quiz-feedback.correct .feedback-content {
+    color: #22543d;
+}
+
+.quiz-feedback.incorrect .feedback-content {
+    color: #742a2a;
+}
+
+/* ==================== Explanation - 答案解析 ==================== */
+.explanation {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid rgba(0,0,0,0.1);
+}
+
+.explanation h4 {
+    color: #2d3748;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.explanation p {
+    color: #4a5568;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+.explanation-section {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.5);
+    border-radius: 6px;
+}
+
+.explanation-section h5 {
+    color: #667eea;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.explanation-section p {
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.explanation-section pre {
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-top: 0.75rem;
+}
+
+.explanation-section code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* ==================== Code Quiz - 代码题 ==================== */
+.quiz-code-section .code-block {
+    margin: 1.5rem 0;
+    background: #1e1e1e;
+    border: none;
+}
+
+.quiz-code-section .code-block pre {
+    color: #d4d4d4;
+}
+
+.quiz-code-section .code-block code {
+    color: #d4d4d4;
+}
+
+/* ==================== 相关资源链接 ==================== */
+.related-topics {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #e6fffa;
+    border-radius: 6px;
+    border-left: 3px solid #38b2ac;
+}
+
+.related-topics h5 {
+    color: #234e52;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.related-topics ul {
+    list-style: none;
+    padding: 0;
+}
+
+.related-topics li {
+    margin-bottom: 0.5rem;
+}
+
+.related-topics a {
+    color: #319795;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.related-topics a:hover {
+    color: #2c7a7b;
+    text-decoration: underline;
+}
+
+/* ==================== 统计信息 ==================== */
+.quiz-statistics {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.5);
+    border-radius: 6px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* ==================== 答题进度 ==================== */
+.quiz-progress {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 600;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+/* ==================== 答题计时器 ==================== */
+.quiz-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: white;
+    border-radius: 20px;
+    border: 2px solid #e2e8f0;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.quiz-timer.warning {
+    border-color: #ed8936;
+    background: #fffaf0;
+    color: #7c2d12;
+}
+
+.quiz-timer.danger {
+    border-color: #f56565;
+    background: #fff5f5;
+    color: #742a2a;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ==================== 题目标签 ==================== */
+.question-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.question-tag {
+    padding: 0.4rem 0.75rem;
+    background: #edf2f7;
+    color: #4a5568;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ==================== 填空题 ==================== */
+.fill-blank-section .template-code {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    font-family: 'Courier New', monospace;
+    line-height: 1.8;
+}
+
+.fill-blank-section .blank-input {
+    display: inline-block;
+    min-width: 100px;
+    padding: 0.25rem 0.75rem;
+    background: #2d3748;
+    border: 2px solid #4a5568;
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    margin: 0 0.25rem;
+}
+
+.fill-blank-section .blank-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: #1a202c;
+}
+
+/* ==================== 判断题特殊样式 ==================== */
+.quiz-section[data-quiz-type="bool"] .quiz-option {
+    justify-content: center;
+    font-size: 1.1rem;
+    padding: 1.25rem;
+}
+
+.quiz-section[data-quiz-type="bool"] .quiz-option span {
+    flex: none;
+}
+
+/* ==================== 多选题提示 ==================== */
+.multi-choice-hint {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #bee3f8;
+    color: #2c5282;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 768px) {
+    .quiz-question {
+        padding: 1rem;
+    }
+    
+    .question-text {
+        font-size: 1.1rem;
+    }
+    
+    .quiz-option {
+        padding: 0.875rem 1rem;
+    }
+    
+    .quiz-statistics {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .explanation-section {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .difficulty-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.75rem;
+    }
+    
+    .question-text {
+        font-size: 1rem;
+    }
+    
+    .quiz-option span {
+        font-size: 0.9rem;
+    }
+}

@@ -1,0 +1,27 @@
+/**
+ * Vue 学科主题
+ */
+
+:root {
+    --primary-color: #42b883;
+    --secondary-color: #35495e;
+    --bg-gradient: linear-gradient(135deg, #42b883 0%, #35495e 100%);
+    --subject-icon: '💚';
+}
+
+.topic-section {
+    border-left-color: #42b883;
+}
+
+.topic-title::before {
+    content: '💚 ';
+}
+
+/* Vue专属样式增强 */
+.component-demo-section {
+    border-left-color: #42b883;
+}
+
+.component-demo-section .topic-title {
+    color: #42b883;
+}

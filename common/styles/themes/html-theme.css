@@ -1,0 +1,19 @@
+/**
+ * HTML 学科主题
+ */
+
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --subject-icon: '📘';
+}
+
+/* 主题特色强调 */
+.topic-section {
+    border-left-color: #667eea;
+}
+
+.topic-title::before {
+    content: '📘 ';
+}

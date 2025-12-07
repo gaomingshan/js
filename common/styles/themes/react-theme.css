@@ -1,0 +1,27 @@
+/**
+ * React 学科主题
+ */
+
+:root {
+    --primary-color: #61dafb;
+    --secondary-color: #282c34;
+    --bg-gradient: linear-gradient(135deg, #61dafb 0%, #282c34 100%);
+    --subject-icon: '⚛️';
+}
+
+.topic-section {
+    border-left-color: #61dafb;
+}
+
+.topic-title::before {
+    content: '⚛️ ';
+}
+
+/* React专属样式增强 */
+.component-demo-section {
+    border-left-color: #61dafb;
+}
+
+.component-demo-section .topic-title {
+    color: #61dafb;
+}
