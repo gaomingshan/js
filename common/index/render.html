@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">加载中...</title>
+    <meta name="description" content="学习系统通用渲染页面">
+    
+    <!-- 引入通用样式 -->
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/content-types.css">
+</head>
+<body>
+    <!-- 加载提示 -->
+    <div id="loading" style="text-align: center; padding: 100px; color: #666;">
+        <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+        <div style="font-size: 18px;">正在加载内容...</div>
+    </div>
+    
+    <!-- 错误提示 -->
+    <div id="error" style="display: none; text-align: center; padding: 100px; color: #e74c3c;">
+        <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+        <div style="font-size: 18px; margin-bottom: 10px;">加载失败</div>
+        <div id="error-message" style="font-size: 14px; color: #666;"></div>
+    </div>
+    
+    <!-- 内容容器（渲染器会填充这里） -->
+    <div class="container">
+        <header class="content-header">
+            <a href="./index.html" class="back-link" id="back-link">← 返回目录</a>
+            <h1 id="section-title">Loading...</h1>
+        </header>
+
+        <main id="content-container" class="content-main">
+            <!-- 内容将由 UniversalRendererV2 动态生成 -->
+        </main>
+
+        <footer id="nav-links" class="content-footer">
+            <!-- 导航链接将由 UniversalRendererV2 动态生成 -->
+        </footer>
+    </div>
+
+    <!-- 加载逻辑：动态加载数据和渲染器 -->
+    <script>
+        (function() {
+            // 解析URL参数
+            const params = new URLSearchParams(window.location.search);
+            const subject = params.get('subject') || 'html';
+            const type = params.get('type') || 'content';
+            const chapter = params.get('chapter') || '01';
+            
+            // 更新返回链接
+            document.getElementById('back-link').href = `./index.html?subject=${subject}`;
+            
+            // 构建数据文件路径
+            const dataPath = `../../${subject}/data/${type}-${chapter}.js`;
+            
+            console.log('📖 加载参数:', { subject, type, chapter });
+            console.log('📂 数据路径:', dataPath);
+            
+            // 错误处理函数
+            function showError(message) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error-message').textContent = message;
+            }
+            
+            // 步骤1：加载数据文件
+            const dataScript = document.createElement('script');
+            dataScript.src = dataPath;
+            
+            dataScript.onerror = function() {
+                showError(`未找到数据文件：${dataPath}`);
+            };
+            
+            dataScript.onload = function() {
+                console.log('✅ 数据脚本加载成功');
+                
+                // 数据文件应该定义一个全局变量（如：window.pkgManagerContent_01）
+                // 变量命名规范：window.${subject}Content_${chapter}
+                const dataVarName = subject.replace(/-/g, '') + 'Content_' + chapter;
+                const contentData = window[dataVarName];
+                
+                if (!contentData) {
+                    showError(`数据文件中未找到变量：window.${dataVarName}`);
+                    return;
+                }
+                
+                // 步骤2：加载渲染器
+                const rendererScript = document.createElement('script');
+                rendererScript.src = '../core/universal-renderer-v2.js';
+                
+                rendererScript.onerror = function() {
+                    showError('无法加载渲染器');
+                };
+                
+                rendererScript.onload = function() {
+                    console.log('✅ 渲染器加载成功');
+                    
+                    // 步骤3：初始化渲染器
+                    if (typeof UniversalRendererV2 !== 'undefined') {
+                        try {
+                            // 隐藏加载提示
+                            document.getElementById('loading').style.display = 'none';
+                            
+                            // 更新页面标题
+                            document.getElementById('page-title').textContent = contentData.section?.title || '学习系统';
+                            
+                            // 创建渲染器实例
+                            const renderer = new UniversalRendererV2({
+                                subject: subject,
+                                theme: contentData.theme || {}
+                            });
+                            
+                            // 初始化并渲染
+                            renderer.init(contentData);
+                            
+                            console.log('✅ 渲染完成:', contentData.section?.title);
+                            
+                        } catch (error) {
+                            showError('渲染失败: ' + error.message);
+                            console.error('❌ 渲染错误:', error);
+                        }
+                    } else {
+                        showError('渲染器未定义');
+                    }
+                };
+                
+                document.head.appendChild(rendererScript);
+            };
+            
+            document.head.appendChild(dataScript);
+        })();
+    </script>
+</body>
+</html>
