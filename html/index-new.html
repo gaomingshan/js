@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 学习系统 - 系统化学习HTML核心知识</title>
+    <meta name="description" content="从基础到高级，系统掌握HTML核心知识与最佳实践">
+    
+    <!-- 通用目录样式 -->
+    <link rel="stylesheet" href="../common/index/index.css">
+</head>
+<body>
+    <!-- 加载提示 -->
+    <div style="text-align: center; padding: 100px 20px; color: white;">
+        <h1 style="margin-bottom: 20px;">⏳ 正在加载...</h1>
+        <p style="opacity: 0.8;">请稍候</p>
+    </div>
+    
+    <!-- 核心渲染器 -->
+    <script src="../common/index/index-renderer.js"></script>
+    
+    <!-- HTML学科数据 -->
+    <script src="./index-data.js"></script>
+    
+    <!-- 初始化渲染 -->
+    <script>
+        // 创建渲染器实例并渲染
+        const renderer = new IndexRenderer(htmlIndexData);
+        renderer.render();
+        
+        // 输出统计信息
+        const stats = renderer.getStatistics();
+        console.log('📊 HTML学习系统统计:');
+        console.log(`- 标签页: ${stats.tabs}个`);
+        console.log(`- 章节组: ${stats.sections}个`);
+        console.log(`- 总章节: ${stats.chapters}章`);
+    </script>
+</body>
+</html>

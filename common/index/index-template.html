@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">学习系统</title>
+    <meta name="description" content="系统化学习核心知识" id="page-desc">
+    
+    <!-- 通用目录样式 -->
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+    <!-- 加载提示 -->
+    <div id="loading" style="text-align: center; padding: 100px 20px; color: white;">
+        <h1 style="margin-bottom: 20px;">⏳ 正在加载...</h1>
+        <p style="opacity: 0.8;">请稍候</p>
+    </div>
+    
+    <!-- 错误提示（默认隐藏） -->
+    <div id="error" style="display: none; text-align: center; padding: 100px 20px; color: white;">
+        <h1 style="margin-bottom: 20px; color: #f56565;">❌ 加载失败</h1>
+        <p id="error-message" style="opacity: 0.8; margin-bottom: 30px;"></p>
+        <a href="./" style="display: inline-block; padding: 12px 30px; background: white; color: #667eea; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            返回首页
+        </a>
+    </div>
+    
+    <!-- 核心渲染器 -->
+    <script src="./index-renderer.js"></script>
+    
+    <!-- 动态加载数据并渲染 -->
+    <script>
+        (function() {
+            // 获取URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const subject = urlParams.get('subject') || 'html';
+            
+            // 注册数据的全局函数（供数据文件调用）
+            window.registerIndexData = function(data) {
+                try {
+                    // 隐藏加载提示
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // 更新页面元信息
+                    document.getElementById('page-title').textContent = data.title;
+                    document.getElementById('page-desc').content = data.subtitle;
+                    
+                    // 创建渲染器并渲染
+                    const renderer = new IndexRenderer(data);
+                    renderer.render();
+                    
+                    // 输出统计信息
+                    const stats = renderer.getStatistics();
+                    console.log(`📊 ${data.title}统计:`);
+                    console.log(`- 学科: ${stats.subject}`);
+                    console.log(`- 标签页: ${stats.tabs}个`);
+                    console.log(`- 章节组: ${stats.sections}个`);
+                    console.log(`- 总章节: ${stats.chapters}章`);
+                    
+                    // 清理全局函数
+                    delete window.registerIndexData;
+                    
+                } catch (error) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error-message').textContent = error.message;
+                    console.error('渲染失败:', error);
+                }
+            };
+            
+            // 动态加载数据文件
+            const script = document.createElement('script');
+            script.src = `./data/${subject}.js`;
+            
+            script.onerror = function() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error-message').textContent = 
+                    `未找到 ${subject} 学科的数据文件：data/${subject}.js`;
+                delete window.registerIndexData;
+            };
+            
+            document.head.appendChild(script);
+        })();
+    </script>
+</body>
+</html>
