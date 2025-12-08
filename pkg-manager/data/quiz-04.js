@@ -234,7 +234,7 @@ registry=https://registry.npmjs.org`,
     navigation: {
         prev: {
             title: '第3章面试题：包管理器工作原理',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=3'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=03'
         },
         next: {
             title: '返回目录',

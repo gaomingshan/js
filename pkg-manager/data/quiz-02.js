@@ -255,11 +255,11 @@ const routes = [
     navigation: {
         prev: {
             title: '第1章面试题：包管理器简介与发展史',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=1'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=01'
         },
         next: {
             title: '第3章面试题：包管理器工作原理',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=3'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=03'
         }
     }
 };

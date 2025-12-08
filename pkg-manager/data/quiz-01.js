@@ -234,7 +234,7 @@ window.content = {
         },
         next: {
             title: '第2章面试题：模块化与依赖管理',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=2'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=02'
         }
     }
 };

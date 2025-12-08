@@ -247,11 +247,11 @@ node_modules/
     navigation: {
         prev: {
             title: '第2章面试题：模块化与依赖管理',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=2'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=02'
         },
         next: {
             title: '第4章面试题：registry与镜像源',
-            url: './render.html?subject=pkg-manager&type=quiz&chapter=4'
+            url: './render.html?subject=pkg-manager&type=quiz&chapter=04'
         }
     }
 };
