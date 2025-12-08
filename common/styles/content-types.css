@@ -813,13 +813,23 @@
     color: #742a2a;
 }
 
+/* 答案解析区域 */
+.quiz-answer-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    animation: slideDown 0.3s ease-out;
+}
+
 /* 解析区域 */
 .explanation {
-    margin-top: 1rem;
-    padding: 1.25rem;
-    background: white;
-    border-radius: 8px;
-    border-left: 4px solid #667eea;
+    margin-top: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    border-left: none;
 }
 
 .explanation-header {
@@ -861,6 +871,82 @@
     border-radius: 6px;
     overflow-x: auto;
     margin-top: 0.5rem;
+}
+
+.explanation-content ul {
+    margin-top: 0.75rem;
+    padding-left: 1.5rem;
+}
+
+.explanation-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.7;
+}
+
+/* 按钮组样式 */
+.btn-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* 按钮组内的按钮统一样式 */
+.btn-group .btn-check-answer,
+.btn-group .btn-show-answer {
+    flex: 1;
+    width: auto;  /* 覆盖base.css的width: 100% */
+    margin-top: 0;  /* 覆盖base.css的margin-top */
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+/* 提交答案按钮 */
+.btn-group .btn-check-answer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-group .btn-check-answer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-group .btn-check-answer:active {
+    transform: translateY(0);
+}
+
+/* 查看解析按钮 */
+.btn-group .btn-show-answer {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+}
+
+.btn-group .btn-show-answer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(113, 128, 150, 0.4);
+}
+
+.btn-group .btn-show-answer:active {
+    transform: translateY(0);
+}
+
+/* 动画效果 */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .explanation-section code {

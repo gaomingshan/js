@@ -654,6 +654,7 @@ class UniversalRendererV2 {
                     <h2 class="topic-title">❓ ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
+                        <span class="quiz-tag">📝 单选题</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
@@ -673,25 +674,17 @@ class UniversalRendererV2 {
                         `}).join('')}
                     </div>
                     
-                    <button class="btn-check-answer" data-quiz="${id}">检查答案</button>
+                    <div class="btn-group">
+                        <button class="btn-check-answer" data-quiz="${id}">提交答案</button>
+                        <button class="btn-show-answer" data-quiz="${id}">查看解析</button>
+                    </div>
                     
                     <div class="quiz-feedback" style="display: none;">
                         <div class="feedback-content"></div>
-                        ${content.explanation ? `
-                            <div class="explanation">
-                                <div class="explanation-header">💡 ${this.escape(content.explanation.title || '答案解析')}</div>
-                                <div class="explanation-content">
-                                    <p>${this.escape(content.explanation.content || content.explanation)}</p>
-                                    ${content.explanation.sections ? content.explanation.sections.map(section => `
-                                        <div class="explanation-section">
-                                            <h5>${this.escape(section.subtitle)}</h5>
-                                            ${section.text ? `<p>${this.escape(section.text)}</p>` : ''}
-                                            ${section.code ? `<pre><code>${this.escape(section.code)}</code></pre>` : ''}
-                                        </div>
-                                    `).join('') : ''}
-                                </div>
-                            </div>
-                        ` : ''}
+                    </div>
+                    
+                    <div class="quiz-answer-section" style="display: none;">
+                        ${this._renderExplanation(content)}
                     </div>
                 </div>
             </div>
@@ -702,27 +695,53 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
+        // 难度标签映射
+        const difficultyMap = {
+            'easy': { class: 'easy', icon: '🟢', text: '简单' },
+            'medium': { class: 'medium', icon: '🟡', text: '中等' },
+            'hard': { class: 'hard', icon: '🔴', text: '困难' }
+        };
+        const diff = difficultyMap[content.difficulty] || difficultyMap.medium;
+        
         return `
             <div class="topic-section quiz-section" data-quiz-id="${id}" data-quiz-type="multi">
-                <h2 class="topic-title">❓ ${this.escape(title)} (多选)</h2>
+                <div class="quiz-header">
+                    <h2 class="topic-title">❓ ${this.escape(title)}</h2>
+                    <div class="quiz-meta">
+                        ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
+                        <span class="quiz-tag">☑️ 多选题</span>
+                        ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
+                    </div>
+                </div>
                 
                 <div class="quiz-question">
                     <p class="question-text">${this.escape(content.question)}</p>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">💡 提示：请选择所有正确答案</p>
                     
                     <div class="quiz-options">
-                        ${content.options.map((option, i) => `
-                            <label class="quiz-option">
-                                <input type="checkbox" name="quiz-${id}" value="${i}" 
-                                       data-correct="${content.correctAnswers.includes(i)}">
-                                <span>${this.escape(option)}</span>
+                        ${content.options.map((option, i) => {
+                            const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            const isCorrect = Array.isArray(content.correctAnswer) ? content.correctAnswer.includes(i) : content.correctAnswers?.includes(i);
+                            return `
+                            <label class="quiz-option" data-option="${letter}">
+                                <input type="checkbox" name="quiz-${id}" value="${i}" data-correct="${isCorrect}">
+                                <span class="option-letter">${letter}</span>
+                                <span class="option-text">${this.escape(option)}</span>
                             </label>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                     
-                    <button class="btn-check-answer" data-quiz="${id}">检查答案</button>
+                    <div class="btn-group">
+                        <button class="btn-check-answer" data-quiz="${id}">提交答案</button>
+                        <button class="btn-show-answer" data-quiz="${id}">查看解析</button>
+                    </div>
                     
                     <div class="quiz-feedback" style="display: none;">
                         <div class="feedback-content"></div>
+                    </div>
+                    
+                    <div class="quiz-answer-section" style="display: none;">
+                        ${this._renderExplanation(content)}
                     </div>
                 </div>
             </div>
@@ -779,7 +798,7 @@ class UniversalRendererV2 {
                     <h2 class="topic-title">💻 ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
-                        <span class="quiz-tag">代码题</span>
+                        <span class="quiz-tag">💻 代码题</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
@@ -803,22 +822,86 @@ class UniversalRendererV2 {
                         `}).join('')}
                     </div>
                     
-                    <button class="btn-check-answer" data-quiz="${id}">检查答案</button>
+                    <div class="btn-group">
+                        <button class="btn-check-answer" data-quiz="${id}">提交答案</button>
+                        <button class="btn-show-answer" data-quiz="${id}">查看解析</button>
+                    </div>
                     
                     <div class="quiz-feedback" style="display: none;">
                         <div class="feedback-content"></div>
-                        ${content.explanation ? `
-                            <div class="explanation">
-                                <div class="explanation-header">💡 ${this.escape(content.explanation.title || '答案解析')}</div>
-                                <div class="explanation-content">
-                                    <p>${this.escape(content.explanation.content || content.explanation)}</p>
-                                </div>
-                            </div>
-                        ` : ''}
+                    </div>
+                    
+                    <div class="quiz-answer-section" style="display: none;">
+                        ${this._renderExplanation(content)}
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    _renderExplanation(content) {
+        if (!content.explanation) return '';
+        
+        const exp = content.explanation;
+        let html = '<div class="explanation">';
+        
+        // 标题
+        if (exp.title) {
+            html += `<div class="explanation-header">💡 ${this.escape(exp.title)}</div>`;
+        }
+        
+        html += '<div class="explanation-content">';
+        
+        // 简单字符串格式
+        if (typeof exp === 'string') {
+            html += `<p style="white-space: pre-line;">${this.escape(exp)}</p>`;
+        } else {
+            // 描述或内容
+            if (exp.description || exp.content) {
+                html += `<p style="white-space: pre-line;">${this.escape(exp.description || exp.content)}</p>`;
+            }
+            
+            // 要点列表
+            if (exp.points) {
+                html += '<ul style="margin-top: 1rem;">';
+                exp.points.forEach(point => {
+                    html += `<li style="margin-bottom: 0.5rem;">${this.escape(point)}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            // 代码块
+            if (exp.code) {
+                html += `<pre style="margin-top: 1rem;"><code>${this.escape(exp.code)}</code></pre>`;
+            }
+            
+            // 分节内容
+            if (exp.sections) {
+                exp.sections.forEach(section => {
+                    html += '<div class="explanation-section">';
+                    if (section.title || section.subtitle) {
+                        html += `<h5>${this.escape(section.title || section.subtitle)}</h5>`;
+                    }
+                    if (section.content || section.text) {
+                        html += `<p style="white-space: pre-line;">${this.escape(section.content || section.text)}</p>`;
+                    }
+                    if (section.points) {
+                        html += '<ul>';
+                        section.points.forEach(point => {
+                            html += `<li>${this.escape(point)}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                    if (section.code) {
+                        html += `<pre><code>${this.escape(section.code)}</code></pre>`;
+                    }
+                    html += '</div>';
+                });
+            }
+        }
+        
+        html += '</div></div>';
+        return html;
     }
 
     renderDefault(topic) {
@@ -925,6 +1008,34 @@ class UniversalRendererV2 {
     }
 
     _initQuiz() {
+        // 选项点击事件（支持单选和多选）
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                // 如果点击的是input本身，不需要处理
+                if (e.target.tagName === 'INPUT') return;
+                
+                const input = this.querySelector('input');
+                if (!input || input.disabled) return;
+                
+                const section = this.closest('.quiz-section');
+                const type = section.dataset.quizType;
+                
+                if (type === 'multi') {
+                    // 多选题：切换checkbox
+                    input.checked = !input.checked;
+                    this.classList.toggle('selected', input.checked);
+                } else {
+                    // 单选题：互斥选择
+                    section.querySelectorAll('.quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    input.checked = true;
+                }
+            });
+        });
+        
+        // 提交答案按钮
         document.querySelectorAll('.btn-check-answer').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const quizId = e.target.dataset.quiz;
@@ -935,6 +1046,20 @@ class UniversalRendererV2 {
                     this._checkMultiAnswer(section, quizId);
                 } else {
                     this._checkSingleAnswer(section, quizId);
+                }
+            });
+        });
+        
+        // 查看解析按钮
+        document.querySelectorAll('.btn-show-answer').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const quizId = e.target.dataset.quiz;
+                const section = document.querySelector(`[data-quiz-id="${quizId}"]`);
+                const answerSection = section.querySelector('.quiz-answer-section');
+                
+                if (answerSection) {
+                    answerSection.style.display = answerSection.style.display === 'none' ? 'block' : 'none';
+                    e.target.textContent = answerSection.style.display === 'none' ? '查看解析' : '隐藏解析';
                 }
             });
         });
@@ -974,12 +1099,22 @@ class UniversalRendererV2 {
         
         feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
         
-        // 禁用按钮
+        // 禁用提交按钮
         const btn = section.querySelector('.btn-check-answer');
         if (btn) {
             btn.disabled = true;
             btn.style.opacity = '0.6';
             btn.style.cursor = 'not-allowed';
+        }
+        
+        // 自动显示解析
+        const answerSection = section.querySelector('.quiz-answer-section');
+        if (answerSection) {
+            answerSection.style.display = 'block';
+            const showBtn = section.querySelector('.btn-show-answer');
+            if (showBtn) {
+                showBtn.textContent = '隐藏解析';
+            }
         }
     }
 
@@ -1014,12 +1149,22 @@ class UniversalRendererV2 {
         
         feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
         
-        // 禁用按钮
+        // 禁用提交按钮
         const btn = section.querySelector('.btn-check-answer');
         if (btn) {
             btn.disabled = true;
             btn.style.opacity = '0.6';
             btn.style.cursor = 'not-allowed';
+        }
+        
+        // 自动显示解析
+        const answerSection = section.querySelector('.quiz-answer-section');
+        if (answerSection) {
+            answerSection.style.display = 'block';
+            const showBtn = section.querySelector('.btn-show-answer');
+            if (showBtn) {
+                showBtn.textContent = '隐藏解析';
+            }
         }
     }
 
