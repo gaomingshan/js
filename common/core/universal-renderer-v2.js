@@ -640,21 +640,37 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
+        // 难度标签映射
+        const difficultyMap = {
+            'easy': { class: 'easy', icon: '🟢', text: '简单' },
+            'medium': { class: 'medium', icon: '🟡', text: '中等' },
+            'hard': { class: 'hard', icon: '🔴', text: '困难' }
+        };
+        const diff = difficultyMap[content.difficulty] || difficultyMap.medium;
+        
         return `
             <div class="topic-section quiz-section" data-quiz-id="${id}" data-quiz-type="single">
-                <h2 class="topic-title">❓ ${this.escape(title)}</h2>
-                ${content.difficulty ? `<span class="difficulty-badge ${content.difficulty}">${content.difficulty}</span>` : ''}
+                <div class="quiz-header">
+                    <h2 class="topic-title">❓ ${this.escape(title)}</h2>
+                    <div class="quiz-meta">
+                        ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
+                        ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
+                    </div>
+                </div>
                 
                 <div class="quiz-question">
                     <p class="question-text">${this.escape(content.question)}</p>
                     
                     <div class="quiz-options">
-                        ${content.options.map((option, i) => `
-                            <label class="quiz-option">
+                        ${content.options.map((option, i) => {
+                            const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            return `
+                            <label class="quiz-option" data-option="${letter}">
                                 <input type="radio" name="quiz-${id}" value="${i}" data-correct="${i === content.correctAnswer}">
-                                <span>${this.escape(option)}</span>
+                                <span class="option-letter">${letter}</span>
+                                <span class="option-text">${this.escape(option)}</span>
                             </label>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                     
                     <button class="btn-check-answer" data-quiz="${id}">检查答案</button>
@@ -663,15 +679,17 @@ class UniversalRendererV2 {
                         <div class="feedback-content"></div>
                         ${content.explanation ? `
                             <div class="explanation">
-                                <h4>${this.escape(content.explanation.title || '答案解析')}</h4>
-                                <p>${this.escape(content.explanation.content || content.explanation)}</p>
-                                ${content.explanation.sections ? content.explanation.sections.map(section => `
-                                    <div class="explanation-section">
-                                        <h5>${this.escape(section.subtitle)}</h5>
-                                        ${section.text ? `<p>${this.escape(section.text)}</p>` : ''}
-                                        ${section.code ? `<pre><code>${this.escape(section.code)}</code></pre>` : ''}
-                                    </div>
-                                `).join('') : ''}
+                                <div class="explanation-header">💡 ${this.escape(content.explanation.title || '答案解析')}</div>
+                                <div class="explanation-content">
+                                    <p>${this.escape(content.explanation.content || content.explanation)}</p>
+                                    ${content.explanation.sections ? content.explanation.sections.map(section => `
+                                        <div class="explanation-section">
+                                            <h5>${this.escape(section.subtitle)}</h5>
+                                            ${section.text ? `<p>${this.escape(section.text)}</p>` : ''}
+                                            ${section.code ? `<pre><code>${this.escape(section.code)}</code></pre>` : ''}
+                                        </div>
+                                    `).join('') : ''}
+                                </div>
                             </div>
                         ` : ''}
                     </div>
@@ -747,9 +765,24 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
+        // 难度标签映射
+        const difficultyMap = {
+            'easy': { class: 'easy', icon: '🟢', text: '简单' },
+            'medium': { class: 'medium', icon: '🟡', text: '中等' },
+            'hard': { class: 'hard', icon: '🔴', text: '困难' }
+        };
+        const diff = difficultyMap[content.difficulty] || difficultyMap.medium;
+        
         return `
             <div class="topic-section quiz-section quiz-code-section" data-quiz-id="${id}" data-quiz-type="single">
-                <h2 class="topic-title">❓ ${this.escape(title)} (代码题)</h2>
+                <div class="quiz-header">
+                    <h2 class="topic-title">💻 ${this.escape(title)}</h2>
+                    <div class="quiz-meta">
+                        ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
+                        <span class="quiz-tag">代码题</span>
+                        ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
+                    </div>
+                </div>
                 
                 <div class="quiz-question">
                     <p class="question-text">${this.escape(content.question)}</p>
@@ -759,18 +792,29 @@ class UniversalRendererV2 {
                     </div>
                     
                     <div class="quiz-options">
-                        ${content.options.map((option, i) => `
-                            <label class="quiz-option">
+                        ${content.options.map((option, i) => {
+                            const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            return `
+                            <label class="quiz-option" data-option="${letter}">
                                 <input type="radio" name="quiz-${id}" value="${i}" data-correct="${i === content.correctAnswer}">
-                                <span>${this.escape(option)}</span>
+                                <span class="option-letter">${letter}</span>
+                                <span class="option-text">${this.escape(option)}</span>
                             </label>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                     
                     <button class="btn-check-answer" data-quiz="${id}">检查答案</button>
                     
                     <div class="quiz-feedback" style="display: none;">
                         <div class="feedback-content"></div>
+                        ${content.explanation ? `
+                            <div class="explanation">
+                                <div class="explanation-header">💡 ${this.escape(content.explanation.title || '答案解析')}</div>
+                                <div class="explanation-content">
+                                    <p>${this.escape(content.explanation.content || content.explanation)}</p>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -908,21 +952,35 @@ class UniversalRendererV2 {
         const feedbackContent = feedback.querySelector('.feedback-content');
         const isCorrect = selected.dataset.correct === 'true';
         
-        feedback.style.display = 'block';
-        feedbackContent.innerHTML = isCorrect
-            ? '✅ 回答正确！'
-            : '❌ 回答错误';
-        
-        feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
-        
+        // 禁用所有选项
         section.querySelectorAll('.quiz-option').forEach(opt => {
             const input = opt.querySelector('input');
+            input.disabled = true;
+            opt.style.cursor = 'default';
+            
+            // 标记正确/错误
             if (input.dataset.correct === 'true') {
                 opt.classList.add('correct');
             } else if (input.checked) {
                 opt.classList.add('wrong');
             }
         });
+        
+        // 显示反馈
+        feedback.style.display = 'block';
+        feedbackContent.innerHTML = isCorrect
+            ? '✅ 回答正确！'
+            : '❌ 回答错误，正确答案已标记为绿色';
+        
+        feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+        
+        // 禁用按钮
+        const btn = section.querySelector('.btn-check-answer');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+        }
     }
 
     _checkMultiAnswer(section, quizId) {
@@ -932,15 +990,37 @@ class UniversalRendererV2 {
         const isCorrect = selected.length === correct.length && 
                          selected.every(s => s.dataset.correct === 'true');
         
+        // 禁用所有选项
+        section.querySelectorAll('.quiz-option').forEach(opt => {
+            const input = opt.querySelector('input');
+            input.disabled = true;
+            opt.style.cursor = 'default';
+            
+            // 标记正确/错误
+            if (input.dataset.correct === 'true') {
+                opt.classList.add('correct');
+            } else if (input.checked) {
+                opt.classList.add('wrong');
+            }
+        });
+        
         const feedback = section.querySelector('.quiz-feedback');
         const feedbackContent = feedback.querySelector('.feedback-content');
         
         feedback.style.display = 'block';
         feedbackContent.innerHTML = isCorrect
             ? '✅ 回答正确！'
-            : `❌ 回答错误，正确答案有${correct.length}个选项`;
+            : `❌ 回答错误，正确答案有${correct.length}个选项，已标记为绿色`;
         
         feedback.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+        
+        // 禁用按钮
+        const btn = section.querySelector('.btn-check-answer');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+        }
     }
 
     _initColorCopy() {
