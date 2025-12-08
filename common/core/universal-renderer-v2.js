@@ -640,10 +640,9 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
-        // 自动判断是单选还是多选
-        const isMulti = Array.isArray(content.correctAnswer);
-        const quizType = isMulti ? 'multi' : 'single';
-        const inputType = isMulti ? 'checkbox' : 'radio';
+        // 获取题型信息（优先使用显式定义，回退到自动判断）
+        const typeInfo = this._getQuestionType(content);
+        const { quizType, inputType, isMulti, label } = typeInfo;
         
         // 难度标签映射
         const difficultyMap = {
@@ -659,7 +658,7 @@ class UniversalRendererV2 {
                     <h2 class="topic-title">❓ ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
-                        <span class="quiz-tag">${isMulti ? '☑️ 多选题' : '📝 单选题'}</span>
+                        <span class="quiz-tag">${label}</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
@@ -793,10 +792,9 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
-        // 自动判断是单选还是多选
-        const isMulti = Array.isArray(content.correctAnswer);
-        const quizType = isMulti ? 'multi' : 'single';
-        const inputType = isMulti ? 'checkbox' : 'radio';
+        // 获取题型信息（优先使用显式定义，回退到自动判断）
+        const typeInfo = this._getQuestionType(content);
+        const { quizType, inputType, isMulti, label } = typeInfo;
         
         // 难度标签映射
         const difficultyMap = {
@@ -812,7 +810,7 @@ class UniversalRendererV2 {
                     <h2 class="topic-title">💻 ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
-                        <span class="quiz-tag">💻 代码题${isMulti ? '（多选）' : ''}</span>
+                        <span class="quiz-tag">💻 ${label}</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
@@ -855,6 +853,84 @@ class UniversalRendererV2 {
                 </div>
             </div>
         `;
+    }
+
+    /**
+     * 获取题目类型信息
+     * @param {Object} content - 题目内容
+     * @returns {Object} 题型信息 { quizType, inputType, isMulti, label }
+     */
+    _getQuestionType(content) {
+        // 方案1：优先使用显式的questionType字段（推荐）
+        if (content.questionType) {
+            const typeMap = {
+                'single': {
+                    quizType: 'single',
+                    inputType: 'radio',
+                    isMulti: false,
+                    label: '📝 单选题'
+                },
+                'multiple': {
+                    quizType: 'multi',
+                    inputType: 'checkbox',
+                    isMulti: true,
+                    label: '☑️ 多选题'
+                },
+                'boolean': {
+                    quizType: 'boolean',
+                    inputType: 'radio',
+                    isMulti: false,
+                    label: '✓✗ 判断题'
+                },
+                'code-single': {
+                    quizType: 'single',
+                    inputType: 'radio',
+                    isMulti: false,
+                    label: '代码题'
+                },
+                'code-multiple': {
+                    quizType: 'multi',
+                    inputType: 'checkbox',
+                    isMulti: true,
+                    label: '代码题（多选）'
+                }
+            };
+            
+            return typeMap[content.questionType] || typeMap.single;
+        }
+        
+        // 方案2：向后兼容 - 自动判断（不推荐，仅用于历史数据）
+        const isMulti = Array.isArray(content.correctAnswer) && content.correctAnswer.length > 1;
+        
+        // 判断是否为布尔题（通过选项内容判断）
+        const isBooleanQuestion = content.options?.length === 2 && 
+            content.options.some(opt => /^(正确|对|是|True|✓)$/i.test(opt?.trim() || '')) &&
+            content.options.some(opt => /^(错误|错|否|False|✗)$/i.test(opt?.trim() || ''));
+        
+        if (isBooleanQuestion) {
+            return {
+                quizType: 'boolean',
+                inputType: 'radio',
+                isMulti: false,
+                label: '✓✗ 判断题'
+            };
+        }
+        
+        if (isMulti) {
+            return {
+                quizType: 'multi',
+                inputType: 'checkbox',
+                isMulti: true,
+                label: '☑️ 多选题'
+            };
+        }
+        
+        return {
+            quizType: 'single',
+            inputType: 'radio',
+            isMulti: false,
+            label: '📝 单选题'
+        };
     }
 
     _renderExplanation(content) {

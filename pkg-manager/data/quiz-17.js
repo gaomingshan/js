@@ -15,6 +15,7 @@ window.content = {
             type: 'quiz',
             title: '题目1：yarn add命令',
             content: {
+                questionType: 'single',  // 显式定义题型
                 difficulty: 'easy',
                 tags: ['安装依赖', 'yarn add'],
                 question: 'yarn add package和npm install package的区别是什么？',
@@ -205,6 +206,7 @@ yarn upgrade-interactive # D: 交互式选择更新`,
             type: 'quiz',
             title: '题目5：yarn why命令',
             content: {
+                questionType: 'multiple',  // 显式定义为多选题
                 difficulty: 'medium',
                 tags: ['依赖分析', '多选题'],
                 question: 'yarn why lodash命令可以查看哪些信息？',
