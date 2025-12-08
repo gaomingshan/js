@@ -823,6 +823,33 @@
     animation: slideDown 0.3s ease-out;
 }
 
+/* 正确答案显示 */
+.correct-answer-display {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.correct-answer-display strong {
+    font-weight: 700;
+}
+
+.correct-answer-display .answer-letters {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+}
+
 /* 解析区域 */
 .explanation {
     margin-top: 0;

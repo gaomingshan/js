@@ -640,6 +640,11 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
+        // 自动判断是单选还是多选
+        const isMulti = Array.isArray(content.correctAnswer);
+        const quizType = isMulti ? 'multi' : 'single';
+        const inputType = isMulti ? 'checkbox' : 'radio';
+        
         // 难度标签映射
         const difficultyMap = {
             'easy': { class: 'easy', icon: '🟢', text: '简单' },
@@ -649,25 +654,29 @@ class UniversalRendererV2 {
         const diff = difficultyMap[content.difficulty] || difficultyMap.medium;
         
         return `
-            <div class="topic-section quiz-section" data-quiz-id="${id}" data-quiz-type="single">
+            <div class="topic-section quiz-section" data-quiz-id="${id}" data-quiz-type="${quizType}">
                 <div class="quiz-header">
                     <h2 class="topic-title">❓ ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
-                        <span class="quiz-tag">📝 单选题</span>
+                        <span class="quiz-tag">${isMulti ? '☑️ 多选题' : '📝 单选题'}</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
                 
                 <div class="quiz-question">
                     <p class="question-text">${this.escape(content.question)}</p>
+                    ${isMulti ? '<p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">💡 提示：请选择所有正确答案</p>' : ''}
                     
                     <div class="quiz-options">
                         ${content.options.map((option, i) => {
                             const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            const isCorrect = isMulti 
+                                ? content.correctAnswer.includes(i) 
+                                : (i === content.correctAnswer);
                             return `
                             <label class="quiz-option" data-option="${letter}">
-                                <input type="radio" name="quiz-${id}" value="${i}" data-correct="${i === content.correctAnswer}">
+                                <input type="${inputType}" name="quiz-${id}" value="${i}" data-correct="${isCorrect}">
                                 <span class="option-letter">${letter}</span>
                                 <span class="option-text">${this.escape(option)}</span>
                             </label>
@@ -784,6 +793,11 @@ class UniversalRendererV2 {
         const { title, content } = topic;
         const id = this._generateId();
         
+        // 自动判断是单选还是多选
+        const isMulti = Array.isArray(content.correctAnswer);
+        const quizType = isMulti ? 'multi' : 'single';
+        const inputType = isMulti ? 'checkbox' : 'radio';
+        
         // 难度标签映射
         const difficultyMap = {
             'easy': { class: 'easy', icon: '🟢', text: '简单' },
@@ -793,18 +807,19 @@ class UniversalRendererV2 {
         const diff = difficultyMap[content.difficulty] || difficultyMap.medium;
         
         return `
-            <div class="topic-section quiz-section quiz-code-section" data-quiz-id="${id}" data-quiz-type="single">
+            <div class="topic-section quiz-section quiz-code-section" data-quiz-id="${id}" data-quiz-type="${quizType}">
                 <div class="quiz-header">
                     <h2 class="topic-title">💻 ${this.escape(title)}</h2>
                     <div class="quiz-meta">
                         ${content.difficulty ? `<span class="difficulty-badge ${diff.class}">${diff.icon} ${diff.text}</span>` : ''}
-                        <span class="quiz-tag">💻 代码题</span>
+                        <span class="quiz-tag">💻 代码题${isMulti ? '（多选）' : ''}</span>
                         ${content.tags ? content.tags.map(tag => `<span class="quiz-tag">${this.escape(tag)}</span>`).join('') : ''}
                     </div>
                 </div>
                 
                 <div class="quiz-question">
                     <p class="question-text">${this.escape(content.question)}</p>
+                    ${isMulti ? '<p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">💡 提示：请选择所有正确答案</p>' : ''}
                     
                     <div class="code-block">
                         <pre><code>${this.escape(content.code)}</code></pre>
@@ -813,9 +828,12 @@ class UniversalRendererV2 {
                     <div class="quiz-options">
                         ${content.options.map((option, i) => {
                             const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            const isCorrect = isMulti 
+                                ? content.correctAnswer.includes(i) 
+                                : (i === content.correctAnswer);
                             return `
                             <label class="quiz-option" data-option="${letter}">
-                                <input type="radio" name="quiz-${id}" value="${i}" data-correct="${i === content.correctAnswer}">
+                                <input type="${inputType}" name="quiz-${id}" value="${i}" data-correct="${isCorrect}">
                                 <span class="option-letter">${letter}</span>
                                 <span class="option-text">${this.escape(option)}</span>
                             </label>
@@ -844,6 +862,21 @@ class UniversalRendererV2 {
         
         const exp = content.explanation;
         let html = '<div class="explanation">';
+        
+        // 显示正确答案
+        html += '<div class="correct-answer-display">';
+        html += '<strong>✅ 正确答案：</strong>';
+        
+        if (Array.isArray(content.correctAnswer)) {
+            // 多选题
+            const letters = content.correctAnswer.map(i => String.fromCharCode(65 + i));
+            html += `<span class="answer-letters">${letters.join(', ')}</span>`;
+        } else {
+            // 单选题
+            const letter = String.fromCharCode(65 + content.correctAnswer);
+            html += `<span class="answer-letters">${letter}</span>`;
+        }
+        html += '</div>';
         
         // 标题
         if (exp.title) {
