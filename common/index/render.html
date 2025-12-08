@@ -76,9 +76,8 @@
             dataScript.onload = function() {
                 console.log('✅ 数据脚本加载成功');
                 
-                // 数据文件应该定义一个全局变量（如：window.pkgManagerContent_01）
-                // 变量命名规范：window.${subject}Content_${chapter}
-                const dataVarName = subject.replace(/-/g, '') + 'Content_' + chapter;
+                // 数据文件应该定义一个全局变量
+                const dataVarName = 'content';
                 const contentData = window[dataVarName];
                 
                 if (!contentData) {
