@@ -152,6 +152,7 @@ ls -l node_modules/lodash
                         },
                         {
                             title: 'pnpm的混合策略',
+                            title: 'pnpm的混合策略',
                             code: `// pnpm的三层结构
 1. 全局store（真实文件）
    ~/.pnpm-store/v3/files/00/abc123... (真实文件)
