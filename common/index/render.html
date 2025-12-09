@@ -85,6 +85,39 @@
                     return;
                 }
                 
+                // 数据预处理：恢复代码块中各种转义供显示
+                function processCodeBlocks(obj) {
+                    if (!obj || typeof obj !== 'object') return obj;
+                    
+                    if (Array.isArray(obj)) {
+                        return obj.map(item => processCodeBlocks(item));
+                    }
+                    
+                    const processed = {};
+                    for (const key in obj) {
+                        if (key === 'code' && typeof obj[key] === 'string') {
+                            let code = obj[key];
+                            // 恢复各种转义供显示：
+                            // 1. GitHub Actions: \${{ → ${{
+                            code = code.replace(/\\\$\{\{/g, '${{');
+                            // 2. Bash变量: \$VAR → $VAR
+                            code = code.replace(/\\\$([A-Z_][A-Z0-9_]*)/g, '$$$1');
+                            // 3. JS嵌套模板字符串: \\\${ → \${
+                            code = code.replace(/\\\\\\\$\{/g, '\\${');
+                            
+                            processed[key] = code;
+                        } else if (typeof obj[key] === 'object') {
+                            processed[key] = processCodeBlocks(obj[key]);
+                        } else {
+                            processed[key] = obj[key];
+                        }
+                    }
+                    return processed;
+                }
+                
+                // 处理数据
+                processCodeBlocks(contentData);
+                
                 // 步骤2：加载渲染器
                 const rendererScript = document.createElement('script');
                 rendererScript.src = '../core/universal-renderer-v2.js';
