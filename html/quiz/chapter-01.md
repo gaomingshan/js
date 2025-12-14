@@ -71,7 +71,7 @@ HTML5 是 W3C 制定的最新 HTML 标准。
 <details>
 <summary>查看答案</summary>
 
-### ✅ 正确答案：B（错误）
+### ✅ 正确答案：B（错
 
 ### 📖 解析
 
