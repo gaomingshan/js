@@ -263,6 +263,121 @@
 
 ---
 
+## 附录：HTML 实战应用指南
+
+> 侧重"如何应用"，覆盖后端开发者在实际前端工程中最常用的 HTML 场景
+
+### 附录 A：列表与数据展示
+
+[A.1 列表与数据展示](./content/content-37.md)
+- 无序列表、有序列表、定义列表的应用场景选择
+- 嵌套列表与导航菜单的构建模式
+- 自定义列表样式的最佳实践
+- 常见反模式：用 div 模拟列表、列表滥用
+
+### 附录 B：图片与响应式媒体
+
+[B.1 图片与响应式媒体](./content/content-38.md)
+- img 的核心属性：src、srcset、sizes、alt、loading
+- picture 元素与 source 的格式适配策略
+- 响应式图片的完整方案（分辨率切换 + 艺术方向）
+- 图片懒加载、占位与性能优化实践
+- SVG 内联 vs 外部引用的选择
+
+### 附录 C：音频与视频
+
+[C.1 音频与视频](./content/content-39.md)
+- audio / video 元素的属性与控制
+- 多格式兼容：source 与 MIME 类型
+- 自定义播放器控件的 HTML 结构
+- 字幕（track）与无障碍播放
+- 工程实践：视频懒加载、流媒体嵌入
+
+### 附录 D：Canvas 基础绘图
+
+[D.1 Canvas 基础绘图](./content/content-40.md)
+- Canvas 与 SVG 的适用场景对比
+- Canvas 2D 上下文：基础图形、路径、文本
+- 像素操作与图像处理入门
+- Canvas 动画的基本模式（requestAnimationFrame）
+- 工程实践：图表绘制、图片水印、签名板
+
+### 附录 E：表格与结构化数据
+
+[E.1 表格与结构化数据](./content/content-41.md)
+- table 的语义结构：thead、tbody、tfoot、caption
+- 合并单元格：rowspan、colspan
+- 表格的可访问性（scope、headers）
+- 响应式表格的常见处理方案
+- 后端视角：表格 ≈ 数据库查询结果的 HTML 映射
+
+### 附录 F：表单实战模式
+
+[F.1 表单实战模式](./content/content-42.md)
+- 常用表单控件完整参考（input 各类型、select、textarea、datalist）
+- 表单布局的典型 HTML 结构
+- 文件上传：单文件、多文件、拖拽上传的 HTML 层
+- 表单联动与动态字段的结构设计
+- FormData 与后端接口对接实践
+
+### 附录 G：HTML 安全防护
+
+[G.1 HTML 安全防护](./content/content-43.md)
+- XSS 攻击的 HTML 层面理解：存储型、反射型、DOM 型
+- HTML 转义与内容消毒（Sanitization）
+- CSP（Content Security Policy）策略配置
+- iframe 沙箱：sandbox 属性详解
+- rel="noopener noreferrer" 与链接安全
+- 表单安全：CSRF 防护、autocomplete 控制
+- 后端视角：输入验证的前后端协作
+
+### 附录 H：链接与导航模式
+
+[H.1 链接与导航模式](./content/content-44.md)
+- a 标签完整用法：href 协议（http / mailto / tel / javascript）
+- 锚点导航与页内定位（id + hash）
+- download 属性与文件下载触发
+- target 属性与窗口控制（_blank 的安全问题）
+- SPA 路由中 a 标签的角色与拦截机制
+
+### 附录 I：Meta 标签与 SEO 实战
+
+[I.1 Meta 标签与 SEO 实战](./content/content-45.md)
+- 必备 meta 标签清单：charset、viewport、description、robots
+- Open Graph 协议与社交分享卡片
+- favicon 体系：ico / png / apple-touch-icon / manifest
+- 结构化数据：JSON-LD / Schema.org 与搜索引擎富摘要
+- 后端视角：SSR 页面的 head 管理策略
+
+### 附录 J：无障碍（Accessibility）实战
+
+[J.1 无障碍实战](./content/content-46.md)
+- ARIA 属性体系：role、aria-label、aria-hidden、aria-live
+- 焦点管理：tabindex、焦点顺序、焦点陷阱（模态框场景）
+- 键盘导航的 HTML 结构要求
+- 屏幕阅读器友好的标记模式
+- 工程实践：A11y 检测工具与 CI 集成
+
+### 附录 K：HTML5 原生交互组件
+
+[K.1 HTML5 原生交互组件](./content/content-47.md)
+- dialog 元素：模态框 / 非模态框的原生方案
+- details / summary：原生折叠面板
+- progress / meter：进度与度量展示
+- Popover API（新标准）
+- 原生组件 vs JS 组件库的选型权衡
+
+### 附录 L：data-* 属性与 HTML/JS 数据桥接
+
+[L.1 data-* 属性与数据桥接](./content/content-48.md)
+- 自定义数据属性的命名规范与 dataset API
+- HTML 作为数据载体的典型模式（SSR 注入、配置传递）
+- data-* 与框架绑定（Vue / React 中的使用）
+- 微数据（Microdata）与语义扩展
+- 后端视角：HTML ≈ 带上下文的数据传输层
+
+---
+
 ## 学习路径建议
 
 **第 1-2 周（基础篇）**：
