@@ -1,600 +1,1637 @@
-# JavaScript 面试题汇总
+# JavaScript 面试题集 (共100题)
 
-> 涵盖 JavaScript 核心知识点的 100 道精选面试题
+## 第1-20题：基础入门
 
----
+### 1. JavaScript 中的数据类型有哪些？
+**难度：⭐**
 
-## 使用说明
+**选项：**
+- A. Number, String, Boolean
+- B. Number, String, Boolean, Null, Undefined, Symbol, BigInt, Object
+- C. Number, String, Boolean, Object
+- D. Number, String, Array, Object
 
-本面试题汇总精选了 100 道 JavaScript 面试题，按照知识模块分类，难度从基础到高级递进。每道题目都包含：
-- 问题描述
-- 参考答案
-- 知识点解析
-- 相关章节链接
+**答案：B**
 
----
-
-## 目录
-
-1. [语言基础（10题）](#语言基础)
-2. [类型系统（10题）](#类型系统)
-3. [执行模型（15题）](#执行模型)
-4. [对象与原型（10题）](#对象与原型)
-5. [函数（10题）](#函数)
-6. [异步编程（15题）](#异步编程)
-7. [引擎与性能（10题）](#引擎与性能)
-8. [浏览器 API（10题）](#浏览器api)
-9. [现代特性（10题）](#现代特性)
-10. [工程实践（10题）](#工程实践)
+**解析：**
+JavaScript 有8种数据类型，其中7种是基本类型（Number, String, Boolean, Null, Undefined, Symbol, BigInt），1种是引用类型（Object）。Symbol 是 ES6 新增，BigInt 是 ES2020 新增。
 
 ---
 
-## 语言基础
+### 2. var、let、const 的区别是什么？
+**难度：⭐⭐**
 
-### 1. JavaScript 的主要特点是什么？
+**选项：**
+- A. 只有作用域不同
+- B. var 有变量提升，let 和 const 没有
+- C. var 函数作用域，let/const 块级作用域；var 有提升，let/const 有暂时性死区；const 声明后不可重新赋值
+- D. 没有区别
 
-**答案：**
-1. **动态类型**：变量类型在运行时确定
-2. **弱类型**：类型转换灵活
-3. **单线程**：同一时间只执行一个任务
-4. **事件驱动**：基于事件循环的异步模型
-5. **原型继承**：基于原型链的继承机制
-6. **函数一等公民**：函数可以作为值传递
+**答案：C**
 
-**相关章节：** [JavaScript 语言特性与设计理念](../content/content-1.md)
-
----
-
-### 2. var、let、const 的区别？
-
-**答案：**
-
-| 特性 | var | let | const |
-|------|-----|-----|-------|
-| 作用域 | 函数作用域 | 块级作用域 | 块级作用域 |
-| 变量提升 | 提升且初始化为 undefined | 提升但不初始化（TDZ）| 提升但不初始化（TDZ）|
-| 重复声明 | 允许 | 不允许 | 不允许 |
-| 重新赋值 | 允许 | 允许 | 不允许 |
-| 全局对象属性 | 是 | 否 | 否 |
-
-**示例：**
-```javascript
-// var：函数作用域
-function test() {
-  if (true) {
-    var x = 1;
-  }
-  console.log(x);  // 1（可访问）
-}
-
-// let：块级作用域
-function test() {
-  if (true) {
-    let x = 1;
-  }
-  console.log(x);  // ReferenceError
-}
-
-// const：不可重新赋值
-const obj = { a: 1 };
-obj.a = 2;  // ✅ 可以修改属性
-obj = {};   // ❌ 不能重新赋值
-```
-
-**相关章节：** [变量声明与作用域基础](../content/content-2.md)
+**解析：**
+var 声明的变量是函数作用域，存在变量提升；let 和 const 是块级作用域，存在暂时性死区（TDZ）；const 声明的是常量，声明后不能重新赋值（但对象属性可以修改）。
 
 ---
 
-### 3. JavaScript 有哪些数据类型？
+### 3. == 和 === 的区别？
+**难度：⭐**
 
-**答案：**
+**选项：**
+- A. 没有区别
+- B. == 比较值，=== 比较值和类型
+- C. == 更严格
+- D. === 会进行类型转换
 
-**8 种数据类型：**
-1. **原始类型（7种）：**
-   - `Number`：数字
-   - `String`：字符串
-   - `Boolean`：布尔值
-   - `undefined`：未定义
-   - `null`：空值
-   - `Symbol`：唯一标识符（ES6）
-   - `BigInt`：大整数（ES2020）
+**答案：B**
 
-2. **引用类型（1种）：**
-   - `Object`：对象（包括 Array、Function、Date、RegExp 等）
-
-**检测方法：**
-```javascript
-typeof 123                    // "number"
-typeof "hello"                // "string"
-typeof true                   // "boolean"
-typeof undefined              // "undefined"
-typeof null                   // "object"（历史遗留bug）
-typeof Symbol()               // "symbol"
-typeof 123n                   // "bigint"
-typeof {}                     // "object"
-typeof []                     // "object"
-typeof function() {}          // "function"
-
-// 准确判断
-Object.prototype.toString.call([])  // "[object Array]"
-Array.isArray([])                   // true
-```
-
-**相关章节：** [数据类型概览](../content/content-3.md)
+**解析：**
+== 是抽象相等，会进行类型转换后再比较；=== 是严格相等，不会类型转换，值和类型都必须相同。建议使用 === 避免隐式类型转换带来的问题。
 
 ---
 
 ### 4. null 和 undefined 的区别？
+**难度：⭐⭐**
 
-**答案：**
+**选项：**
+- A. 没有区别
+- B. null 表示空对象，undefined 表示未定义
+- C. null 是关键字，undefined 不是
+- D. undefined 是全局变量
 
-| 特性 | undefined | null |
-|------|-----------|------|
-| 含义 | 未定义、未初始化 | 空值、无对象 |
-| 类型 | undefined | object（历史bug）|
-| 转为数字 | NaN | 0 |
-| 转为布尔 | false | false |
-| 使用场景 | 变量未赋值、函数无返回值 | 主动表示"空" |
+**答案：B**
 
-**示例：**
-```javascript
-let a;
-console.log(a);  // undefined（声明但未赋值）
-
-const obj = { b: null };
-console.log(obj.b);  // null（明确设置为空）
-
-function test() {}
-console.log(test());  // undefined（无返回值）
-
-// 判断
-a === undefined  // true
-a === null       // false
-
-// 非严格相等
-a == null        // true（undefined == null）
-```
-
-**相关章节：** [数据类型概览](../content/content-3.md)
+**解析：**
+undefined 表示变量已声明但未赋值，或访问对象不存在的属性；null 是一个表示"空"的对象，通常用于显式表示"无值"。typeof null 返回 "object"（这是一个历史遗留bug）。
 
 ---
 
-### 5. == 和 === 的区别？
+### 5. typeof 可以判断哪些类型？
+**难度：⭐**
 
-**答案：**
+**选项：**
+- A. 所有类型
+- B. 除了 null 都能正确判断
+- C. 能判断基本类型（除 null 返回 object），引用类型都返回 object（除 function）
+- D. 只能判断 number 和 string
 
-- `==`：相等运算符，会进行类型转换
-- `===`：严格相等运算符，不进行类型转换
+**答案：C**
 
-**类型转换规则（==）：**
-```javascript
-// 1. null == undefined
-null == undefined  // true
-
-// 2. 字符串 == 数字：字符串转数字
-"42" == 42  // true
-"0" == 0    // true
-
-// 3. 布尔值 == 其他：布尔值转数字
-true == 1   // true
-false == 0  // true
-
-// 4. 对象 == 原始值：对象转原始值
-[] == 0     // true（[] -> "" -> 0）
-[1] == 1    // true（[1] -> "1" -> 1）
-
-// 严格相等（===）
-"42" === 42  // false
-null === undefined  // false
-```
-
-**最佳实践：**
-```javascript
-// ✅ 推荐使用 ===
-if (value === null) {}
-
-// ❌ 避免使用 ==
-if (value == null) {}  // 可以同时检查 null 和 undefined
-
-// 例外：检查 null 和 undefined
-if (value == null) {  // 等价于 value === null || value === undefined
-  // value 是 null 或 undefined
-}
-```
-
-**相关章节：** [类型转换规则](../content/content-6.md)
+**解析：**
+typeof 对基本类型（除 null）能正确返回类型字符串，但 typeof null 返回 "object"；对引用类型，除了 function 返回 "function"，其他都返回 "object"，无法区分数组、对象等。
 
 ---
 
-### 6. 如何判断数组？
+### 6. 如何判断一个变量是数组？
+**难度：⭐⭐**
 
-**答案：**
+**选项：**
+- A. typeof arr === 'array'
+- B. arr instanceof Array 或 Array.isArray(arr)
+- C. arr.constructor === Array
+- D. 以上都对
 
-**推荐方法：**
-```javascript
-// 1. Array.isArray（最佳）
-Array.isArray([])       // true
-Array.isArray({})       // false
+**答案：B**
 
-// 2. Object.prototype.toString
-Object.prototype.toString.call([])  // "[object Array]"
-
-// 3. instanceof（注意跨 iframe 问题）
-[] instanceof Array  // true
-
-// 4. constructor
-[].constructor === Array  // true
-```
-
-**为什么不用 typeof：**
-```javascript
-typeof []  // "object"（不准确）
-```
-
-**跨 iframe 问题：**
-```javascript
-// iframe 中的数组在父页面中
-const iframeArray = iframe.contentWindow.Array;
-const arr = new iframeArray();
-
-arr instanceof Array  // false（不同的 Array 构造函数）
-Array.isArray(arr)    // true（推荐）
-```
-
-**相关章节：** [类型判断方法](../content/content-5.md)
+**解析：**
+推荐使用 Array.isArray(arr)，这是最可靠的方法。instanceof 在多窗口环境下可能失效。typeof 对数组返回 "object"。constructor 可以被修改。
 
 ---
 
-### 7. 什么是暂时性死区（TDZ）？
+### 7. 什么是闭包？
+**难度：⭐⭐⭐**
 
-**答案：**
+**选项：**
+- A. 函数嵌套函数
+- B. 能够访问其他函数内部变量的函数
+- C. 函数及其词法环境的组合，使函数能访问外部作用域的变量
+- D. 匿名函数
 
-暂时性死区（Temporal Dead Zone）是指在代码块中，使用 `let` 或 `const` 声明的变量在声明之前的区域。
+**答案：C**
 
-**特点：**
-- 变量已提升，但未初始化
-- 访问会抛出 `ReferenceError`
-- 从块开始到声明语句之间
-
-**示例：**
-```javascript
-console.log(x);  // ReferenceError: Cannot access 'x' before initialization
-let x = 1;
-
-// TDZ 范围
-{
-  // TDZ 开始
-  console.log(y);  // ReferenceError
-  
-  let y = 2;  // TDZ 结束
-  
-  console.log(y);  // 2
-}
-
-// 对比 var（没有 TDZ）
-console.log(a);  // undefined（变量提升）
-var a = 1;
-```
-
-**为什么设计 TDZ：**
-1. 避免在声明前使用变量（更安全）
-2. 捕获编程错误
-3. 与 const 行为一致
-
-**相关章节：** [变量声明与作用域基础](../content/content-2.md)
+**解析：**
+闭包是函数和其词法环境的组合。当内部函数引用外部函数的变量时，即使外部函数已执行完毕，这些变量也不会被回收，内部函数仍能访问。闭包常用于数据封装、函数工厂等场景。
 
 ---
 
-### 8. JavaScript 中的包装对象是什么？
+### 8. this 的指向规则？
+**难度：⭐⭐⭐**
 
-**答案：**
+**选项：**
+- A. 总是指向定义时的对象
+- B. 总是指向 window
+- C. 取决于调用方式：默认绑定、隐式绑定、显式绑定、new 绑定
+- D. 随机指向
 
-包装对象是原始值的对象形式，JavaScript 会在需要时自动进行包装和拆箱。
+**答案：C**
 
-**三种包装对象：**
-- `Number`：包装数字
-- `String`：包装字符串
-- `Boolean`：包装布尔值
-
-**自动装箱：**
-```javascript
-const str = "hello";
-console.log(str.length);        // 5
-console.log(str.toUpperCase()); // "HELLO"
-
-// 实际执行过程：
-// 1. 创建临时包装对象：new String("hello")
-// 2. 调用方法：wrapper.toUpperCase()
-// 3. 销毁包装对象
-```
-
-**手动创建包装对象：**
-```javascript
-const num = 123;
-const obj = new Number(123);
-
-console.log(typeof num);  // "number"
-console.log(typeof obj);  // "object"
-
-console.log(num === obj);  // false（类型不同）
-console.log(num == obj);   // true（自动拆箱）
-```
-
-**注意事项：**
-```javascript
-// ❌ 不要手动创建包装对象
-const bool = new Boolean(false);
-if (bool) {
-  console.log("执行");  // 会执行（对象总是 truthy）
-}
-
-// ✅ 使用原始值
-const bool = false;
-if (bool) {
-  console.log("不执行");
-}
-```
-
-**相关章节：** [数据类型概览](../content/content-3.md)
+**解析：**
+this 的指向取决于调用方式：1) 默认绑定（独立调用指向 window/undefined）；2) 隐式绑定（对象方法调用指向该对象）；3) 显式绑定（call/apply/bind）；4) new 绑定（指向新创建的对象）。箭头函数没有自己的 this。
 
 ---
 
-### 9. Symbol 的作用是什么？
+### 9. call、apply、bind 的区别？
+**难度：⭐⭐**
 
-**答案：**
+**选项：**
+- A. 没有区别
+- B. call 和 apply 立即执行，bind 返回新函数；call 接收参数列表，apply 接收数组
+- C. bind 不能改变 this
+- D. apply 更快
 
-Symbol 是 ES6 引入的原始数据类型，用于创建唯一的标识符。
+**答案：B**
 
-**主要用途：**
-
-1. **创建唯一属性键**
-```javascript
-const id = Symbol('id');
-const obj = {
-  name: 'Alice',
-  [id]: 123
-};
-
-console.log(obj[id]);  // 123
-console.log(obj.id);   // undefined
-```
-
-2. **避免属性名冲突**
-```javascript
-// 多个库可以安全地扩展对象
-const lib1 = Symbol('lib1');
-const lib2 = Symbol('lib2');
-
-Object.prototype[lib1] = function() { return 'Library 1'; };
-Object.prototype[lib2] = function() { return 'Library 2'; };
-```
-
-3. **定义私有属性**
-```javascript
-const _private = Symbol('private');
-
-class User {
-  constructor(name) {
-    this.name = name;
-    this[_private] = 'secret';
-  }
-}
-
-// Symbol 属性不会出现在常规遍历中
-const user = new User('Alice');
-console.log(Object.keys(user));  // ['name']
-```
-
-4. **Well-known Symbols**
-```javascript
-// Symbol.iterator：自定义迭代
-const range = {
-  start: 1,
-  end: 5,
-  [Symbol.iterator]() {
-    let current = this.start;
-    return {
-      next: () => ({
-        value: current,
-        done: current++ > this.end
-      })
-    };
-  }
-};
-
-for (const num of range) {
-  console.log(num);  // 1, 2, 3, 4, 5
-}
-```
-
-**相关章节：** [Symbol 与元编程](../content/content-33.md)
+**解析：**
+call 和 apply 都立即调用函数并改变 this，区别在于参数传递方式：call 接收参数列表 fn.call(obj, 1, 2)，apply 接收数组 fn.apply(obj, [1, 2])。bind 返回一个新函数，不立即执行。
 
 ---
 
-### 10. BigInt 是什么？如何使用？
+### 10. 什么是原型链？
+**难度：⭐⭐⭐**
 
-**答案：**
+**选项：**
+- A. 对象之间的继承关系
+- B. 通过 __proto__ 连接的对象链，用于属性查找和继承
+- C. prototype 属性
+- D. constructor 属性
 
-BigInt 是 ES2020 引入的数据类型，用于表示任意精度的整数。
+**答案：B**
 
-**创建方式：**
-```javascript
-// 1. 字面量（加 n 后缀）
-const big1 = 123n;
-
-// 2. BigInt 函数
-const big2 = BigInt(123);
-const big3 = BigInt("9007199254740991");
-
-// 不能用 new
-const big4 = new BigInt(123);  // ❌ TypeError
-```
-
-**使用场景：**
-```javascript
-// 1. 超出 Number 范围的整数
-const maxSafeInt = Number.MAX_SAFE_INTEGER;  // 9007199254740991
-console.log(maxSafeInt + 1);  // 9007199254740992
-console.log(maxSafeInt + 2);  // 9007199254740992（精度丢失）
-
-const big = BigInt(maxSafeInt);
-console.log(big + 1n);  // 9007199254740992n
-console.log(big + 2n);  // 9007199254740993n（精确）
-
-// 2. 大数运算
-const a = 123456789012345678901234567890n;
-const b = 987654321098765432109876543210n;
-console.log(a * b);  // 精确结果
-```
-
-**注意事项：**
-```javascript
-// 1. 不能与 Number 混用
-1n + 2    // ❌ TypeError
-1n + 2n   // ✅ 3n
-
-// 2. 不支持一元 +
-+123n  // ❌ TypeError
-
-// 3. 不能用于 Math 方法
-Math.sqrt(4n)  // ❌ TypeError
-
-// 4. 除法向下取整
-7n / 2n  // 3n（不是 3.5n）
-
-// 5. 比较运算
-1n === 1   // false（严格不等）
-1n == 1    // true（宽松相等）
-1n < 2     // true（可以比较）
-```
-
-**相关章节：** [数据类型概览](../content/content-3.md)
+**解析：**
+原型链是对象通过 __proto__ 属性连接形成的链式结构。当访问对象属性时，如果对象本身没有，会沿着原型链向上查找，直到 Object.prototype，如果还没找到则返回 undefined。
 
 ---
 
-## 类型系统
+### 11. new 操作符做了什么？
+**难度：⭐⭐⭐**
 
-### 11. 类型转换的规则是什么？
+**选项：**
+- A. 只是创建一个对象
+- B. 创建对象，绑定原型，执行构造函数，返回对象
+- C. 调用构造函数
+- D. 返回 this
 
-**答案：**
+**答案：B**
 
-**ToPrimitive 抽象操作：**
-
-对象转换为原始值时，按以下顺序尝试：
-1. 调用 `[Symbol.toPrimitive](hint)` 方法（如果存在）
-2. hint 为 "string"：调用 `toString()`，失败则调用 `valueOf()`
-3. hint 为 "number"：调用 `valueOf()`，失败则调用 `toString()`
-
-**常见转换：**
-```javascript
-// 转为字符串
-String(123)      // "123"
-String(true)     // "true"
-String(null)     // "null"
-String(undefined) // "undefined"
-String([1, 2])   // "1,2"
-String({ a: 1 }) // "[object Object]"
-
-// 转为数字
-Number("123")    // 123
-Number("12.5")   // 12.5
-Number("")       // 0
-Number("abc")    // NaN
-Number(true)     // 1
-Number(false)    // 0
-Number(null)     // 0
-Number(undefined) // NaN
-Number([])       // 0
-Number([5])      // 5
-Number([1, 2])   // NaN
-
-// 转为布尔值
-Boolean(0)       // false
-Boolean("")      // false
-Boolean(null)    // false
-Boolean(undefined) // false
-Boolean(NaN)     // false
-Boolean({})      // true
-Boolean([])      // true
-```
-
-**隐式转换陷阱：**
-```javascript
-// 加号运算符
-"1" + 2        // "12"（字符串拼接）
-1 + "2"        // "12"
-1 + 2 + "3"    // "33"（从左到右）
-"1" + 2 + 3    // "123"
-
-// 减号运算符
-"5" - 2        // 3（数字运算）
-"5" - "2"      // 3
-
-// 比较运算符
-"10" > 9       // true（转为数字）
-"10" > "9"     // false（字符串比较）
-
-// 对象转换
-[] + []        // ""（"" + "" = ""）
-[] + {}        // "[object Object]"
-{} + []        // 0（{} 被当作代码块，+[] = 0）
-({}) + []      // "[object Object]"
-```
-
-**相关章节：** [类型转换规则](../content/content-6.md)
+**解析：**
+new 的执行过程：1) 创建一个新对象；2) 将对象的 __proto__ 指向构造函数的 prototype；3) 将构造函数的 this 绑定到新对象；4) 执行构造函数；5) 如果构造函数返回对象，则返回该对象，否则返回新创建的对象。
 
 ---
 
-### 12. 如何准确判断对象类型？
+### 12. JavaScript 的继承方式有哪些？
+**难度：⭐⭐⭐**
 
-**答案：**
+**选项：**
+- A. 只有原型链继承
+- B. 原型链、构造函数、组合继承、寄生组合继承、ES6 Class
+- C. 只能用 extends
+- D. JavaScript 不支持继承
 
-**推荐方法：Object.prototype.toString**
-```javascript
-function getType(value) {
-  return Object.prototype.toString.call(value).slice(8, -1);
-}
+**答案：B**
 
-getType([])              // "Array"
-getType({})              // "Object"
-getType(null)            // "Null"
-getType(undefined)       // "Undefined"
-getType(123)             // "Number"
-getType("abc")           // "String"
-getType(true)            // "Boolean"
-getType(Symbol())        // "Symbol"
-getType(123n)            // "BigInt"
-getType(function() {})   // "Function"
-getType(new Date())      // "Date"
-getType(/regex/)         // "RegExp"
-getType(new Map())       // "Map"
-getType(new Set())       // "Set"
-```
-
-**其他方法对比：**
-```javascript
-// typeof：适合原始类型
-typeof 123           // "number"
-typeof null          // "object"（bug）
-typeof []            // "object"（不准确）
-
-// instanceof：适合对象类型
-[] instanceof Array  // true
-({}) instanceof Object  // true
-
-// Array.isArray：专门判断数组
-Array.isArray([])    // true
-
-// constructor：可以判断
-[].constructor === Array  // true
-```
-
-**相关章节：** [类型判断方法](../content/content-5.md)
+**解析：**
+主要继承方式：1) 原型链继承；2) 构造函数继承；3) 组合继承（最常用）；4) 原型式继承；5) 寄生式继承；6) 寄生组合继承（最优）；7) ES6 Class（本质是语法糖）。
 
 ---
 
-由于篇幅限制，我将继续生成剩余的面试题...
+### 13. 箭头函数和普通函数的区别？
+**难度：⭐⭐⭐**
 
-<function_calls>
-<invoke name="edit">
-<parameter name="file_path">c:\soft\work\code\js\user\js\js\quiz\quiz.md
+**选项：**
+- A. 只是写法不同
+- B. 箭头函数没有 this、arguments、prototype，不能用 new
+- C. 箭头函数更快
+- D. 没有区别
+
+**答案：B**
+
+**解析：**
+箭头函数与普通函数的区别：1) 没有自己的 this，继承外层作用域的 this；2) 没有 arguments 对象；3) 不能用作构造函数，不能使用 new；4) 没有 prototype 属性；5) 不能用作 Generator 函数。
+
+---
+
+### 14. Promise 的三种状态？
+**难度：⭐⭐**
+
+**选项：**
+- A. success、error、pending
+- B. pending、fulfilled、rejected
+- C. waiting、done、failed
+- D. ready、running、finished
+
+**答案：B**
+
+**解析：**
+Promise 有三种状态：1) pending（进行中）；2) fulfilled（已成功）；3) rejected（已失败）。状态只能从 pending 变为 fulfilled 或 rejected，且状态一旦改变就不会再变。
+
+---
+
+### 15. async/await 相比 Promise 的优势？
+**难度：⭐⭐**
+
+**选项：**
+- A. 性能更好
+- B. 代码更简洁，像同步代码一样编写异步逻辑
+- C. 不会出错
+- D. 不需要 Promise
+
+**答案：B**
+
+**解析：**
+async/await 是 Promise 的语法糖，优势在于：1) 代码更简洁易读，避免回调地狱；2) 像写同步代码一样处理异步；3) 错误处理更方便（可用 try-catch）。本质上仍返回 Promise。
+
+---
+
+### 16. 事件循环（Event Loop）是什么？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 定时器循环
+- B. JavaScript 处理异步任务的机制，包括宏任务和微任务队列
+- C. 浏览器的渲染循环
+- D. 函数调用栈
+
+**答案：B**
+
+**解析：**
+Event Loop 是 JavaScript 处理异步的机制。执行栈为空时，会先执行所有微任务（Promise、MutationObserver），再执行一个宏任务（setTimeout、setInterval、I/O），然后继续执行微任务，如此循环。
+
+---
+
+### 17. 宏任务和微任务有哪些？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. setTimeout 是微任务，Promise 是宏任务
+- B. 宏任务：setTimeout、setInterval、I/O；微任务：Promise、MutationObserver、queueMicrotask
+- C. 没有区别
+- D. async/await 是宏任务
+
+**答案：B**
+
+**解析：**
+宏任务（Macrotask）：script、setTimeout、setInterval、setImmediate、I/O、UI rendering。微任务（Microtask）：Promise.then/catch/finally、MutationObserver、queueMicrotask、process.nextTick（Node.js）。
+
+---
+
+### 18. 什么是防抖和节流？
+**难度：⭐⭐**
+
+**选项：**
+- A. 防止函数执行
+- B. 防抖：延迟执行，持续触发只执行最后一次；节流：固定时间间隔执行
+- C. 性能优化手段
+- D. 事件处理方式
+
+**答案：B**
+
+**解析：**
+防抖（debounce）：事件触发后延迟执行，如果在延迟期间再次触发，则重新计时。适用于输入框搜索。节流（throttle）：固定时间间隔内只执行一次。适用于滚动、缩放事件。
+
+---
+
+### 19. 深拷贝和浅拷贝的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. 浅拷贝只复制第一层，深拷贝递归复制所有层级
+- C. 深拷贝更快
+- D. 浅拷贝不能用
+
+**答案：B**
+
+**解析：**
+浅拷贝只复制对象的第一层属性，嵌套对象仍是引用。方法：Object.assign()、扩展运算符。深拷贝递归复制所有层级，完全独立。方法：JSON.parse(JSON.stringify())（有局限）、递归、lodash.cloneDeep()。
+
+---
+
+### 20. 如何实现深拷贝？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. Object.assign()
+- B. JSON.parse(JSON.stringify()) 或递归遍历
+- C. 扩展运算符 ...
+- D. slice()
+
+**答案：B**
+
+**解析：**
+常用方法：1) JSON.parse(JSON.stringify())，简单但有局限（不能复制函数、Symbol、循环引用）；2) 递归遍历所有属性并复制；3) 使用第三方库如 lodash 的 cloneDeep()；4) structuredClone()（现代浏览器）。
+
+---
+
+## 第21-40题：进阶知识
+
+### 21. 什么是柯里化（Currying）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 函数调用函数
+- B. 将多参数函数转换为一系列单参数函数
+- C. 函数组合
+- D. 高阶函数
+
+**答案：B**
+
+**解析：**
+柯里化是将接收多个参数的函数转换为接收单一参数的函数序列的技术。例如 `add(1, 2, 3)` 转为 `add(1)(2)(3)`。优点：参数复用、延迟执行、函数组合。
+
+---
+
+### 22. 什么是高阶函数？
+**难度：⭐⭐**
+
+**选项：**
+- A. 复杂的函数
+- B. 接收函数作为参数或返回函数的函数
+- C. 嵌套函数
+- D. 箭头函数
+
+**答案：B**
+
+**解析：**
+高阶函数（Higher-Order Function）是指接收函数作为参数或返回函数的函数。常见的高阶函数：map、filter、reduce、forEach。高阶函数是函数式编程的基础。
+
+---
+
+### 23. map、filter、reduce 的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. map 转换数组，filter 过滤数组，reduce 聚合数组
+- C. 都是遍历数组
+- D. reduce 最快
+
+**答案：B**
+
+**解析：**
+map：遍历数组并返回新数组，每个元素经过回调函数转换。filter：返回满足条件的元素组成的新数组。reduce：将数组元素聚合为单一值，接收累加器和当前值。
+
+---
+
+### 24. JavaScript 中的模块化方案有哪些？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 只有 ES6 Module
+- B. CommonJS、AMD、CMD、UMD、ES6 Module
+- C. 只有 require 和 import
+- D. JavaScript 不支持模块化
+
+**答案：B**
+
+**解析：**
+主要模块化方案：1) CommonJS（Node.js，同步加载）；2) AMD（异步模块定义，RequireJS）；3) CMD（SeaJS）；4) UMD（通用模块定义）；5) ES6 Module（官方标准，静态导入）。
+
+---
+
+### 25. CommonJS 和 ES6 Module 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. CommonJS 运行时加载，值拷贝；ES6 Module 编译时加载，值引用
+- C. CommonJS 更新
+- D. ES6 Module 只能在浏览器用
+
+**答案：B**
+
+**解析：**
+主要区别：1) CommonJS 运行时加载（动态），ES6 Module 编译时加载（静态）；2) CommonJS 输出值的拷贝，ES6 Module 输出值的引用；3) CommonJS 是同步加载，ES6 Module 支持异步；4) this 指向不同。
+
+---
+
+### 26. 什么是树摇（Tree Shaking）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 删除代码
+- B. 移除未使用的代码，减小打包体积
+- C. 代码压缩
+- D. 代码混淆
+
+**答案：B**
+
+**解析：**
+Tree Shaking 是移除 JavaScript 中未使用代码的优化技术，依赖 ES6 Module 的静态结构。Webpack、Rollup 等打包工具支持。需要注意副作用代码的处理。
+
+---
+
+### 27. 什么是作用域链？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 变量的作用范围
+- B. 函数查找变量时，沿着作用域逐层向上查找的链式结构
+- C. 原型链
+- D. 调用栈
+
+**答案：B**
+
+**解析：**
+作用域链是函数在查找变量时，从当前作用域开始，逐层向外层作用域查找，直到全局作用域的链式结构。每个函数都有自己的作用域链，在函数创建时就确定了（词法作用域）。
+
+---
+
+### 28. let 和 const 的暂时性死区（TDZ）是什么？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 变量不能使用的区域
+- B. 从块级作用域开始到变量声明之间的区域，在此区域访问变量会报错
+- C. 变量提升
+- D. 作用域
+
+**答案：B**
+
+**解析：**
+暂时性死区（Temporal Dead Zone）是指在代码块内，使用 let/const 声明变量之前的区域。在 TDZ 内访问变量会抛出 ReferenceError。这是为了避免变量提升带来的问题。
+
+---
+
+### 29. JavaScript 中的垃圾回收机制？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 手动释放内存
+- B. 标记清除和引用计数
+- C. 定时清理
+- D. 不需要垃圾回收
+
+**答案：B**
+
+**解析：**
+主要垃圾回收算法：1) 标记清除（Mark-Sweep）：标记不再使用的对象并清除，现代浏览器主要使用此方法；2) 引用计数（Reference Counting）：统计对象被引用次数，为0时回收，但无法处理循环引用。
+
+---
+
+### 30. 什么是内存泄漏？如何避免？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 内存不足
+- B. 程序无法释放已不再使用的内存，导致内存占用持续增长
+- C. 内存错误
+- D. 内存溢出
+
+**答案：B**
+
+**解析：**
+内存泄漏是指不再需要的内存没有被及时释放。常见原因：1) 意外的全局变量；2) 未清除的定时器；3) 闭包引用；4) DOM 引用；5) 事件监听未移除。避免方法：及时清理、使用弱引用、避免循环引用。
+
+---
+
+### 31. WeakMap 和 Map 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. WeakMap 的键必须是对象且是弱引用，不可遍历
+- C. WeakMap 更快
+- D. Map 已废弃
+
+**答案：B**
+
+**解析：**
+区别：1) WeakMap 的键必须是对象，Map 的键可以是任意值；2) WeakMap 的键是弱引用，不影响垃圾回收；3) WeakMap 不可遍历，没有 size 属性；4) WeakMap 常用于存储私有数据，避免内存泄漏。
+
+---
+
+### 32. Set 和 Array 的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. Set 元素唯一，无序；Array 可重复，有序
+- C. Set 更快
+- D. Set 不能遍历
+
+**答案：B**
+
+**解析：**
+Set 是值的集合，元素唯一，类似数学集合。Array 是有序列表，元素可重复。Set 常用于去重、判断元素存在。性能上，Set 的 has 操作比 Array 的 includes 快。
+
+---
+
+### 33. Symbol 的作用是什么？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 字符串类型
+- B. 创建唯一的属性键，避免属性名冲突
+- C. 数字类型
+- D. 对象类型
+
+**答案：B**
+
+**解析：**
+Symbol 是 ES6 新增的原始数据类型，表示独一无二的值。主要用途：1) 创建唯一的对象属性键；2) 定义对象的私有属性；3) 实现元编程（如 Symbol.iterator）。Symbol() 每次返回不同的值。
+
+---
+
+### 34. Proxy 和 Object.defineProperty 的区别？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. Proxy 可以监听整个对象，支持更多操作；Object.defineProperty 只能监听属性
+- C. Object.defineProperty 更好
+- D. Proxy 已废弃
+
+**答案：B**
+
+**解析：**
+Proxy 优势：1) 可以监听整个对象，不需要遍历属性；2) 可以监听数组变化；3) 支持13种拦截操作；4) 返回新对象，不修改原对象。Object.defineProperty 只能监听已存在的属性，Vue 3 用 Proxy 替代了 Vue 2 的 Object.defineProperty。
+
+---
+
+### 35. Reflect 的作用是什么？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 反射对象
+- B. 提供操作对象的标准 API，与 Proxy 配合使用
+- C. 复制对象
+- D. 对象类型判断
+
+**答案：B**
+
+**解析：**
+Reflect 是 ES6 新增的内置对象，提供操作对象的标准方法。优点：1) 将 Object 的一些方法归到 Reflect；2) 让操作对象的行为变成函数式；3) 与 Proxy 的方法一一对应；4) 操作失败返回 false 而不抛错。
+
+---
+
+### 36. 什么是 Generator 函数？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 普通函数
+- B. 可以暂停和恢复执行的函数，返回迭代器对象
+- C. 异步函数
+- D. 箭头函数
+
+**答案：B**
+
+**解析：**
+Generator 函数是 ES6 提供的异步编程解决方案。特点：1) function* 定义；2) 内部使用 yield 暂停执行；3) 返回 Iterator 对象；4) 调用 next() 恢复执行。可用于实现异步流程控制、状态机等。
+
+---
+
+### 37. Iterator 和 Iterable 的概念？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 迭代器和可迭代对象
+- B. Iterable 是具有 Symbol.iterator 方法的对象，Iterator 是遍历器对象
+- C. 循环和遍历
+- D. 数组方法
+
+**答案：B**
+
+**解析：**
+Iterable（可迭代对象）：部署了 Symbol.iterator 方法的对象，如 Array、String、Map、Set。Iterator（迭代器）：有 next() 方法的对象，每次调用返回 {value, done}。for...of 循环内部调用 Symbol.iterator。
+
+---
+
+### 38. for...in 和 for...of 的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. for...in 遍历键（可枚举属性），for...of 遍历值（可迭代对象）
+- C. for...of 更快
+- D. for...in 已废弃
+
+**答案：B**
+
+**解析：**
+for...in：遍历对象的可枚举属性（包括继承的），适用于对象。for...of：遍历可迭代对象的值，适用于 Array、String、Map、Set 等。for...in 遍历键，for...of 遍历值。
+
+---
+
+### 39. 什么是装饰器（Decorator）？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 设计模式
+- B. 用于修改类和类成员行为的特殊函数，使用 @ 语法
+- C. 函数包装
+- D. 高阶函数
+
+**答案：B**
+
+**解析：**
+装饰器是 ES 提案中的特性（Stage 3），用于在不修改原代码的情况下扩展功能。可以装饰类、方法、属性。语法：@decoratorName。常用于日志、权限验证、性能监控等场景。需要 Babel 转译。
+
+---
+
+### 40. 什么是事件委托（事件代理）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 事件传递
+- B. 利用事件冒泡，将子元素的事件监听委托给父元素处理
+- C. 事件绑定
+- D. 事件触发
+
+**答案：B**
+
+**解析：**
+事件委托是利用事件冒泡原理，将多个子元素的事件监听委托给父元素处理。优点：1) 减少内存消耗（只绑定一个监听器）；2) 动态添加的元素也能响应事件；3) 提高性能。通过 event.target 判断实际触发的元素。
+
+---
+
+## 第41-60题：DOM 与浏览器
+
+### 41. 事件冒泡和事件捕获的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. 冒泡从目标元素向上传播，捕获从根元素向下传播
+- C. 冒泡更快
+- D. 捕获已废弃
+
+**答案：B**
+
+**解析：**
+事件流包括三个阶段：捕获阶段（从 window 到目标元素）、目标阶段、冒泡阶段（从目标元素到 window）。addEventListener 第三个参数为 true 表示捕获阶段触发，false（默认）表示冒泡阶段触发。
+
+---
+
+### 42. 如何阻止事件冒泡和默认行为？
+**难度：⭐⭐**
+
+**选项：**
+- A. return false
+- B. event.stopPropagation() 阻止冒泡，event.preventDefault() 阻止默认行为
+- C. event.stop()
+- D. 无法阻止
+
+**答案：B**
+
+**解析：**
+event.stopPropagation()：阻止事件继续传播（冒泡或捕获）。event.preventDefault()：阻止默认行为（如链接跳转、表单提交）。event.stopImmediatePropagation()：阻止传播且阻止同元素上其他监听器执行。
+
+---
+
+### 43. DOM 事件模型的三个阶段？
+**难度：⭐⭐**
+
+**选项：**
+- A. 开始、进行、结束
+- B. 捕获阶段、目标阶段、冒泡阶段
+- C. 触发、传播、完成
+- D. 只有冒泡
+
+**答案：B**
+
+**解析：**
+DOM 事件流的三个阶段：1) 捕获阶段（Capturing Phase）：从 window 向目标元素传播；2) 目标阶段（Target Phase）：到达目标元素；3) 冒泡阶段（Bubbling Phase）：从目标元素向 window 传播。
+
+---
+
+### 44. 什么是虚拟 DOM？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 假的 DOM
+- B. 用 JavaScript 对象模拟 DOM 结构，通过 diff 算法减少真实 DOM 操作
+- C. 浏览器的 DOM
+- D. Shadow DOM
+
+**答案：B**
+
+**解析：**
+虚拟 DOM（Virtual DOM）是用 JavaScript 对象描述真实 DOM 的技术。优点：1) 减少直接操作 DOM；2) 通过 diff 算法计算最小变更；3) 批量更新；4) 跨平台。React、Vue 等框架都使用虚拟 DOM。
+
+---
+
+### 45. 浏览器的重绘（Repaint）和回流（Reflow）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. 回流：元素几何属性改变，触发布局计算；重绘：样式改变但不影响布局
+- C. 重绘更耗性能
+- D. 只会触发重绘
+
+**答案：B**
+
+**解析：**
+回流（Reflow）：元素的尺寸、位置等几何属性改变，需要重新计算布局，成本高。重绘（Repaint）：元素样式改变但不影响布局（如颜色），只需重新绘制。回流必定引起重绘，但重绘不一定回流。优化：批量修改、使用 transform。
+
+---
+
+### 46. 如何优化 DOM 操作性能？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 频繁操作 DOM
+- B. 使用文档片段、减少回流、事件委托、虚拟滚动
+- C. 不需要优化
+- D. 只能用框架
+
+**答案：B**
+
+**解析：**
+优化方法：1) 减少 DOM 访问，缓存查询结果；2) 批量修改，使用 DocumentFragment；3) 避免频繁触发回流；4) 使用事件委托；5) 使用 requestAnimationFrame；6) 虚拟滚动处理大列表；7) CSS 代替 JavaScript 动画。
+
+---
+
+### 47. localStorage、sessionStorage、Cookie 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. 生命周期、存储大小、与服务器通信方式不同
+- C. 都是永久存储
+- D. 只有大小不同
+
+**答案：B**
+
+**解析：**
+localStorage：永久存储，5MB，不参与服务器通信。sessionStorage：会话级存储（关闭标签页清除），5MB，不参与通信。Cookie：可设置过期时间，4KB，每次请求自动携带。用途：localStorage 持久化，sessionStorage 临时数据，Cookie 身份验证。
+
+---
+
+### 48. 跨域问题及解决方案？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 不存在跨域问题
+- B. CORS、JSONP、代理服务器、postMessage
+- C. 无法解决
+- D. 只能用 JSONP
+
+**答案：B**
+
+**解析：**
+跨域是浏览器同源策略限制。解决方案：1) CORS（服务器设置 Access-Control-Allow-Origin）；2) JSONP（利用 script 标签，只支持 GET）；3) 代理服务器；4) postMessage（跨窗口通信）；5) WebSocket；6) nginx 反向代理。
+
+---
+
+### 49. 什么是同源策略？
+**难度：⭐⭐**
+
+**选项：**
+- A. 相同的代码
+- B. 协议、域名、端口都相同才能访问资源的安全策略
+- C. 同一个服务器
+- D. 同一个文件夹
+
+**答案：B**
+
+**解析：**
+同源策略（Same-Origin Policy）是浏览器的安全机制，要求协议（http/https）、域名、端口完全相同才能访问资源。限制：1) 无法读取非同源的 Cookie、LocalStorage；2) 无法操作非同源 DOM；3) AJAX 请求不能发送到非同源地址。
+
+---
+
+### 50. JSONP 的原理和缺点？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. JSON 的增强版
+- B. 利用 script 标签不受跨域限制的特性，只支持 GET 请求且有安全风险
+- C. 新的协议
+- D. 已废弃
+
+**答案：B**
+
+**解析：**
+JSONP 原理：利用 script 标签的 src 属性不受同源策略限制，服务器返回可执行的 JavaScript 代码（调用回调函数）。缺点：1) 只支持 GET 请求；2) 安全性问题（XSS 风险）；3) 错误处理困难。现代开发推荐使用 CORS。
+
+---
+
+### 51. XSS 和 CSRF 攻击是什么？如何防范？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 相同的攻击
+- B. XSS 是跨站脚本攻击，CSRF 是跨站请求伪造，需不同方式防范
+- C. 无法防范
+- D. 只存在于老浏览器
+
+**答案：B**
+
+**解析：**
+XSS（跨站脚本）：注入恶意脚本。防范：转义输出、CSP、HttpOnly Cookie。CSRF（跨站请求伪造）：利用用户身份发送恶意请求。防范：Token 验证、SameSite Cookie、验证 Referer、二次验证。
+
+---
+
+### 52. 浏览器的渲染流程？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 下载 HTML 然后显示
+- B. 解析 HTML → 构建 DOM → 解析 CSS → 构建 CSSOM → 生成渲染树 → 布局 → 绘制
+- C. 直接显示
+- D. 只解析 HTML
+
+**答案：B**
+
+**解析：**
+渲染流程：1) 解析 HTML 构建 DOM 树；2) 解析 CSS 构建 CSSOM 树；3) 合并生成渲染树（Render Tree）；4) 布局（Layout/Reflow）计算位置；5) 绘制（Paint）；6) 合成（Composite）。优化：减少回流、CSS 放头部、JS 放尾部、异步加载。
+
+---
+
+### 53. defer 和 async 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. defer 顺序执行且在 DOMContentLoaded 前，async 并行加载立即执行
+- C. async 更好
+- D. 都已废弃
+
+**答案：B**
+
+**解析：**
+defer：并行下载，DOMContentLoaded 前按顺序执行，不阻塞解析。async：并行下载，下载完立即执行，可能阻塞解析，不保证顺序。使用场景：defer 适合依赖 DOM 和有顺序要求的脚本，async 适合独立的第三方脚本。
+
+---
+
+### 54. DOMContentLoaded 和 load 事件的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. DOMContentLoaded 在 DOM 解析完成触发，load 在所有资源加载完成触发
+- C. load 更快
+- D. 已废弃
+
+**答案：B**
+
+**解析：**
+DOMContentLoaded：DOM 树构建完成即触发，不等待样式表、图片等资源。load：页面所有资源（图片、CSS、JS）都加载完成才触发。jQuery 的 $(document).ready() 监听的是 DOMContentLoaded。
+
+---
+
+### 55. 什么是浏览器的关键渲染路径（Critical Rendering Path）？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 浏览器的渲染引擎
+- B. 从接收 HTML/CSS/JS 到渲染页面的关键步骤序列
+- C. DOM 树的构建
+- D. 网络请求路径
+
+**答案：B**
+
+**解析：**
+关键渲染路径是浏览器将 HTML、CSS、JavaScript 转换为屏幕像素的关键步骤序列。优化方向：1) 减少关键资源数量；2) 减少关键资源大小；3) 缩短关键路径长度。方法：压缩、缓存、异步加载非关键资源、内联关键 CSS。
+
+---
+
+### 56. requestAnimationFrame 的作用？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 请求动画资源
+- B. 在浏览器下次重绘前执行回调，实现流畅动画
+- C. 创建动画
+- D. 定时器的别名
+
+**答案：B**
+
+**解析：**
+requestAnimationFrame 在浏览器下次重绘前调用回调函数。优势：1) 与浏览器刷新率同步（通常 60fps）；2) 页面不可见时自动暂停，节省资源；3) 比 setTimeout/setInterval 更流畅。适用于动画、滚动监听等。
+
+---
+
+### 57. 浏览器的缓存策略？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 只有内存缓存
+- B. 强缓存（Expires、Cache-Control）和协商缓存（ETag、Last-Modified）
+- C. 浏览器自动管理
+- D. 不需要缓存
+
+**答案：B**
+
+**解析：**
+强缓存：不请求服务器，直接使用缓存。头：Expires（绝对时间）、Cache-Control（相对时间，优先级高）。协商缓存：请求服务器验证，304 使用缓存。头：Last-Modified/If-Modified-Since、ETag/If-None-Match（优先级高）。
+
+---
+
+### 58. Service Worker 的作用？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 后台服务
+- B. 运行在浏览器后台的独立线程，实现离线缓存、推送通知等
+- C. Web Worker 的别名
+- D. 服务器工作进程
+
+**答案：B**
+
+**解析：**
+Service Worker 是运行在浏览器后台的脚本，独立于网页。功能：1) 离线缓存（PWA 核心）；2) 拦截网络请求；3) 推送通知；4) 后台同步。特点：必须 HTTPS、异步设计、不能访问 DOM。
+
+---
+
+### 59. Web Worker 的作用？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 网络请求
+- B. 在后台线程运行 JavaScript，避免阻塞主线程
+- C. DOM 操作
+- D. 服务器代码
+
+**答案：B**
+
+**解析：**
+Web Worker 为 JavaScript 创建多线程环境，在后台线程运行脚本。特点：1) 不能访问 DOM；2) 通过 postMessage 通信；3) 适合计算密集型任务。类型：Dedicated Worker（专用）、Shared Worker（共享）。
+
+---
+
+### 60. 什么是浏览器的事件循环（Event Loop）详细机制？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 循环执行代码
+- B. 调用栈 → 微任务队列 → 宏任务队列，微任务优先级高于宏任务
+- C. 随机执行
+- D. 只有一个队列
+
+**答案：B**
+
+**解析：**
+Event Loop 执行顺序：1) 执行同步代码（调用栈）；2) 执行所有微任务（Promise、MutationObserver）；3) 执行一个宏任务（setTimeout、I/O）；4) 渲染更新；5) 回到步骤2。微任务在每个宏任务后、渲染前清空。
+
+---
+
+## 第61-80题：ES6+ 与高级特性
+
+### 61. 解构赋值的应用场景？
+**难度：⭐⭐**
+
+**选项：**
+- A. 只能用于数组
+- B. 数组、对象解构，函数参数，交换变量，提取数据
+- C. 已废弃
+- D. 性能很差
+
+**答案：B**
+
+**解析：**
+解构赋值可以从数组或对象中提取值并赋给变量。应用场景：1) 交换变量 `[a, b] = [b, a]`；2) 函数返回多个值；3) 函数参数默认值；4) 提取 JSON 数据；5) 遍历 Map；6) 导入模块的部分功能。
+
+---
+
+### 62. 扩展运算符（...）的用途？
+**难度：⭐⭐**
+
+**选项：**
+- A. 只能展开数组
+- B. 数组展开、对象展开、剩余参数、复制、合并
+- C. 字符串连接
+- D. 数学运算
+
+**答案：B**
+
+**解析：**
+扩展运算符用途：1) 数组展开 `[...arr1, ...arr2]`；2) 对象展开 `{...obj1, ...obj2}`；3) 函数剩余参数 `(...args)`；4) 浅拷贝；5) 将伪数组转为真数组；6) Math.max(...arr)；7) 字符串转数组。
+
+---
+
+### 63. 模板字符串的优势？
+**难度：⭐**
+
+**选项：**
+- A. 只是写法不同
+- B. 支持多行字符串、嵌入表达式、标签模板
+- C. 性能更差
+- D. 已废弃
+
+**答案：B**
+
+**解析：**
+模板字符串使用反引号 ` 定义。优势：1) 多行字符串无需 \n；2) 嵌入表达式 ${expression}；3) 标签模板（Tagged Template）自定义处理；4) 代码更易读；5) 避免字符串拼接的复杂性。
+
+---
+
+### 64. Class 和构造函数的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 完全相同
+- B. Class 是语法糖，更简洁；严格模式、不可提升、方法不可枚举
+- C. Class 性能更好
+- D. 构造函数已废弃
+
+**答案：B**
+
+**解析：**
+Class 是 ES6 语法糖，本质仍是函数。区别：1) Class 声明不会提升；2) Class 内部默认严格模式；3) Class 方法不可枚举；4) 必须用 new 调用；5) 有 static、extends、super 等语法；6) 更符合面向对象思维。
+
+---
+
+### 65. 什么是 Proxy 的应用场景？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 网络代理
+- B. 数据验证、双向绑定、属性拦截、性能监控、缓存
+- C. 服务器代理
+- D. 没有应用场景
+
+**答案：B**
+
+**解析：**
+Proxy 应用场景：1) 数据验证（拦截 set）；2) 双向数据绑定（Vue 3）；3) 属性访问拦截；4) 私有属性保护；5) 函数参数验证；6) 性能监控；7) 缓存优化；8) 默认值处理。
+
+---
+
+### 66. Promise.all、Promise.race、Promise.allSettled 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. all 全部成功才成功，race 返回最快的，allSettled 等待全部完成
+- C. 都已废弃
+- D. 功能相同
+
+**答案：B**
+
+**解析：**
+Promise.all：所有 Promise 都成功才返回成功，任一失败则失败。Promise.race：返回最先完成的 Promise 结果（无论成功失败）。Promise.allSettled：等待所有 Promise 完成，返回每个结果（ES2020）。Promise.any：任一成功即成功（ES2021）。
+
+---
+
+### 67. 可选链操作符（?.）的作用？
+**难度：⭐⭐**
+
+**选项：**
+- A. 三元运算符
+- B. 安全访问深层嵌套属性，如果中间值为 null/undefined 则返回 undefined
+- C. 逻辑运算
+- D. 字符串操作
+
+**答案：B**
+
+**解析：**
+可选链（Optional Chaining，ES2020）允许安全访问深层属性。语法：`obj?.prop`、`obj?.[expr]`、`func?.()`。好处：1) 避免长链的 null 检查；2) 代码更简洁；3) 遇到 null/undefined 短路返回 undefined。
+
+---
+
+### 68. 空值合并操作符（??）和逻辑或（||）的区别？
+**难度：⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. ?? 只判断 null/undefined，|| 判断所有假值
+- C. ?? 已废弃
+- D. || 更好
+
+**答案：B**
+
+**解析：**
+空值合并操作符 `??`（ES2020）只在左侧为 null 或 undefined 时返回右侧值。`||` 对所有假值（0、''、false、null、undefined、NaN）都返回右侧值。使用场景：`??` 适合有默认值但 0 和 '' 是有效值的情况。
+
+---
+
+### 69. BigInt 的作用和使用限制？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 大整数
+- B. 表示超过 Number.MAX_SAFE_INTEGER 的整数，不能与 Number 混合运算
+- C. 大数字
+- D. 浮点数
+
+**答案：B**
+
+**解析：**
+BigInt（ES2020）用于表示任意精度的整数。语法：`123n` 或 `BigInt(123)`。限制：1) 不能与 Number 直接运算；2) 不支持 Math 对象方法；3) JSON.stringify 不支持；4) 不能用于位运算中的无符号右移。用途：大整数计算、精确金融计算。
+
+---
+
+### 70. 什么是函数式编程的核心概念？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 使用函数
+- B. 纯函数、不可变性、高阶函数、函数组合、声明式编程
+- C. 面向对象
+- D. 过程式编程
+
+**答案：B**
+
+**解析：**
+函数式编程核心：1) 纯函数（无副作用，相同输入相同输出）；2) 不可变性（不修改原数据）；3) 高阶函数（函数作为参数/返回值）；4) 函数组合（compose/pipe）；5) 柯里化；6) 声明式而非命令式。优点：易测试、可预测、并发安全。
+
+---
+
+### 71. 什么是纯函数？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 干净的函数
+- B. 相同输入总是返回相同输出，且无副作用的函数
+- C. 简单的函数
+- D. 箭头函数
+
+**答案：B**
+
+**解析：**
+纯函数特征：1) 相同输入总返回相同输出；2) 无副作用（不修改外部变量、不进行 I/O 操作、不修改参数）。优点：1) 易于测试和调试；2) 可缓存；3) 可并行；4) 引用透明。示例：`Array.map` 是纯函数，`Array.push` 不是。
+
+---
+
+### 72. 什么是函数组合（Function Composition）？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 多个函数一起定义
+- B. 将多个函数组合成一个新函数，从右到左依次执行
+- C. 函数嵌套
+- D. 函数调用链
+
+**答案：B**
+
+**解析：**
+函数组合是将多个函数组合成一个函数，数据从右到左流动。实现：`compose(f, g, h)(x) = f(g(h(x)))`。pipe 是从左到右的组合。优点：1) 代码复用；2) 逻辑清晰；3) 易于维护；4) 符合函数式编程思想。
+
+---
+
+### 73. 尾调用优化（Tail Call Optimization）是什么？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 优化函数尾部代码
+- B. 函数最后一步是调用另一个函数，可复用调用栈帧避免栈溢出
+- C. 删除尾部代码
+- D. 函数性能优化
+
+**答案：B**
+
+**解析：**
+尾调用是函数最后一步调用另一个函数。尾调用优化：复用当前栈帧，避免栈溢出。ES6 规范要求严格模式下支持，但实际浏览器支持有限。应用：尾递归优化，将递归改为迭代式的栈使用。
+
+---
+
+### 74. 什么是惰性求值（Lazy Evaluation）？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 延迟加载
+- B. 表达式只在需要时才计算，避免不必要的计算
+- C. 性能差
+- D. 懒加载图片
+
+**答案：B**
+
+**解析：**
+惰性求值是延迟表达式的计算直到真正需要结果时。优点：1) 提高性能；2) 处理无限序列；3) 避免不必要计算。JavaScript 实现：Generator、Proxy、函数包装。示例：短路求值（&&、||）、Generator 函数。
+
+---
+
+### 75. Memoization（记忆化）是什么？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 记忆函数
+- B. 缓存函数计算结果，相同输入直接返回缓存，避免重复计算
+- C. 备忘录
+- D. 函数存储
+
+**答案：B**
+
+**解析：**
+Memoization 是一种优化技术，缓存函数的计算结果。适用于纯函数和计算密集型操作。实现：用对象或 Map 存储输入和输出的映射。应用：斐波那契数列、递归优化、React.memo、Vue computed。
+
+---
+
+### 76. 什么是函数劫持（Function Hijacking）？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 黑客攻击
+- B. 修改或包装原生函数以改变其行为，用于 polyfill、监控等
+- C. 删除函数
+- D. 函数重命名
+
+**答案：B**
+
+**解析：**
+函数劫持是修改或包装已有函数的技术。用途：1) Polyfill（如劫持 Array.prototype.includes）；2) 性能监控；3) 行为修改；4) AOP（面向切面编程）；5) 调试和日志。示例：重写 console.log、包装 fetch。
+
+---
+
+### 77. 什么是偏函数（Partial Application）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 不完整的函数
+- B. 固定函数的部分参数，返回接收剩余参数的新函数
+- C. 部分执行的函数
+- D. 柯里化的别名
+
+**答案：B**
+
+**解析：**
+偏函数是固定函数的部分参数，生成一个参数更少的新函数。与柯里化区别：柯里化每次只接收一个参数，偏函数可以一次固定多个参数。实现：bind、自定义 partial 函数。应用：参数复用、简化调用。
+
+---
+
+### 78. Object.create(null) 和 {} 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. Object.create(null) 创建没有原型的纯净对象，{} 继承 Object.prototype
+- C. {} 更好
+- D. 都已废弃
+
+**答案：B**
+
+**解析：**
+Object.create(null) 创建没有原型链的对象（__proto__ 为 null），没有继承任何属性和方法。{} 继承 Object.prototype。应用场景：1) 作为纯粹的哈希表；2) 避免属性名冲突；3) 避免原型污染；4) Map 的替代方案。
+
+---
+
+### 79. Object.freeze() 和 Object.seal() 的区别？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 没有区别
+- B. freeze 完全冻结（不可修改、删除、添加），seal 可修改但不可删除和添加
+- C. seal 更严格
+- D. 都已废弃
+
+**答案：B**
+
+**解析：**
+Object.freeze()：完全冻结，不能修改、添加、删除属性，且不能修改原型。Object.seal()：密封对象，可修改现有属性值，但不能添加或删除属性。Object.preventExtensions()：不能添加新属性，但可修改和删除现有属性。
+
+---
+
+### 80. 什么是对象属性描述符？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 对象的说明
+- B. 描述对象属性特性的对象，包括 value、writable、enumerable、configurable
+- C. 属性的类型
+- D. 属性的注释
+
+**答案：B**
+
+**解析：**
+属性描述符定义属性的特性：数据描述符（value、writable）和访问器描述符（get、set）。共有特性：enumerable（可枚举）、configurable（可配置）。操作方法：Object.defineProperty、Object.defineProperties、Object.getOwnPropertyDescriptor。
+
+---
+
+## 第81-100题：性能优化与最佳实践
+
+### 81. 什么是重排（Reflow）触发条件？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 只有改变颜色时触发
+- B. 改变几何属性、添加删除元素、修改内容、页面初始化、窗口大小改变
+- C. 不会触发
+- D. 只在移动端触发
+
+**答案：B**
+
+**解析：**
+触发回流的操作：1) 添加/删除/更新 DOM 节点；2) display: none（回流+重绘）；3) 移动元素位置；4) 修改尺寸、边距、边框；5) 修改内容（文字、图片大小）；6) 页面初始渲染；7) 浏览器窗口大小改变；8) 获取某些属性（offsetTop、scrollTop）。
+
+---
+
+### 82. JavaScript 性能优化的最佳实践？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 不需要优化
+- B. 减少 DOM 操作、事件委托、防抖节流、懒加载、代码分割、缓存
+- C. 只压缩代码
+- D. 只能靠硬件
+
+**答案：B**
+
+**解析：**
+性能优化实践：1) 减少 DOM 操作和回流；2) 事件委托；3) 防抖节流；4) 图片懒加载；5) 代码分割和按需加载；6) 缓存数据和计算结果；7) 使用 Web Worker；8) 避免内存泄漏；9) 使用 requestAnimationFrame；10) 优化循环和算法。
+
+---
+
+### 83. 如何避免内存泄漏？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 内存会自动清理
+- B. 及时解除引用、清除定时器、移除事件监听、使用弱引用
+- C. 不需要管理
+- D. 重启浏览器
+
+**答案：B**
+
+**解析：**
+避免内存泄漏的方法：1) 及时清除定时器和定时任务；2) 移除不需要的事件监听器；3) 避免意外的全局变量；4) 闭包使用后及时释放；5) DOM 引用及时清除；6) 使用 WeakMap/WeakSet；7) 注意循环引用。
+
+---
+
+### 84. 什么是代码分割（Code Splitting）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 分开写代码
+- B. 将代码拆分成多个包，按需加载，减小初始加载体积
+- C. 代码压缩
+- D. 代码混淆
+
+**答案：B**
+
+**解析：**
+代码分割是将应用拆分成多个 bundle，按需加载。实现方式：1) 入口分割（多入口）；2) 动态 import()；3) React.lazy、Vue 异步组件。优点：1) 减小初始包体积；2) 加快首屏加载；3) 按需加载提升性能。工具：Webpack、Rollup。
+
+---
+
+### 85. 什么是懒加载（Lazy Loading）？
+**难度：⭐⭐**
+
+**选项：**
+- A. 延迟开发
+- B. 延迟加载资源，在需要时才加载，常用于图片和组件
+- C. 慢速加载
+- D. 后台加载
+
+**答案：B**
+
+**解析：**
+懒加载是延迟加载非关键资源的技术。应用：1) 图片懒加载（Intersection Observer）；2) 组件懒加载（React.lazy、Vue 异步组件）；3) 路由懒加载；4) 无限滚动。优点：1) 减少初始加载时间；2) 节省带宽；3) 提升性能。
+
+---
+
+### 86. Intersection Observer API 的作用？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 交集计算
+- B. 异步观察目标元素与祖先元素或视口的交叉状态，用于懒加载、无限滚动
+- C. DOM 观察
+- D. 事件监听
+
+**答案：B**
+
+**解析：**
+Intersection Observer API 用于异步观察元素可见性变化。优势：1) 性能优于 scroll 事件；2) 不阻塞主线程；3) 配置灵活。应用场景：1) 图片懒加载；2) 无限滚动；3) 曝光埋点；4) 动画触发。
+
+---
+
+### 87. 什么是渐进式 Web 应用（PWA）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 渐进式开发
+- B. 具有原生应用体验的 Web 应用，支持离线、推送通知、添加到主屏幕
+- C. 新的框架
+- D. 移动应用
+
+**答案：B**
+
+**解析：**
+PWA（Progressive Web App）是使用现代 Web 技术构建的应用。特性：1) 离线工作（Service Worker）；2) 推送通知；3) 添加到主屏幕；4) 响应式设计；5) HTTPS；6) 渐进增强。核心技术：Service Worker、Web App Manifest、HTTPS。
+
+---
+
+### 88. 什么是前端路由的实现原理？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 服务器路由
+- B. Hash 模式（#）和 History 模式（pushState/replaceState）
+- C. URL 跳转
+- D. 页面刷新
+
+**答案：B**
+
+**解析：**
+前端路由实现方式：1) Hash 模式：监听 hashchange 事件，URL 带 #，兼容性好。2) History 模式：使用 pushState/replaceState 修改 URL，监听 popstate 事件，需要服务器配置。优点：单页应用无刷新跳转。
+
+---
+
+### 89. 什么是单页应用（SPA）的优缺点？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 只有优点
+- B. 优点：用户体验好、前后端分离；缺点：首屏慢、SEO 差、前进后退需管理
+- C. 没有缺点
+- D. 已过时
+
+**答案：B**
+
+**解析：**
+SPA 优点：1) 流畅的用户体验；2) 前后端分离；3) 减轻服务器压力；4) 复用组件。缺点：1) 首屏加载慢；2) SEO 不友好；3) 前进后退需自行管理；4) 初始代码体积大。解决方案：SSR、预渲染、代码分割。
+
+---
+
+### 90. 什么是服务端渲染（SSR）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 服务器运行代码
+- B. 在服务器生成 HTML 返回给浏览器，改善首屏加载和 SEO
+- C. 后端渲染页面
+- D. 模板引擎
+
+**答案：B**
+
+**解析：**
+SSR（Server-Side Rendering）是在服务器端生成完整 HTML。优点：1) 首屏加载快；2) SEO 友好；3) 更好的性能感知。缺点：1) 服务器压力大；2) 开发复杂度高；3) 限制了某些浏览器 API 使用。框架：Next.js、Nuxt.js。
+
+---
+
+### 91. 什么是静态站点生成（SSG）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 静态 HTML 页面
+- B. 构建时预渲染所有页面为静态 HTML，结合 SSR 和 SPA 优点
+- C. 不能更新的网站
+- D. 纯 HTML 网站
+
+**答案：B**
+
+**解析：**
+SSG（Static Site Generation）是在构建时预渲染页面为静态 HTML。优点：1) 性能极佳；2) SEO 友好；3) 部署简单（CDN）；4) 安全性高。适用场景：博客、文档、营销页面等内容不频繁变化的网站。工具：Gatsby、Next.js、VuePress。
+
+---
+
+### 92. JavaScript 中的设计模式有哪些？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 只有一种
+- B. 单例、工厂、观察者、发布订阅、代理、装饰器、策略、适配器等
+- C. 不需要设计模式
+- D. 只有面向对象语言有
+
+**答案：B**
+
+**解析：**
+常见设计模式：创建型（单例、工厂、建造者）、结构型（代理、装饰器、适配器、外观）、行为型（观察者、发布订阅、策略、迭代器、命令）。设计模式提供可复用的解决方案，提高代码质量和可维护性。
+
+---
+
+### 93. 单例模式的实现和应用？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 只能创建一个变量
+- B. 保证一个类只有一个实例，提供全局访问点，用于全局状态管理、缓存等
+- C. 只能用一次的函数
+- D. 已废弃
+
+**答案：B**
+
+**解析：**
+单例模式保证类只有一个实例。实现方式：1) 闭包；2) ES6 Class + static；3) 模块。应用场景：1) 全局状态管理（Vuex、Redux）；2) 全局缓存；3) 配置对象；4) 弹窗管理器；5) 数据库连接池。
+
+---
+
+### 94. 观察者模式和发布订阅模式的区别？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 完全相同
+- B. 观察者模式直接通信，发布订阅模式通过事件中心解耦
+- C. 没有区别
+- D. 发布订阅已废弃
+
+**答案：B**
+
+**解析：**
+观察者模式：Subject 直接通知 Observer，耦合度较高。发布订阅模式：Publisher 通过 Event Channel 通知 Subscriber，完全解耦。应用：观察者（Vue 响应式）、发布订阅（EventEmitter、消息队列）。
+
+---
+
+### 95. 什么是中间件（Middleware）模式？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 中间代码
+- B. 在处理流程中插入自定义逻辑的函数，形成处理链，常用于请求处理
+- C. 中间件软件
+- D. 服务器组件
+
+**答案：B**
+
+**解析：**
+中间件是拦截处理流程的函数，形成洋葱模型。特点：1) 可组合；2) 顺序执行；3) next() 传递控制权。应用：Express/Koa 中间件、Redux middleware、axios 拦截器。作用：日志、权限验证、错误处理、数据转换。
+
+---
+
+### 96. 如何实现一个简单的模块加载器？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 直接 import
+- B. 维护模块缓存，定义 require 函数，包装模块代码，执行并导出
+- C. 使用 Webpack
+- D. 不需要自己实现
+
+**答案：B**
+
+**解析：**
+模块加载器核心实现：1) 模块缓存对象；2) require 函数（检查缓存、包装模块、执行、缓存结果）；3) 模块包装（立即执行函数）；4) exports 和 module.exports。理解原理有助于深入掌握模块系统。
+
+---
+
+### 97. JavaScript 代码规范和最佳实践？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 随意编写
+- B. 使用 ESLint、命名规范、注释文档、错误处理、代码复用、测试
+- C. 不需要规范
+- D. 只要能运行
+
+**答案：B**
+
+**解析：**
+最佳实践：1) 使用 ESLint、Prettier；2) 命名清晰（驼峰、常量大写）；3) 添加注释和文档；4) 完善的错误处理；5) DRY 原则；6) 单一职责；7) 编写测试；8) 使用现代语法；9) 避免全局变量；10) 性能优化意识。
+
+---
+
+### 98. 什么是持续集成/持续部署（CI/CD）？
+**难度：⭐⭐⭐**
+
+**选项：**
+- A. 开发流程
+- B. 自动化构建、测试、部署流程，确保代码质量和快速交付
+- C. 部署工具
+- D. 测试方法
+
+**答案：B**
+
+**解析：**
+CI/CD 是自动化软件交付流程。CI（持续集成）：频繁提交代码，自动构建和测试。CD（持续部署）：自动部署到生产环境。好处：1) 快速发现问题；2) 提高代码质量；3) 加快交付速度；4) 降低风险。工具：Jenkins、GitLab CI、GitHub Actions。
+
+---
+
+### 99. 前端监控和错误追踪的实现？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 不需要监控
+- B. window.onerror、Promise 错误、资源加载错误、性能监控、用户行为追踪
+- C. 只能用第三方工具
+- D. 控制台查看
+
+**答案：B**
+
+**解析：**
+前端监控实现：1) JS 错误（window.onerror、error 事件）；2) Promise 错误（unhandledrejection）；3) 资源加载错误；4) 接口错误；5) 性能监控（Performance API）；6) 用户行为追踪；7) 上报服务器。工具：Sentry、Fundebug。
+
+---
+
+### 100. 如何进行前端性能监控？
+**难度：⭐⭐⭐⭐**
+
+**选项：**
+- A. 猜测性能
+- B. Performance API、FCP、LCP、FID、CLS 等指标，上报分析
+- C. 不需要监控
+- D. 只看加载时间
+
+**答案：B**
+
+**解析：**
+性能监控方法：1) Performance API（Navigation Timing、Resource Timing）；2) 核心指标：FCP（首次内容绘制）、LCP（最大内容绘制）、FID（首次输入延迟）、CLS（累积布局偏移）；3) 自定义指标；4) 数据上报和分析。工具：Lighthouse、Web Vitals、Google Analytics。
+
+---
+
+## 总结
+
+恭喜！您已完成全部 100 道 JavaScript 面试题。
+
+**难度分布：**
+- ⭐ 基础：约 20 题
+- ⭐⭐ 中级：约 25 题
+- ⭐⭐⭐ 进阶：约 35 题
+- ⭐⭐⭐⭐ 高级：约 20 题
+
+**主题覆盖：**
+1. 基础知识（数据类型、作用域、闭包）
+2. 面向对象（原型链、继承、Class）
+3. 异步编程（Promise、async/await、Event Loop）
+4. DOM 与浏览器（事件、渲染、缓存、安全）
+5. ES6+ 特性（解构、箭头函数、Proxy、Symbol）
+6. 函数式编程（纯函数、柯里化、组合）
+7. 性能优化（懒加载、代码分割、监控）
+8. 工程化（模块化、构建工具、设计模式）
+
+**学习建议：**
+- 基础题务必掌握，是面试必考内容
+- 进阶题理解原理，能够举例说明
+- 高级题了解应用场景，有实践经验更佳
+- 建议结合实际项目深入理解每个知识点
