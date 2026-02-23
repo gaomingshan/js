@@ -6,6 +6,29 @@
 
 ---
 
+## 10.0 核心套路
+
+### 核心套路
+
+```typescript
+// 1. 条件类型：extends ? :
+type IsString<T> = T extends string ? true : false;
+
+// 2. 递归：自己调用自己
+type Repeat<T, N> = N extends 0 ? [] : [T, ...Repeat<T, N-1>];
+
+// 3. 查表法：用元组索引模拟运算
+type Prev = [never, 0, 1, 2, 3, 4, 5];
+
+// 4. 推断：infer 提取类型
+type First<T> = T extends [infer F, ...any] ? F : never;
+
+// 5. 模板字面量：字符串操作
+type Kebab<T> = T extends `${infer A}${infer B}` 
+  ? `${Lowercase<A>}${Kebab<B>}` 
+  : T;
+```
+
 ## 10.1 Utility Types 的实现原理
 
 ### Partial 实现
