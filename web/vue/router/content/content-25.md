@@ -489,7 +489,7 @@ const breadcrumbs = computed(() => {
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in">
         <keep-alive :include="cachedViews">
-          <component :is="Component" :key="route.fullPath" />
+          <component :is="Component" :key="appStore.routerViewKey" />
         </keep-alive>
       </transition>
     </router-view>
@@ -499,8 +499,10 @@ const breadcrumbs = computed(() => {
 <script setup>
 import { computed } from 'vue'
 import { useTabsStore } from '@/stores/tabs'
+import { useAppStore } from '@/stores/app'
 
 const tabsStore = useTabsStore()
+const appStore = useAppStore()
 
 const cachedViews = computed(() => {
   return tabsStore.cachedViews
@@ -508,49 +510,58 @@ const cachedViews = computed(() => {
 </script>
 ```
 
-### 页面刷新功能
+### 轻量级页面刷新
 
-```vue
-<!-- views/Redirect.vue -->
-<script setup>
-import { onBeforeMount } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-
-const route = useRoute()
-const router = useRouter()
-
-onBeforeMount(() => {
-  const { params, query } = route
-  const { path } = params
-  
-  router.replace({
-    path: '/' + path,
-    query
-  })
-})
-</script>
-
-<template>
-  <div></div>
-</template>
-```
+**核心思路：** 通过递增 `key` 强制组件重新渲染，无需额外路由。
 
 ```javascript
-// 路由配置
-{
-  path: '/redirect/:path(.*)',
-  component: () => import('@/views/Redirect.vue'),
-  meta: { hidden: true }
-}
+// stores/app.js
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-// 使用
-function refreshPage() {
-  const fullPath = route.fullPath
-  router.replace({
-    path: '/redirect' + fullPath
-  })
-}
+export const useAppStore = defineStore('app', () => {
+  // 单调递增的 key，用于强制刷新路由视图
+  const routerViewKey = ref(0)
+
+  // 刷新当前视图的方法
+  function refreshRouterView() {
+    routerViewKey.value++
+  }
+
+  return { routerViewKey, refreshRouterView }
+})
 ```
+
+```vue
+<!-- 在需要刷新的地方使用 -->
+<template>
+  <div>
+    <button @click="handleRefresh">刷新页面</button>
+    <!-- 其他内容 -->
+  </div>
+</template>
+
+<script setup>
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
+
+function handleRefresh() {
+  appStore.refreshRouterView()
+}
+</script>
+```
+
+**优势对比：**
+
+| 特性 | 重定向方案 | Key 递增方案（推荐） |
+|------|-----------|---------------------|
+| **代码量** | 需要 Redirect 组件和路由 | 只需 store 管理 key |
+| **路由配置** | 需要额外路由 | 无需额外配置 |
+| **URL 变化** | 临时跳转到 `/redirect` | 保持当前 URL 不变 |
+| **浏览器历史** | 会留下历史记录 | 不影响历史记录 |
+| **性能** | 涉及路由跳转 | 仅组件重新渲染 |
+| **实现复杂度** | 中等 | 简单 |
 
 ## 路由错误边界
 
