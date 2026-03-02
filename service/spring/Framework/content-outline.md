@@ -526,7 +526,156 @@ Spring MVC → 资源管理 → 事件驱动 → 注解开发 → 高级特性
 
 ---
 
-## 📖 附录资源
+## � 源码阅读指南（按包分类）
+
+> 按 Spring Framework 包结构组织的源码学习指南，提供每个包的核心类体系、设计目的和使用限制。
+
+### 核心基础模块
+
+#### [spring-core](./packages/spring-core.md)
+资源访问、类型转换、反射工具、环境抽象、SPI 扩展等 Spring 最底层的基础设施。
+
+**核心内容**：Resource 抽象、ConversionService、Environment、SpringFactoriesLoader、ResolvableType
+
+---
+
+#### [spring-beans](./packages/spring-beans.md)
+IoC 容器核心实现，Bean 定义、生命周期管理、依赖注入、循环依赖解决。
+
+**核心内容**：BeanFactory、BeanDefinition、三级缓存、BeanPostProcessor、FactoryBean
+
+---
+
+#### [spring-context](./packages/spring-context.md)
+ApplicationContext 扩展，注解驱动配置、事件机制、国际化、任务调度。
+
+**核心内容**：ApplicationContext、@Configuration、@ComponentScan、@Import、@Conditional、事件发布
+
+---
+
+#### [spring-expression](./packages/spring-expression.md)
+SpEL 表达式引擎，支持运行时动态计算表达式。
+
+**核心内容**：ExpressionParser、EvaluationContext、SpEL 语法、表达式编译
+
+---
+
+### AOP 相关模块
+
+#### [spring-aop](./packages/spring-aop.md)
+面向切面编程支持，JDK 动态代理、CGLIB 代理、切点表达式。
+
+**核心内容**：AOP 代理机制、Pointcut、Advice、Advisor、ProxyFactory
+
+---
+
+#### [spring-aspects](./packages/spring-aspects.md)
+预定义的 AspectJ 切面，事务、缓存、异步等切面实现。
+
+**核心内容**：AspectJ 集成、LTW、@Configurable 支持
+
+---
+
+#### [spring-instrument](./packages/spring-instrument.md)
+类加载时织入（LTW）基础设施，Java Agent 支持。
+
+**核心内容**：InstrumentationSavingAgent、ClassFileTransformer、LoadTimeWeaver
+
+---
+
+### 数据访问模块
+
+#### [spring-tx](./packages/spring-tx.md)
+事务管理抽象，声明式和编程式事务支持。
+
+**核心内容**：PlatformTransactionManager、@Transactional、事务传播行为、事务同步
+
+---
+
+#### [spring-jdbc](./packages/spring-jdbc.md)
+JDBC 操作简化，模板类、统一异常体系、结果集映射。
+
+**核心内容**：JdbcTemplate、NamedParameterJdbcTemplate、RowMapper、批量操作
+
+---
+
+#### [spring-orm](./packages/spring-orm.md)
+ORM 框架集成，JPA、Hibernate、MyBatis 支持。
+
+**核心内容**：JPA 集成、Hibernate 集成、Session 管理、OpenSessionInView
+
+---
+
+#### [spring-jms](./packages/spring-jms.md)
+JMS 消息队列集成，简化消息发送和接收。
+
+**核心内容**：JmsTemplate、MessageListenerContainer、@JmsListener、消息转换
+
+---
+
+### 消息处理模块
+
+#### [spring-messaging](./packages/spring-messaging.md)
+消息传递抽象，STOMP、WebSocket、AMQP 协议支持。
+
+**核心内容**：MessageChannel、MessageHandler、STOMP、@MessageMapping
+
+---
+
+#### [spring-oxm](./packages/spring-oxm.md)
+对象-XML 映射抽象，支持 JAXB、Castor、XStream 等。
+
+**核心内容**：Marshaller、Unmarshaller、JAXB 集成
+
+---
+
+### Web 层模块
+
+#### [spring-web](./packages/spring-web.md)
+Web 应用基础支持，文件上传、HTTP 消息转换、CORS。
+
+**核心内容**：WebApplicationContext、MultipartResolver、HttpMessageConverter、WebDataBinder
+
+---
+
+#### [spring-webmvc](./packages/spring-webmvc.md)
+Spring MVC 框架实现，基于注解的 Web 开发。
+
+**核心内容**：DispatcherServlet、@Controller、@RequestMapping、HandlerMapping、ViewResolver
+
+---
+
+#### [spring-websocket](./packages/spring-websocket.md)
+WebSocket 协议支持，实时双向通信。
+
+**核心内容**：WebSocketHandler、SockJS、STOMP、@EnableWebSocketMessageBroker
+
+---
+
+#### [spring-webflux](./packages/spring-webflux.md)
+响应式 Web 框架，基于 Reactor 的非阻塞异步编程。
+
+**核心内容**：Mono、Flux、RouterFunction、WebClient、响应式编程
+
+---
+
+### 扩展支持模块
+
+#### [spring-context-support](./packages/spring-context-support.md)
+上下文扩展支持，缓存、调度、邮件、模板引擎。
+
+**核心内容**：@Cacheable、CacheManager、@Scheduled、JavaMailSender、Quartz 集成
+
+---
+
+#### [spring-test](./packages/spring-test.md)
+测试支持，单元测试、集成测试、Mock 环境。
+
+**核心内容**：@SpringBootTest、MockMvc、@MockBean、TestRestTemplate、WebTestClient
+
+---
+
+## �📖 附录资源
 
 ### 学习路线建议
 
