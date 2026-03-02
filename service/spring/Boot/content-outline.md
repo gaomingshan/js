@@ -316,6 +316,116 @@ Spring Boot 核心扩展点
 
 ---
 
+## 🚀 源码阅读指南（按包分类）
+
+> 按 Spring Boot 包结构组织的源码学习指南，专注核心模块和启动机制。
+
+### 核心模块
+
+#### [spring-boot](./packages/spring-boot.md)
+核心启动引擎、应用上下文创建、外部化配置、属性绑定、日志系统。
+
+**核心内容**：SpringApplication、ConfigData、Binder、@ConfigurationProperties、LoggingSystem、ApplicationEvent
+
+---
+
+#### [spring-boot-autoconfigure](./packages/spring-boot-autoconfigure.md)
+自动配置机制、条件注解体系、各领域自动配置（Web、数据、消息、缓存等）。
+
+**核心内容**：@EnableAutoConfiguration、AutoConfigurationImportSelector、@Conditional*、WebMvcAutoConfiguration、DataSourceAutoConfiguration
+
+---
+
+#### [spring-boot-actuator](./packages/spring-boot-actuator.md)
+生产监控端点定义、健康检查体系、指标度量体系、审计追踪。
+
+**核心内容**：@Endpoint、Health、HealthIndicator、MeterRegistry、Metrics、Actuator 端点
+
+---
+
+#### [spring-boot-actuator-autoconfigure](./packages/spring-boot-actuator-autoconfigure.md)
+Actuator 端点自动配置、健康检查自动配置、指标导出自动配置。
+
+**核心内容**：EndpointAutoConfiguration、HealthIndicatorAutoConfiguration、MetricsAutoConfiguration
+
+---
+
+### 工具模块
+
+#### [spring-boot-configuration-processor](./packages/spring-boot-configuration-processor.md)
+配置元数据注解处理器、IDE 自动完成支持。
+
+**核心内容**：ConfigurationMetadataAnnotationProcessor、spring-configuration-metadata.json 生成
+
+---
+
+### Starter 依赖管理
+
+#### spring-boot-starters
+各领域 Starter 依赖聚合，简化依赖管理（仅依赖声明，无代码）。
+
+**核心 Starter**
+- spring-boot-starter - 核心 Starter
+- spring-boot-starter-logging - 日志（Logback）
+- spring-boot-starter-log4j2 - Log4j2 日志
+- spring-boot-starter-test - 测试支持
+- spring-boot-starter-aop - AOP
+- spring-boot-starter-validation - 校验
+- spring-boot-starter-json - JSON
+
+**Web Starter**
+- spring-boot-starter-web - Spring MVC
+- spring-boot-starter-webflux - 响应式 Web
+- spring-boot-starter-websocket - WebSocket
+- spring-boot-starter-jersey - Jersey REST
+- spring-boot-starter-thymeleaf - Thymeleaf 模板
+- spring-boot-starter-freemarker - FreeMarker 模板
+- spring-boot-starter-mustache - Mustache 模板
+- spring-boot-starter-hateoas - HATEOAS
+- spring-boot-starter-graphql - GraphQL
+- spring-boot-starter-web-services - SOAP Web Services
+
+**数据访问 Starter**
+- spring-boot-starter-data-jpa - JPA
+- spring-boot-starter-data-jdbc - Spring Data JDBC
+- spring-boot-starter-jdbc - JDBC
+- spring-boot-starter-data-redis - Redis
+- spring-boot-starter-data-redis-reactive - 响应式 Redis
+- spring-boot-starter-data-mongodb - MongoDB
+- spring-boot-starter-data-mongodb-reactive - 响应式 MongoDB
+- spring-boot-starter-data-elasticsearch - Elasticsearch
+- spring-boot-starter-data-neo4j - Neo4j
+- spring-boot-starter-data-cassandra - Cassandra
+- spring-boot-starter-data-ldap - LDAP
+- spring-boot-starter-data-r2dbc - R2DBC 响应式数据库
+- spring-boot-starter-data-rest - REST 仓库
+- spring-boot-starter-jooq - JOOQ
+
+**消息队列 Starter**
+- spring-boot-starter-amqp - RabbitMQ
+- spring-boot-starter-artemis - Artemis
+- spring-boot-starter-activemq - ActiveMQ
+- spring-boot-starter-kafka - Kafka
+- spring-boot-starter-pulsar - Pulsar
+- spring-boot-starter-pulsar-reactive - 响应式 Pulsar
+
+**安全 Starter**
+- spring-boot-starter-security - Spring Security
+- spring-boot-starter-oauth2-client - OAuth2 客户端
+- spring-boot-starter-oauth2-resource-server - OAuth2 资源服务器
+- spring-boot-starter-oauth2-authorization-server - OAuth2 授权服务器
+
+**其他 Starter**
+- spring-boot-starter-actuator - 生产监控
+- spring-boot-starter-cache - 缓存抽象
+- spring-boot-starter-mail - 邮件发送
+- spring-boot-starter-quartz - Quartz 调度
+- spring-boot-starter-batch - Spring Batch
+- spring-boot-starter-integration - Spring Integration
+- spring-boot-starter-rsocket - RSocket
+
+---
+
 ## 面试题汇总
 
 ### [面试题汇总（quiz/quiz.md）](./quiz/quiz.md)
