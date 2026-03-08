@@ -291,6 +291,57 @@ public void initBinder(WebDataBinder binder) {
 }
 ```
 
+> `registerCustomEditor` 属于早期 `PropertyEditor` 方案。现代 Spring MVC 参数转换默认优先走 `ConversionService`。
+
+### 6.2 参数转换如何通过 ConversionService 桥接
+
+很多人知道“Spring 会自动把 `String` 转成 `Long`/`Enum`/`LocalDate`”，但容易忽略桥接点其实在 `WebDataBinder`：
+
+```text
+HTTP 参数(String)
+  -> HandlerMethodArgumentResolver 取值
+  -> WebDataBinder.convertIfNecessary(...)
+  -> TypeConverterDelegate
+  -> ConversionService.convert(...)
+  -> 目标参数类型
+```
+
+关键点：
+
+- `HandlerMethodArgumentResolver` 只负责“拿到原始值 + 调用绑定”，不自己实现复杂类型转换。
+- `WebDataBinder` 是参数绑定入口，内部通过 `TypeConverter`/`TypeConverterDelegate` 委托转换。
+- 当容器里存在 `ConversionService`（MVC 默认会配置）时，`WebDataBinder` 最终会走 `conversionService.convert(...)`。
+- `@RequestParam`、`@PathVariable`、`@ModelAttribute` 的标量字段转换，本质都复用这条链路。
+
+### 6.3 自定义 Converter 的推荐方式
+
+```java
+// 1) 定义转换器：例如把 String -> UserId
+public class StringToUserIdConverter implements Converter<String, UserId> {
+    @Override
+    public UserId convert(String source) {
+        return new UserId(Long.parseLong(source));
+    }
+}
+
+// 2) 注册到 ConversionService（推荐在 WebMvcConfigurer 中注册）
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(new StringToUserIdConverter());
+    }
+}
+
+// 3) 控制器参数可直接使用目标类型
+@GetMapping("/users/{id}")
+public User getUser(@PathVariable UserId id) {
+    return userService.findById(id.value());
+}
+```
+
+这就是“参数解析器”和“类型转换服务”的桥接关系：解析器负责提取值，`WebDataBinder` 负责把值交给 `ConversionService` 完成最终类型转换。
+
 ---
 
 ## 7. 实际落地场景（工作实战）
@@ -369,3 +420,4 @@ public class UserDTO {
 **上一章** ← [第 18 章：HandlerMapping 映射机制](./content-18.md)  
 **下一章** → [第 20 章：视图解析与渲染](./content-20.md)  
 **返回目录** → [学习大纲](../content-outline.md)
+
