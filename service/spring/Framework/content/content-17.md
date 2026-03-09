@@ -56,7 +56,7 @@
 
 3. HandlerAdapter 适配处理器
    └─> 执行 Handler（Controller 方法）
-   └─> 返回 ModelAndView
+   └─> 返回 ModelAndView 或直接写入响应（如 @ResponseBody/ResponseEntity）
 
 4. ViewResolver 解析视图
    └─> 返回 View 对象
@@ -260,7 +260,7 @@ doDispatch() 执行流程：
 
 6. ha.handle()
    └─> 执行 Controller 方法
-       └─> 返回 ModelAndView
+       └─> 返回 ModelAndView，或由返回值处理器直接写入响应
 
 7. applyDefaultViewName()
    └─> 设置默认视图名
@@ -444,6 +444,37 @@ protected View resolveViewName(String viewName, @Nullable Map<String, Object> mo
     return null;
 }
 ```
+
+### 8.1 返回值解析步骤（不是只有 String 视图）
+
+`DispatcherServlet` 在 `ha.handle()` 之后拿到的表面结果常写作 `ModelAndView`，但对注解控制器来说，真正关键步骤发生在 `RequestMappingHandlerAdapter` 内部：
+
+```text
+Controller 方法返回值
+  -> ServletInvocableHandlerMethod.invokeAndHandle(...)
+  -> HandlerMethodReturnValueHandlerComposite.selectHandler(...)
+  -> 对应 ReturnValueHandler 处理
+     - 视图分支：组装 ModelAndView（或 View 名）
+     - REST 分支：HttpMessageConverter 写出 JSON/XML/文本/字节
+     - 二进制/流分支：直接写 HttpServletResponse OutputStream
+```
+
+常见返回类型与处理器对应：
+
+- `String`：通常当作逻辑视图名，由 `ViewResolver` 继续解析。
+- `ModelAndView`：已包含模型和视图信息，可能绕过“视图名字符串拼接”，但若是视图名仍会走 `ViewResolver`。
+- `@ResponseBody` / `@RestController` 对象：走 `RequestResponseBodyMethodProcessor`，使用 `HttpMessageConverter` 序列化，不走 `ViewResolver`。
+- `ResponseEntity<T>` / `HttpEntity<T>`：走 `HttpEntityMethodProcessor`，可控制状态码与头，同样不走 `ViewResolver`。
+- `byte[]` / `Resource` / `StreamingResponseBody` / `void`（手写 response）：本质是直接写响应体或流，不走 `ViewResolver`。
+
+### 8.2 与 ViewResolver 的关系（核心结论）
+
+`ViewResolver` 只负责“把视图名解析成 `View` 对象”。
+
+- 只有返回值最终形成“视图渲染语义”（如 `String` 视图名、`ModelAndView` 的视图名）时，才会进入 `resolveViewName(...)`。
+- 如果返回值已经是“HTTP 响应语义”（JSON、文件流、二进制、自定义状态码头），就由返回值处理器 + 消息转换器直接完成响应，`ViewResolver` 不参与。
+
+这也是为什么同一个 `DispatcherServlet` 既能做 MVC 页面渲染，也能做 REST API：分流点不在 `ViewResolver`，而在 `HandlerMethodReturnValueHandler` 的选择。
 
 ---
 
@@ -644,8 +675,8 @@ public class ViewResolverConfig {
 4. **拦截器前置**：执行 Interceptor.preHandle()
 5. **处理器执行**：执行 Controller 方法
 6. **拦截器后置**：执行 Interceptor.postHandle()
-7. **视图解析**：通过 ViewResolver 解析视图
-8. **视图渲染**：View.render() 填充模型数据
+7. **返回值分流**：由 HandlerMethodReturnValueHandler 判断是视图语义还是 HTTP 响应语义
+8. **视图分支渲染**：仅在视图语义下通过 ViewResolver + View.render() 完成渲染
 9. **拦截器完成**：执行 Interceptor.afterCompletion()
 10. **返回响应**：将结果返回给客户端
 
@@ -675,3 +706,4 @@ public class ViewResolverConfig {
 **上一章** ← [第 16 章：事务隔离级别与并发问题](./content-16.md)  
 **下一章** → [第 18 章：HandlerMapping 映射机制](./content-18.md)  
 **返回目录** → [学习大纲](../content-outline.md)
+
