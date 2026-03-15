@@ -2,7 +2,7 @@
 
 > **学习定位**：面向有 Spring Boot 基础的开发者，系统学习 Spring Cloud 微服务架构  
 > **核心重点**：组件引入 + 自定义配置 + 最佳使用 + 深入原理  
-> **总章节数**：35 章  
+> **总章节数**：38 章  
 > **学习目标**：掌握微服务核心组件，具备微服务架构设计能力，应对工作与面试
 
 ---
@@ -611,9 +611,80 @@
 
 ---
 
-## 第十部分：综合实战与面试（1章）
+## 第十部分：微服务可观测性（3章）⭐⭐
 
-### [第35章：微服务架构综合面试题](./content/content-35.md)
+### [第36章：分布式链路追踪 - SkyWalking](./content/content-36.md)
+**核心内容**：
+- SkyWalking 架构设计（OAP/UI/Agent）
+- SkyWalking 服务端部署（单机/集群）
+- Java Agent 接入与配置
+- 链路追踪原理（TraceId/SpanId/Segment）
+- 拓扑图与服务依赖分析
+- 性能指标采集（响应时间/吞吐量/错误率）
+- 日志收集与关联
+- 告警规则配置
+- 自定义插件开发
+- SkyWalking vs Zipkin 对比
+
+**学习目标**：
+- 掌握 SkyWalking 完整部署
+- 理解链路追踪核心原理
+- 能够分析服务拓扑与性能瓶颈
+- 能够配置告警与自定义监控
+
+---
+
+### [第37章：指标监控 - Prometheus & Grafana](./content/content-37.md)
+**核心内容**：
+- Prometheus 架构与数据模型
+- Prometheus Server 部署与配置
+- Spring Boot Actuator 集成
+- Micrometer 指标收集
+- 核心指标类型（Counter/Gauge/Histogram/Summary）
+- PromQL 查询语言
+- 服务发现配置（static/file/consul/kubernetes）
+- Grafana 安装与数据源配置
+- Dashboard 设计与导入
+- 告警规则配置（AlertManager）
+- JVM 监控面板
+- 业务指标自定义
+- 性能优化与存储配置
+
+**学习目标**：
+- 掌握 Prometheus + Grafana 监控体系
+- 理解时序数据库原理
+- 能够设计监控 Dashboard
+- 能够配置告警策略
+
+---
+
+### [第38章：分布式日志分析 - ELK](./content/content-38.md)
+**核心内容**：
+- ELK 架构设计（Elasticsearch/Logstash/Kibana）
+- Elasticsearch 集群部署
+- Logstash 日志收集与解析
+- Filebeat 轻量级采集
+- Spring Boot 日志集成（Logback/Log4j2）
+- 日志格式规范（JSON 格式）
+- TraceId 日志关联
+- Kibana 日志检索与可视化
+- 索引生命周期管理（ILM）
+- 日志告警配置（ElastAlert）
+- 日志采集性能优化
+- ELK vs EFK 对比
+- 日志分析最佳实践
+
+**学习目标**：
+- 掌握 ELK 完整部署
+- 理解日志收集与分析流程
+- 能够实现日志与链路关联
+- 能够优化日志存储与检索
+
+---
+
+## 第十一部分：综合实战与面试（1章）
+
+### [第39章：微服务架构综合面试题](./content/content-39.md)
 **核心内容**：
 - **组件选型**（20题）
   - Nacos vs Eureka、Config vs Nacos Config、Gateway vs Zuul、Feign vs RestTemplate、Sentinel vs Hystrix
@@ -656,6 +727,8 @@
     ↓
 链路追踪与分布式事务（3章）
     ↓
+微服务可观测性（3章）⭐⭐
+    ↓
 综合面试（1章）
 ```
 
@@ -667,7 +740,8 @@
 - 快速入门：1-2 周（第1-7章）
 - 核心组件：3-4 周（第8-28章）
 - 高级特性：2-3 周（第29-34章）
-- 面试准备：1 周（第35章）
+- 可观测性：1-2 周（第36-38章）
+- 面试准备：1 周（第39章）
 
 **学习方法**：
 1. **动手实践**：每个组件都要在本地搭建环境验证
@@ -679,6 +753,7 @@
 - ⭐⭐ 第16-20章（Feign）
 - ⭐⭐ 第21-25章（Gateway）
 - ⭐⭐ 第29-31章（Stream）
+- ⭐⭐ 第36-38章（可观测性）
 - ⭐ 第8-12章（配置管理）
 - ⭐ 第13-15章（负载均衡）
 - ⭐ 第26-27章（Sentinel）
@@ -715,7 +790,7 @@
 - **官方文档**：[Spring Cloud 官方文档](https://spring.io/projects/spring-cloud)
 - **源码仓库**：[Spring Cloud GitHub](https://github.com/spring-cloud)
 - **实战项目**：配套微服务示例项目（待生成）
-- **面试题库**：quiz/quiz.md（120道精选题）
+- **面试题库**：quiz/quiz.md（130道精选题）
 
 ---
 
