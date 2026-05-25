@@ -2,7 +2,7 @@
 
 > **学习定位**：面向有 Spring Boot 基础的开发者，系统学习 Spring Cloud 微服务架构  
 > **核心重点**：组件引入 + 自定义配置 + 最佳使用 + 深入原理  
-> **技术栈**：聚焦现役技术（Nacos/Gateway/Sentinel/Seata）+ 云原生可观测性  
+> **技术栈**：聚焦现役技术（Nacos/Gateway/Sentinel/Seata）+ 云原生可观测性（OTel + LGTM Stack）  
 > **总章节数**：37 章  
 > **学习目标**：掌握微服务核心组件，具备微服务架构设计能力，应对工作与面试
 
@@ -580,7 +580,10 @@
 
 ---
 
-## 第十部分：微服务可观测性（4章）⭐⭐
+## 第十部分：微服务可观测性 - LGTM Stack（4章）⭐⭐
+
+> **技术栈**：OpenTelemetry + Grafana Loki + Grafana Tempo + Grafana Mimir + Grafana  
+> **核心理念**：以 OTel 为统一数据采集标准，LGTM 为可观测性后端，构建云原生一体化可观测平台
 
 ### [第33章：OpenTelemetry 统一可观测性标准](./content/content-33.md)
 **核心内容**：
@@ -589,93 +592,97 @@
 - OTel Java Agent 自动埋点
 - OTel SDK 手动埋点与 API
 - Span、Trace、Context 传播机制
-- OTel Collector 数据收集与处理
-- 多后端导出器（OTLP/Jaeger/Prometheus/Zipkin）
+- OTel Collector 数据收集与处理管道
+- OTLP 协议与 LGTM 后端导出（Loki/Tempo/Mimir）
 - 资源属性与语义约定（Semantic Conventions）
-- 采样策略（头部采样/尾部采样）
-- 性能优化与最佳实践
+- 采样策略（头部采样/尾部采样/概率采样）
 - Spring Boot 3.x 原生集成
+- OTel Collector 性能优化与高可用部署
 
 **学习目标**：
-- 理解 OpenTelemetry 标准化价值
+- 理解 OpenTelemetry 作为云原生可观测性标准
 - 掌握 OTel 自动埋点与手动埋点
-- 能够配置 OTel Collector 数据管道
-- 具备多后端切换能力
+- 能够配置 OTel Collector 对接 LGTM 数据管道
+- 具备 OTel + LGTM 全栈数据采集能力
 
 ---
 
-### [第34章：分布式链路追踪 - SkyWalking](./content/content-34.md)
+### [第34章：分布式链路追踪 - Grafana Tempo](./content/content-34.md)
 **核心内容**：
-- SkyWalking 架构设计（OAP/UI/Agent）
-- SkyWalking 服务端部署（单机/集群）
-- 接收 OTel 数据（OTel Receiver 配置）
-- 链路追踪原理（TraceId/SpanId/Segment）
-- 拓扑图与服务依赖分析
-- 慢调用定位与根因分析
-- 性能指标采集（响应时间/吞吐量/错误率）
-- 告警规则配置与通知
-- 自定义插件开发
-- SkyWalking vs Jaeger vs Zipkin 对比
+- Tempo 架构设计（Distributor/Ingester/Compactor/Querier）
+- Tempo 服务端部署（单机/微服务/Helm）
+- OTel Collector → Tempo 链路数据管道
+- 链路追踪原理（TraceId/SpanId/ParentSpan）
+- 对象存储后端配置（S3/MinIO/GCS/Azure Blob）
+- Tempo Query 查询语言（TraceQL）
+- Grafana 中 Trace 检索与瀑布图分析
+- 服务依赖图（Service Graph）自动生成
+- Span Metrics 指标派生
+- 低成本存储策略（无需索引，基于对象存储）
+- 采样策略（头部采样/尾部采样/基于规则采样）
+- Tempo vs Jaeger vs SkyWalking 对比
 
 **学习目标**：
-- 掌握 SkyWalking 完整部署
-- 理解链路追踪核心原理
-- 能够分析服务拓扑与性能瓶颈
-- 能够配置告警与自定义监控
+- 掌握 Tempo 完整部署与配置
+- 理解 Tempo 低成本存储原理
+- 能够使用 TraceQL 进行链路检索
+- 能够分析服务拓扑与定位慢调用
 
 ---
 
-### [第35章：指标监控 - Prometheus & Grafana](./content/content-35.md)
+### [第35章：指标监控 - Grafana Mimir & Prometheus](./content/content-35.md)
 **核心内容**：
-- Prometheus 架构与数据模型
-- Prometheus Server 部署与配置
-- OTel Metrics 导出到 Prometheus
-- Spring Boot Actuator 集成
-- Micrometer 与 OTel 集成
+- LGTM 指标架构：Prometheus → Mimir → Grafana
+- Prometheus 架构与数据模型（Pull 模型）
+- Prometheus Server 部署与基础配置
+- Grafana Mimir 架构（Distributor/Ingester/Querier/Store-gateway）
+- Mimir 集群部署（微服务模式/单体模式）
+- OTel Collector → Prometheus/Mimir 指标管道
+- Spring Boot Actuator + Micrometer 集成
+- PromQL 查询语言与 Mimir 即时查询
 - 核心指标类型（Counter/Gauge/Histogram/Summary）
-- PromQL 查询语言
-- 服务发现配置（static/file/consul/kubernetes）
-- Grafana 安装与数据源配置
-- Dashboard 设计与导入
-- 告警规则配置（AlertManager）
-- JVM 监控面板
-- 业务指标自定义（Custom Metrics）
-- 高基数指标治理
-- 性能优化与存储配置
+- Recording Rules 与 Alerting Rules
+- Grafana Alerting 统一告警（替代 AlertManager）
+- Grafana Dashboard 设计与 SLO 面板
+- JVM 监控面板与业务指标自定义
+- 高基数指标治理与基数限制
+- 长期存储与对象存储成本优化
+- Mimir vs VictoriaMetrics vs Thanos 对比
 
 **学习目标**：
-- 掌握 Prometheus + Grafana 监控体系
-- 理解时序数据库原理
-- 能够设计监控 Dashboard
-- 能够配置告警策略
+- 掌握 Prometheus + Mimir 分层指标架构
+- 理解 Mimir 水平扩展与高可用原理
+- 能够设计 Grafana 监控 Dashboard
+- 能够配置 Grafana Alerting 统一告警
 
 ---
 
-### [第36章：日志体系与三大信号关联](./content/content-36.md)
+### [第36章：日志体系 - Grafana Loki](./content/content-36.md)
 **核心内容**：
-- OTel Logs 规范与数据模型
-- ELK 架构设计（Elasticsearch/Logstash/Kibana）
-- Elasticsearch 集群部署
-- Logstash 日志收集与解析
-- Filebeat 轻量级采集
-- Spring Boot 日志集成（Logback/Log4j2）
-- 日志格式规范（JSON 结构化日志）
-- TraceId/SpanId 日志关联
-- Kibana 日志检索与可视化
-- 索引生命周期管理（ILM）
-- 日志告警配置（ElastAlert）
-- Trace-Metric-Log 三大信号联动分析
-- 统一可观测性平台搭建
-- Grafana Loki vs ELK 对比
-- 日志采集性能优化
-- 日志分析最佳实践
+- Loki 架构设计（Distributor/Ingester/Querier/Compactor）
+- Loki 核心设计哲学（索引低成本 + 标签驱动）
+- Loki 服务端部署（单机/微服务/Helm）
+- OTel Collector → Loki 日志管道
+- Promtail / Grafana Alloy 日志采集代理
+- Spring Boot 日志集成（Logback 输出 JSON 结构化日志）
+- Label 设计与最佳实践（静态标签 vs 动态标签）
+- LogQL 查询语言（Log Pipeline / Metric Query）
+- Grafana 中日志检索、过滤与实时追踪
+- TraceId 日志关联（Loki → Tempo 联动）
+- 日志解析（Pattern Parser / JSON Parser / Regexp）
+- 日志保留策略与存储后端（S3/MinIO/GCS）
+- Ruler 日志告警配置（Grafana Alerting 集成）
+- 索引与 chunk 存储优化
+- LGTM 三信号联动：Trace → Metric → Log 协同分析
+- Grafana 统一可观测平台实战
+- Loki vs ELK vs Grafana Cloud Logs 对比
 
 **学习目标**：
-- 掌握 ELK 完整部署
-- 理解日志收集与分析流程
-- 能够实现日志与链路关联
-- 掌握三大信号协同分析能力
-- 能够优化日志存储与检索
+- 掌握 Loki 完整部署与 Label 设计
+- 理解 Loki 低成本日志存储原理
+- 能够使用 LogQL 进行日志检索与分析
+- 掌握 Trace-Metric-Log 三信号联动分析能力
+- 能够搭建 LGTM 统一可观测性平台
 
 ---
 
@@ -686,15 +693,16 @@
 - **组件选型**（20题）
   - Nacos vs Eureka、Config vs Nacos Config、Gateway vs Zuul、Feign vs RestTemplate、Sentinel vs Hystrix
 - **原理深入**（25题）
-  - 服务注册发现原理、配置动态刷新原理、Feign 动态代理原理、Gateway 路由匹配原理、Sentinel 限流算法
+  - 服务注册发现原理、配置动态刷新原理、Feign 动态代理原理、Gateway 路由匹配原理、Sentinel 限流算法、Tempo 低成本存储原理、Loki Label 索引原理、OTel Collector 数据管道原理
 - **场景分析**（25题）
   - Feign 调用失败处理、配置不生效排查、网关鉴权实现、分布式事务一致性
 - **架构设计**（20题）
   - 微服务拆分、服务治理体系、高可用架构、熔断降级策略
 - **实战问题**（20题）
-  - 服务调用超时排查、网关性能优化、灰度发布、统一配置管理
+  - 服务调用超时排查、网关性能优化、灰度发布、统一配置管理、LGTM 平台搭建与故障排查、日志/链路/指标三信号联动排障
 - **对比分析**（10题）
   - AP vs CP、同步 vs 异步、服务端负载 vs 客户端负载、AT vs TCC
+  - Loki vs ELK、Tempo vs SkyWalking、Mimir vs 独立 Prometheus、LGTM vs 传统可观测方案
 
 **学习目标**：
 - 系统掌握微服务面试题
@@ -724,7 +732,7 @@
     ↓
 分布式事务（3章）
     ↓
-微服务可观测性（4章）⭐⭐
+微服务可观测性 - LGTM Stack（4章）⭐⭐
     ↓
 综合面试（1章）
 ```
@@ -737,7 +745,7 @@
 - 快速入门：1-2 周（第1-6章）
 - 核心组件：3-4 周（第7-26章）
 - 高级特性：2-3 周（第27-32章）
-- 可观测性：2-3 周（第33-36章）⭐ 重点掌握 OTel 标准
+- 可观测性：2-3 周（第33-36章）⭐ 重点掌握 OTel + LGTM Stack
 - 面试准备：1 周（第37章）
 
 **学习方法**：
@@ -750,7 +758,7 @@
 - ⭐⭐ 第14-18章（Feign）
 - ⭐⭐ 第19-23章（Gateway）
 - ⭐⭐ 第27-29章（Stream）
-- ⭐⭐ 第33-36章（可观测性 + OTel）
+- ⭐⭐ 第33-36章（LGTM Stack 可观测性）
 - ⭐ 第7-11章（配置管理）
 - ⭐ 第12-13章（负载均衡）
 - ⭐ 第24-25章（Sentinel）
@@ -795,12 +803,12 @@
 
 **v3.0 更新内容**：
 - ✅ 移除过时技术：Eureka、Ribbon、Hystrix、Zuul、Spring Cloud Config、Sleuth + Zipkin
-- ✅ 聚焦现役技术栈：Nacos、Gateway、Sentinel、Seata、SkyWalking
-- ✅ 引入 OpenTelemetry 统一可观测性标准（CNCF 毕业项目）
+- ✅ 聚焦现役技术栈：Nacos、Gateway、Sentinel、Seata、LGTM Stack
+- ✅ 引入 OpenTelemetry 统一可观测性标准 + LGTM Stack 云原生可观测体系
 - ✅ 保留核心组件深入原理与最佳实践
 - ✅ 移除工程实践部分（CI/CD、K8s 部署等）
 - ✅ 优化章节编号，从 38 章调整至 37 章
-- ✅ 强化可观测性体系（OTel + 链路追踪 + 指标监控 + 日志分析 + 三大信号关联）
+- ✅ 重构可观测性体系（OTel → Loki + Tempo + Mimir + Grafana 全栈联动）
 
 ---
 

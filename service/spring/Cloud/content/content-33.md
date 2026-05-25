@@ -1,7 +1,7 @@
 # 第 33 章：OpenTelemetry 统一可观测性标准
 
-> **学习目标**：理解 OpenTelemetry 标准化价值、掌握 OTel 自动埋点与手动埋点、能够配置 OTel Collector 数据管道、具备多后端切换能力  
-> **预计时长**：4-5 小时  
+> **学习目标**：理解 OpenTelemetry 作为云原生可观测性标准、掌握 OTel 自动埋点与手动埋点、能够配置 OTel Collector 对接 LGTM 数据管道、具备 OTel + LGTM 全栈数据采集能力
+> **预计时长**：4-5 小时
 > **难度级别**：⭐⭐⭐⭐⭐ 高级
 
 ---
@@ -10,14 +10,27 @@
 
 ### 1.1 OpenTelemetry 简介
 
-**OpenTelemetry（OTel）**：统一的可观测性标准，提供 API、SDK 和工具来采集、处理和导出遥测数据。
+**OpenTelemetry（OTel）**：CNCF 毕业项目，统一的可观测性标准，提供 API、SDK 和工具来采集、处理和导出遥测数据。在 LGTM 体系中，OTel 承担**统一数据采集层**的角色。
 
 **核心价值**：
-- ✅ 统一标准（Traces/Metrics/Logs）
-- ✅ 厂商中立（避免供应商锁定）
-- ✅ 语言无关（支持多种编程语言）
-- ✅ 自动埋点（零代码侵入）
-- ✅ 灵活导出（支持多种后端）
+- ✅ 统一标准（Traces/Metrics/Logs 三大信号）
+- ✅ 厂商中立（避免供应商锁定，可灵活切换后端）
+- ✅ 语言无关（支持 11+ 编程语言）
+- ✅ 自动埋点（零代码侵入，覆盖主流框架）
+- ✅ OTLP 协议（统一数据传输协议，LGTM 全栈原生支持）
+
+**OTel + LGTM 协同架构**：
+
+```
+应用程序（Spring Boot）
+    ↓
+OTel API / SDK / Java Agent
+    ├─ Traces  ──→ OTLP ──→ Grafana Tempo（链路追踪）
+    ├─ Metrics ──→ OTLP ──→ Grafana Mimir（指标存储）
+    └─ Logs    ──→ OTLP ──→ Grafana Loki（日志存储）
+    ↓
+Grafana（统一可视化 + 统一告警）
+```
 
 ### 1.2 架构设计
 
@@ -29,39 +42,40 @@ OpenTelemetry API/SDK
     ├─ Metrics（指标监控）
     └─ Logs（日志记录）
     ↓
-OTel Collector（可选）
-    ├─ Receivers（接收器）
-    ├─ Processors（处理器）
-    └─ Exporters（导出器）
+OTel Collector（数据管道）
+    ├─ Receivers（接收器）── 接收 OTLP 数据
+    ├─ Processors（处理器）── 批处理、采样、属性增强
+    └─ Exporters（导出器）── 导出到 LGTM 后端
     ↓
-后端系统
-    ├─ Jaeger（链路追踪）
-    ├─ Prometheus（指标监控）
-    ├─ Elasticsearch（日志存储）
-    ├─ SkyWalking（APM）
-    └─ Grafana（可视化）
+LGTM 后端
+    ├─ Loki（日志存储，对象存储低成本）
+    ├─ Tempo（链路存储，对象存储无需索引）
+    ├─ Mimir（指标存储，水平扩展）
+    └─ Grafana（统一可视化与告警）
 ```
 
 ### 1.3 核心组件
 
-**1. API**：定义遥测数据的接口
-**2. SDK**：API 的实现
-**3. Instrumentation**：自动埋点库
-**4. Collector**：数据收集和处理
-**5. Exporters**：数据导出到后端
+| 组件 | 说明 | LGTM 体系中的角色 |
+|------|------|-------------------|
+| **API** | 定义遥测数据的接口规范 | 应用程序调用入口 |
+| **SDK** | API 的语言特定实现 | 生成符合 OTLP 的遥测数据 |
+| **Instrumentation** | 自动埋点库（Java Agent） | 零代码采集，覆盖 Spring Boot 生态 |
+| **Collector** | 独立的数据收集与处理服务 | 数据管道中枢，对接 LGTM 全栈 |
+| **OTLP** | OpenTelemetry Protocol | LGTM 原生支持的统一传输协议 |
 
 ---
 
 ## 2. 三大可观测性信号（Traces/Metrics/Logs）
 
-### 2.1 Traces（链路追踪）
+### 2.1 Traces（链路追踪）→ Tempo
 
-**概念**：记录请求在分布式系统中的完整路径。
+**概念**：记录请求在分布式系统中的完整路径，最终存储到 Tempo。
 
 **核心要素**：
-- **Trace**：一次完整的请求链路
+- **Trace**：一次完整的请求链路（对应 Tempo 中的一条 Trace）
 - **Span**：链路中的一个操作单元
-- **Context**：跨服务传播的上下文信息
+- **Context**：跨服务传播的上下文信息（通过 traceparent header）
 
 **数据模型**：
 
@@ -72,31 +86,30 @@ OTel Collector（可选）
   "parentSpanId": "0000000000000000",
   "name": "GET /api/orders",
   "kind": "SERVER",
-  "startTime": "2024-01-01T00:00:00.000Z",
-  "endTime": "2024-01-01T00:00:01.234Z",
+  "startTimeUnixNano": "1704067200000000000",
+  "endTimeUnixNano": "1704067201234000000",
   "attributes": {
     "http.method": "GET",
     "http.url": "/api/orders",
     "http.status_code": 200
   },
-  "events": [
-    {
-      "name": "查询数据库",
-      "timestamp": "2024-01-01T00:00:00.500Z"
-    }
-  ]
+  "status": {
+    "code": 1
+  }
 }
 ```
 
-### 2.2 Metrics（指标监控）
+Tempo 接收 OTLP Trace 数据后，以 **Trace ID 为键** 直接写入对象存储（S3/MinIO/GCS），**无需建立索引**，这是其低成本的核心原因。
 
-**概念**：数值型数据，用于监控系统性能和健康状态。
+### 2.2 Metrics（指标监控）→ Mimir
+
+**概念**：数值型数据，用于监控系统性能和健康状态，通过 Prometheus 兼容接口写入 Mimir。
 
 **指标类型**：
-- **Counter**：计数器（只增不减）
-- **Gauge**：仪表盘（可增可减）
-- **Histogram**：直方图（分布统计）
-- **Summary**：摘要（分位数统计）
+- **Counter**：计数器（只增不减，如请求总数）
+- **Gauge**：仪表盘（可增可减，如内存使用率）
+- **Histogram**：直方图（分布统计，如 P99 延迟）
+- **Summary**：摘要（客户端分位数）
 
 **数据模型**：
 
@@ -105,33 +118,36 @@ OTel Collector（可选）
   "name": "http_requests_total",
   "description": "HTTP请求总数",
   "unit": "1",
-  "type": "Counter",
   "dataPoints": [
     {
       "attributes": {
         "method": "GET",
         "status": "200"
       },
-      "value": 12345,
-      "timestamp": "2024-01-01T00:00:00.000Z"
+      "timeUnixNano": "1704067200000000000",
+      "asDouble": 12345
     }
   ]
 }
 ```
 
-### 2.3 Logs（日志记录）
+OTel Collector 将 Metrics 通过 Prometheus remote write 协议写入 Mimir，Mimir 对指标数据进行**长期水平扩展存储**。
 
-**概念**：结构化的事件记录。
+### 2.3 Logs（日志记录）→ Loki
+
+**概念**：结构化的事件记录，通过 OTLP 或 Promtail 写入 Loki。
 
 **数据模型**：
 
 ```json
 {
-  "timestamp": "2024-01-01T00:00:00.000Z",
+  "timeUnixNano": "1704067200000000000",
   "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "spanId": "00f067aa0ba902b7",
   "severityText": "INFO",
-  "body": "订单创建成功",
+  "body": {
+    "stringValue": "订单创建成功"
+  },
   "attributes": {
     "orderId": "123456",
     "userId": "789"
@@ -142,6 +158,8 @@ OTel Collector（可选）
 }
 ```
 
+Loki 将日志中的 `resource` 和 `attributes` 映射为 Loki Label（索引），日志正文（body）以**非索引的 chunk** 形式存入对象存储，显著降低存储成本。
+
 ---
 
 ## 3. OTel Java Agent 自动埋点
@@ -149,55 +167,51 @@ OTel Collector（可选）
 ### 3.1 下载 Java Agent
 
 ```bash
-# 下载 OpenTelemetry Java Agent
-wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.32.0/opentelemetry-javaagent.jar
+# 下载 OpenTelemetry Java Agent（最新版本）
+curl -L -o opentelemetry-javaagent.jar \
+  https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 ```
 
-### 3.2 配置 Java Agent
+### 3.2 配置 Java Agent 导出到 LGTM
 
 ```bash
-# 启动应用时添加 -javaagent 参数
+# 启动应用，通过 OTLP 统一导出到 OTel Collector（再由 Collector 分发到 LGTM）
 java -javaagent:opentelemetry-javaagent.jar \
      -Dotel.service.name=order-service \
+     -Dotel.resource.attributes=deployment.environment=production \
      -Dotel.traces.exporter=otlp \
      -Dotel.metrics.exporter=otlp \
      -Dotel.logs.exporter=otlp \
      -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
+     -Dotel.exporter.otlp.protocol=grpc \
      -jar order-service.jar
 ```
 
-### 3.3 配置文件方式
+### 3.3 环境变量配置方式
 
-**application.yml**：
+```bash
+# 推荐：通过环境变量配置（K8s ConfigMap / Docker env）
+export OTEL_SERVICE_NAME=order-service
+export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=otlp
+export OTEL_LOGS_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 
-```yaml
-# 使用环境变量配置
-otel:
-  service:
-    name: ${OTEL_SERVICE_NAME:order-service}
-  
-  traces:
-    exporter: ${OTEL_TRACES_EXPORTER:otlp}
-  
-  metrics:
-    exporter: ${OTEL_METRICS_EXPORTER:otlp}
-  
-  exporter:
-    otlp:
-      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
-      protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:grpc}
+java -javaagent:opentelemetry-javaagent.jar -jar order-service.jar
 ```
 
-### 3.4 自动埋点支持的框架
+### 3.4 自动埋点支持的框架（LGTM 场景覆盖）
 
-**支持的库和框架**：
-- ✅ Spring Boot / Spring MVC / Spring WebFlux
-- ✅ JDBC / Hibernate / MyBatis
-- ✅ HTTP Client（OkHttp、Apache HttpClient）
-- ✅ Kafka / RabbitMQ / Redis
-- ✅ gRPC / Dubbo
-- ✅ Servlet / Netty
-- ✅ Logging（Logback、Log4j2）
+| 类别 | 自动埋点覆盖 | LGTM 信号 |
+|------|-------------|-----------|
+| **Web 框架** | Spring MVC / WebFlux / Servlet | Traces + Metrics |
+| **HTTP 客户端** | RestTemplate / WebClient / OkHttp / Apache HttpClient | Traces |
+| **数据库** | JDBC / Hibernate / MyBatis / Redis / MongoDB | Traces + Metrics |
+| **消息队列** | Kafka / RabbitMQ / RocketMQ | Traces + Metrics |
+| **RPC** | gRPC / Dubbo | Traces |
+| **日志** | Logback / Log4j2（自动注入 TraceId） | Logs → Loki |
 
 ---
 
@@ -207,114 +221,131 @@ otel:
 
 ```xml
 <dependencies>
-    <!-- OpenTelemetry API -->
+    <!-- OpenTelemetry BOM -->
     <dependency>
         <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-api</artifactId>
-        <version>1.32.0</version>
-    </dependency>
-    
-    <!-- OpenTelemetry SDK -->
-    <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-sdk</artifactId>
-        <version>1.32.0</version>
-    </dependency>
-    
-    <!-- OTLP Exporter -->
-    <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-exporter-otlp</artifactId>
-        <version>1.32.0</version>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>1.36.0</version>
+        <type>pom</type>
+        <scope>import</scope>
     </dependency>
 </dependencies>
+
+<!-- 常用依赖 -->
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-api</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-sdk</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-exporter-otlp</artifactId>
+</dependency>
 ```
 
-### 4.2 手动创建 Span
+### 4.2 手动创建 Span（Trace → Tempo）
 
 ```java
 @Service
 @RequiredArgsConstructor
 public class OrderService {
-    
+
     private final Tracer tracer;
-    
+
     public Order createOrder(OrderDTO dto) {
-        // 创建 Span
         Span span = tracer.spanBuilder("createOrder")
             .setSpanKind(SpanKind.INTERNAL)
             .startSpan();
-        
+
         try (Scope scope = span.makeCurrent()) {
-            // 添加属性
             span.setAttribute("order.userId", dto.getUserId());
             span.setAttribute("order.amount", dto.getAmount().doubleValue());
-            
-            // 业务逻辑
+
             Order order = saveOrder(dto);
-            
-            // 添加事件
-            span.addEvent("订单创建成功", 
+
+            span.addEvent("订单创建成功",
                 Attributes.of(
                     AttributeKey.stringKey("orderId"), order.getId().toString()
                 ));
-            
+
             return order;
-            
+
         } catch (Exception e) {
-            // 记录异常
             span.recordException(e);
             span.setStatus(StatusCode.ERROR, "订单创建失败");
             throw e;
-            
         } finally {
-            // 结束 Span
             span.end();
         }
     }
 }
 ```
 
-### 4.3 自定义 Metrics
+### 4.3 自定义 Metrics（Metric → Mimir）
 
 ```java
 @Component
 public class OrderMetrics {
-    
+
     private final Meter meter;
     private final LongCounter orderCounter;
     private final DoubleHistogram orderAmountHistogram;
-    
+
     public OrderMetrics(OpenTelemetry openTelemetry) {
         this.meter = openTelemetry.getMeter("order-service");
-        
-        // 计数器：订单总数
+
         this.orderCounter = meter
             .counterBuilder("order.created.total")
             .setDescription("订单创建总数")
             .setUnit("1")
             .build();
-        
-        // 直方图：订单金额分布
+
         this.orderAmountHistogram = meter
             .histogramBuilder("order.amount")
             .setDescription("订单金额分布")
             .setUnit("CNY")
             .build();
     }
-    
+
     public void recordOrderCreated(Order order) {
-        // 增加计数
-        orderCounter.add(1, 
+        orderCounter.add(1,
             Attributes.of(
                 AttributeKey.stringKey("status"), order.getStatus().name()
             ));
-        
-        // 记录金额
+
         orderAmountHistogram.record(order.getAmount().doubleValue(),
             Attributes.of(
                 AttributeKey.stringKey("userId"), order.getUserId().toString()
             ));
+    }
+}
+```
+
+### 4.4 手动日志关联（Log → Loki）
+
+```java
+@Slf4j
+@Service
+public class OrderService {
+
+    public Order createOrder(OrderDTO dto) {
+        Span span = Span.current();
+        String traceId = span.getSpanContext().getTraceId();
+        String spanId = span.getSpanContext().getSpanId();
+
+        // 结构化日志，TraceId 自动关联 Loki ↔ Tempo
+        MDC.put("trace_id", traceId);
+        MDC.put("span_id", spanId);
+
+        log.info("开始创建订单 userId={} amount={}", dto.getUserId(), dto.getAmount());
+
+        Order order = saveOrder(dto);
+
+        log.info("订单创建成功 orderId={}", order.getId());
+        return order;
     }
 }
 ```
@@ -326,83 +357,43 @@ public class OrderMetrics {
 ### 5.1 Span 父子关系
 
 ```java
-@Service
-public class OrderService {
-    
-    private final Tracer tracer;
-    
-    public Order createOrder(OrderDTO dto) {
-        // 父 Span
-        Span parentSpan = tracer.spanBuilder("createOrder")
-            .setSpanKind(SpanKind.INTERNAL)
-            .startSpan();
-        
-        try (Scope scope = parentSpan.makeCurrent()) {
-            
-            // 子 Span 1：保存订单
-            Span saveSpan = tracer.spanBuilder("saveOrder")
-                .setParent(Context.current())  // 自动关联父 Span
-                .startSpan();
-            
-            try {
-                Order order = saveOrder(dto);
-                saveSpan.end();
-                
-                // 子 Span 2：扣减库存
-                Span inventorySpan = tracer.spanBuilder("deductInventory")
-                    .setParent(Context.current())
-                    .startSpan();
-                
-                try {
-                    deductInventory(order);
-                } finally {
-                    inventorySpan.end();
-                }
-                
-                return order;
-                
-            } catch (Exception e) {
-                saveSpan.recordException(e);
-                throw e;
-            }
-            
-        } finally {
-            parentSpan.end();
-        }
+Span parentSpan = tracer.spanBuilder("createOrder")
+    .setSpanKind(SpanKind.INTERNAL)
+    .startSpan();
+
+try (Scope scope = parentSpan.makeCurrent()) {
+    // 子 Span 自动关联父 Span
+    Span saveSpan = tracer.spanBuilder("saveOrder")
+        .setParent(Context.current())
+        .startSpan();
+    try {
+        saveOrder(dto);
+    } finally {
+        saveSpan.end();
     }
+
+    Span inventorySpan = tracer.spanBuilder("deductInventory")
+        .setParent(Context.current())
+        .startSpan();
+    try {
+        deductInventory(order);
+    } finally {
+        inventorySpan.end();
+    }
+} finally {
+    parentSpan.end();
 }
 ```
 
-### 5.2 跨服务 Context 传播
+### 5.2 跨服务 Context 传播（W3C Trace Context）
 
-**HTTP 请求传播**：
+OTel 默认使用 W3C Trace Context 标准，Tempo 原生兼容。
 
-```java
-// 自动传播（Java Agent 自动处理）
-// 通过 HTTP Header 传播：
-// traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
-// tracestate: ...
+**HTTP Header 自动传播**（Java Agent 自动处理）：
 
-// 手动传播
-@Component
-public class HttpClientInterceptor implements ClientHttpRequestInterceptor {
-    
-    @Override
-    public ClientHttpResponse intercept(
-            HttpRequest request, 
-            byte[] body, 
-            ClientHttpRequestExecution execution) throws IOException {
-        
-        // 注入当前 Span 信息到 Header
-        TextMapPropagator propagator = GlobalOpenTelemetry.getPropagators()
-            .getTextMapPropagator();
-        
-        propagator.inject(Context.current(), request.getHeaders(), 
-            (headers, key, value) -> headers.add(key, value));
-        
-        return execution.execute(request, body);
-    }
-}
+```
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+tracestate: vendor=value
 ```
 
 **消息队列传播**：
@@ -410,28 +401,25 @@ public class HttpClientInterceptor implements ClientHttpRequestInterceptor {
 ```java
 @Service
 public class OrderProducer {
-    
+
     private final StreamBridge streamBridge;
-    
+
     public void sendOrder(Order order) {
-        // 创建消息
-        Message<Order> message = MessageBuilder
-            .withPayload(order)
-            .build();
-        
-        // 注入 Trace Context 到消息头
+        Message<Order> message = MessageBuilder.withPayload(order).build();
+
         TextMapPropagator propagator = GlobalOpenTelemetry.getPropagators()
             .getTextMapPropagator();
-        
-        MessageHeaderAccessor accessor = new MessageHeaderAccessor();
-        propagator.inject(Context.current(), accessor, 
-            (headers, key, value) -> headers.setHeader(key, value));
-        
+
+        Map<String, String> headers = new HashMap<>();
+        propagator.inject(Context.current(), headers,
+            (map, key, value) -> map.put(key, value));
+
         Message<Order> enrichedMessage = MessageBuilder
             .fromMessage(message)
-            .copyHeaders(accessor.toMessageHeaders())
+            .copyHeaders(headers.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> (Object) e.getValue())))
             .build();
-        
+
         streamBridge.send("order-out-0", enrichedMessage);
     }
 }
@@ -439,33 +427,22 @@ public class OrderProducer {
 
 ---
 
-## 6. OTel Collector 数据收集与处理
+## 6. OTel Collector 数据收集与处理（LGTM 管道配置）
 
-### 6.1 Collector 架构
+### 6.1 Collector 在 LGTM 中的角色
 
 ```
-Receivers（接收器）
-    ├─ OTLP Receiver
-    ├─ Jaeger Receiver
-    ├─ Zipkin Receiver
-    └─ Prometheus Receiver
-    ↓
-Processors（处理器）
-    ├─ Batch Processor（批处理）
-    ├─ Attributes Processor（属性处理）
-    ├─ Resource Processor（资源处理）
-    └─ Tail Sampling Processor（尾部采样）
-    ↓
-Exporters（导出器）
-    ├─ OTLP Exporter
-    ├─ Jaeger Exporter
-    ├─ Prometheus Exporter
-    └─ Logging Exporter
+所有应用 → OTLP → Collector → LGTM 后端
+                     │
+                     ├─ 数据预处理（批处理、脱敏、过滤）
+                     ├─ 采样决策（尾部采样保留错误/慢 Trace）
+                     ├─ 属性增强（添加环境、集群标签）
+                     └─ 多后端路由（不同环境路由到不同 LGTM 实例）
 ```
 
-### 6.2 Collector 配置
+### 6.2 Collector 完整配置（对接 LGTM）
 
-**config.yaml**：
+**otel-collector-config.yaml**：
 
 ```yaml
 receivers:
@@ -475,85 +452,86 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  
-  prometheus:
-    config:
-      scrape_configs:
-        - job_name: 'otel-collector'
-          scrape_interval: 10s
-          static_configs:
-            - targets: ['localhost:8888']
 
 processors:
   batch:
     timeout: 10s
     send_batch_size: 1024
-  
-  attributes:
-    actions:
-      - key: environment
-        value: production
-        action: upsert
-  
+
+  # 资源属性增强
   resource:
     attributes:
+      - key: deployment.environment
+        value: production
+        action: upsert
       - key: service.instance.id
         value: ${env:HOSTNAME}
         action: upsert
-  
+
+  # 尾部采样：保留所有错误和慢请求
   tail_sampling:
-    decision_wait: 10s
-    num_traces: 100
-    expected_new_traces_per_sec: 10
+    decision_wait: 30s
+    num_traces: 50000
     policies:
       - name: errors-policy
         type: status_code
         status_code:
           status_codes: [ERROR]
-      
       - name: slow-traces-policy
         type: latency
         latency:
-          threshold_ms: 1000
-      
+          threshold_ms: 2000
       - name: probabilistic-policy
         type: probabilistic
         probabilistic:
           sampling_percentage: 10
 
+  # 内存限制
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1024
+    spike_limit_mib: 256
+
 exporters:
-  otlp/jaeger:
-    endpoint: jaeger:4317
+  # ====== Traces → Tempo ======
+  otlp/tempo:
+    endpoint: tempo:4317
     tls:
       insecure: true
-  
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-  
-  logging:
-    loglevel: debug
-  
-  elasticsearch:
-    endpoints: ["http://elasticsearch:9200"]
-    logs_index: "otel-logs"
+
+  # ====== Metrics → Mimir（通过 Prometheus remote write） ======
+  prometheusremotewrite:
+    endpoint: "http://mimir:9009/api/v1/push"
+    headers:
+      X-Scope-OrgID: "anonymous"
+
+  # ====== Logs → Loki ======
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
+
+  # 调试输出（仅开发环境）
+  debug:
+    verbosity: basic
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch, attributes, tail_sampling]
-      exporters: [otlp/jaeger, logging]
-    
+      processors: [memory_limiter, batch, tail_sampling, resource]
+      exporters: [otlp/tempo, debug]
+
     metrics:
-      receivers: [otlp, prometheus]
-      processors: [batch, resource]
-      exporters: [prometheus, logging]
-    
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheusremotewrite, debug]
+
     logs:
       receivers: [otlp]
-      processors: [batch, attributes]
-      exporters: [elasticsearch, logging]
-  
+      processors: [memory_limiter, batch, resource]
+      exporters: [otlphttp/loki, debug]
+
   telemetry:
     logs:
       level: "info"
@@ -561,132 +539,76 @@ service:
       address: "0.0.0.0:8888"
 ```
 
-### 6.3 部署 Collector
-
-**Docker Compose**：
+### 6.3 Docker Compose 部署 Collector
 
 ```yaml
 version: '3'
 services:
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.91.0
+    image: otel/opentelemetry-collector-contrib:0.102.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4317:4317"   # OTLP gRPC
+      - "4317:4317"   # OTLP gRPC（应用 → Collector）
       - "4318:4318"   # OTLP HTTP
-      - "8888:8888"   # Prometheus metrics
-      - "8889:8889"   # Prometheus exporter
+      - "8888:8888"   # Collector 自身指标
+    environment:
+      - HOSTNAME=${HOSTNAME}
 ```
 
 ---
 
-## 7. 多后端导出器（OTLP/Jaeger/Prometheus/Zipkin）
+## 7. OTLP 协议与 LGTM 后端导出
 
-### 7.1 导出到 Jaeger
+### 7.1 为什么 OTLP 是 LGTM 最佳选择
 
-**配置**：
+| 协议 | Loki | Tempo | Mimir | 说明 |
+|------|------|-------|-------|------|
+| **OTLP** | ✅ 原生 | ✅ 原生 | ✅ 原生 | LGTM 全栈优先支持 |
+| Jaeger Thrift | ❌ | ❌ | ❌ | 旧协议，不建议 |
+| Zipkin | ❌ | ✅ | ❌ | 仅 Tempo 部分支持 |
+| Prometheus remote write | ❌ | ❌ | ✅ 原生 | Mimir 标准写入方式 |
+
+### 7.2 各后端导出器对比
 
 ```yaml
+# 方式1：OTLP 统一导出（推荐，LGTM 全栈原生支持）
 exporters:
-  otlp/jaeger:
-    endpoint: jaeger:4317
-    tls:
-      insecure: true
+  otlp/tempo:
+    endpoint: tempo:4317
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
 
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp/jaeger]
-```
-
-### 7.2 导出到 Prometheus
-
-**配置**：
-
-```yaml
+# 方式2：Prometheus remote write → Mimir（Mimir 标准协议）
 exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-    namespace: "otel"
-    const_labels:
-      environment: "production"
-
-service:
-  pipelines:
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus]
-```
-
-**Prometheus 配置**：
-
-```yaml
-scrape_configs:
-  - job_name: 'otel-collector'
-    scrape_interval: 15s
-    static_configs:
-      - targets: ['otel-collector:8889']
-```
-
-### 7.3 导出到 Elasticsearch
-
-```yaml
-exporters:
-  elasticsearch:
-    endpoints: ["http://elasticsearch:9200"]
-    logs_index: "otel-logs-%{+yyyy.MM.dd}"
-    traces_index: "otel-traces-%{+yyyy.MM.dd}"
-    metrics_index: "otel-metrics-%{+yyyy.MM.dd}"
-
-service:
-  pipelines:
-    logs:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [elasticsearch]
+  prometheusremotewrite:
+    endpoint: "http://mimir:9009/api/v1/push"
 ```
 
 ---
 
 ## 8. 资源属性与语义约定（Semantic Conventions）
 
-### 8.1 资源属性
+### 8.1 LGTM 中关键资源属性
 
-**资源**：描述产生遥测数据的实体。
+在 LGTM 体系中，资源属性直接影响 Loki Label、Tempo Tag、Mimir Label 的生成。
 
 ```java
 @Bean
 public OpenTelemetry openTelemetry() {
-    Resource resource = Resource.create(
-        Attributes.of(
-            // 服务信息
+    Resource resource = Resource.getDefault().merge(
+        Resource.create(Attributes.of(
             ResourceAttributes.SERVICE_NAME, "order-service",
             ResourceAttributes.SERVICE_VERSION, "1.0.0",
             ResourceAttributes.SERVICE_NAMESPACE, "production",
-            ResourceAttributes.SERVICE_INSTANCE_ID, getHostname(),
-            
-            // 部署信息
             ResourceAttributes.DEPLOYMENT_ENVIRONMENT, "production",
-            
-            // 主机信息
             ResourceAttributes.HOST_NAME, getHostname(),
-            ResourceAttributes.HOST_ARCH, getHostArch(),
-            
-            // 容器信息
-            ResourceAttributes.CONTAINER_NAME, getContainerName(),
-            ResourceAttributes.CONTAINER_ID, getContainerId(),
-            
-            // Kubernetes 信息
-            ResourceAttributes.K8S_POD_NAME, getPodName(),
-            ResourceAttributes.K8S_NAMESPACE_NAME, getNamespace()
-        )
+            ResourceAttributes.K8S_NAMESPACE_NAME, getK8sNamespace(),
+            ResourceAttributes.K8S_POD_NAME, getK8sPodName()
+        ))
     );
-    
+
     return OpenTelemetrySdk.builder()
         .setTracerProvider(
             SdkTracerProvider.builder()
@@ -697,149 +619,119 @@ public OpenTelemetry openTelemetry() {
 }
 ```
 
-### 8.2 语义约定
-
-**HTTP 语义约定**：
+### 8.2 LGTM 常用语义约定
 
 ```java
+// HTTP 语义约定
 span.setAttribute(SemanticAttributes.HTTP_METHOD, "GET");
-span.setAttribute(SemanticAttributes.HTTP_URL, "/api/orders");
+span.setAttribute(SemanticAttributes.HTTP_ROUTE, "/api/orders/{id}");
 span.setAttribute(SemanticAttributes.HTTP_STATUS_CODE, 200);
-span.setAttribute(SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH, 1024L);
 span.setAttribute(SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH, 2048L);
-```
 
-**数据库语义约定**：
-
-```java
+// 数据库语义约定
 span.setAttribute(SemanticAttributes.DB_SYSTEM, "mysql");
 span.setAttribute(SemanticAttributes.DB_NAME, "order_db");
-span.setAttribute(SemanticAttributes.DB_STATEMENT, "SELECT * FROM orders WHERE id = ?");
 span.setAttribute(SemanticAttributes.DB_OPERATION, "SELECT");
+span.setAttribute(SemanticAttributes.DB_STATEMENT, "SELECT * FROM orders WHERE id = ?");
+
+// RPC 语义约定
+span.setAttribute(SemanticAttributes.RPC_SYSTEM, "grpc");
+span.setAttribute(SemanticAttributes.RPC_SERVICE, "OrderService");
+span.setAttribute(SemanticAttributes.RPC_METHOD, "CreateOrder");
 ```
 
 ---
 
 ## 9. 采样策略（头部采样/尾部采样）
 
-### 9.1 头部采样
-
-**在 Trace 开始时决定是否采样**：
+### 9.1 头部采样（SDK 层面）
 
 ```java
+// 生产环境常用：基于父 Span 决策的 10% 采样
 @Bean
 public Sampler sampler() {
-    // 1. 始终采样
-    return Sampler.alwaysOn();
-    
-    // 2. 从不采样
-    return Sampler.alwaysOff();
-    
-    // 3. 概率采样（10%）
-    return Sampler.traceIdRatioBased(0.1);
-    
-    // 4. 父级采样
     return Sampler.parentBased(Sampler.traceIdRatioBased(0.1));
 }
 ```
 
-### 9.2 尾部采样
+### 9.2 尾部采样（Collector 层面，推荐 LGTM 使用）
 
-**在 Trace 结束后决定是否保留**：
+尾部采样是 **LGTM + Tempo 推荐策略**：Traces 先全部接收，完成后再决定保留哪些。
 
 ```yaml
 processors:
   tail_sampling:
-    decision_wait: 10s
-    num_traces: 100
+    decision_wait: 30s
+    num_traces: 100000
     policies:
-      # 策略1：保留所有错误
-      - name: errors-policy
+      # 100% 保留错误 Trace
+      - name: errors
         type: status_code
         status_code:
           status_codes: [ERROR]
-      
-      # 策略2：保留慢请求（>1秒）
+
+      # 100% 保留慢请求（> 2s）
       - name: slow-traces
         type: latency
         latency:
-          threshold_ms: 1000
-      
-      # 策略3：10% 概率采样
+          threshold_ms: 2000
+
+      # 关键服务 100% 保留
+      - name: critical-services
+        type: string_attribute
+        string_attribute:
+          key: service.name
+          values: ["payment-service", "order-service"]
+
+      # 其他 10% 概率保留
       - name: probabilistic
         type: probabilistic
         probabilistic:
           sampling_percentage: 10
-      
-      # 策略4：特定服务100%采样
-      - name: critical-service
-        type: string_attribute
-        string_attribute:
-          key: service.name
-          values: ["payment-service"]
 ```
+
+**Tempo 优势**：由于 Tempo 使用对象存储且无需索引，可以承受更高的采样保留率，成本不会线性增长。
 
 ---
 
 ## 10. 性能优化与最佳实践
 
-### 10.1 批处理
+### 10.1 OTel Agent 优化
+
+```bash
+# 限制 Agent 自身资源消耗
+export OTEL_BSP_MAX_QUEUE_SIZE=2048
+export OTEL_BSP_MAX_EXPORT_BATCH_SIZE=512
+export OTEL_BSP_SCHEDULE_DELAY=5000
+export OTEL_METRIC_EXPORT_INTERVAL=30000
+
+# 生产环境合理采样率
+export OTEL_TRACES_SAMPLER=traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.1
+```
+
+### 10.2 Collector 性能优化
 
 ```yaml
 processors:
   batch:
-    timeout: 10s              # 批次超时时间
-    send_batch_size: 1024     # 批次大小
-    send_batch_max_size: 2048 # 最大批次大小
-```
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
 
-### 10.2 异步导出
-
-```java
-@Bean
-public OpenTelemetry openTelemetry() {
-    return OpenTelemetrySdk.builder()
-        .setTracerProvider(
-            SdkTracerProvider.builder()
-                .addSpanProcessor(
-                    BatchSpanProcessor.builder(
-                        OtlpGrpcSpanExporter.builder()
-                            .setEndpoint("http://localhost:4317")
-                            .build()
-                    )
-                    .setScheduleDelay(Duration.ofSeconds(1))
-                    .setMaxQueueSize(2048)
-                    .setMaxExportBatchSize(512)
-                    .build()
-                )
-                .build()
-        )
-        .build();
-}
-```
-
-### 10.3 最佳实践
-
-**1. 合理采样**：
-- 生产环境：10%-50% 采样
-- 错误和慢请求：100% 采样
-
-**2. 批量导出**：
-- 减少网络开销
-- 提高吞吐量
-
-**3. 异步处理**：
-- 避免阻塞业务逻辑
-- 使用队列缓冲
-
-**4. 资源限制**：
-```yaml
-processors:
   memory_limiter:
     check_interval: 1s
-    limit_mib: 512
-    spike_limit_mib: 128
+    limit_mib: 1024
+    spike_limit_mib: 256
 ```
+
+### 10.3 LGTM 最佳实践清单
+
+- **采样策略**：SDK 层 10% 头部采样 + Collector 层 100% 保留错误和慢请求
+- **批量导出**：使用 BatchSpanProcessor，减少网络 RPC 次数
+- **异步处理**：所有 Exporter 使用异步模式，不阻塞业务线程
+- **资源标签标准化**：统一 `service.name`、`deployment.environment` 命名规范
+- **Collector 高可用**：部署多实例 + 负载均衡，避免单点故障
 
 ---
 
@@ -849,19 +741,14 @@ processors:
 
 ```xml
 <dependencies>
-    <!-- Spring Boot 3.x Actuator -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    
-    <!-- Micrometer Tracing -->
     <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-bridge-otel</artifactId>
     </dependency>
-    
-    <!-- OTLP Exporter -->
     <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-otlp</artifactId>
@@ -869,50 +756,54 @@ processors:
 </dependencies>
 ```
 
-### 11.2 配置
+### 11.2 配置（Spring Boot 3.x 原生属性）
 
 ```yaml
+# application.yml
 management:
   tracing:
     sampling:
-      probability: 0.1  # 10% 采样
-  
+      probability: 0.1
+
   otlp:
     tracing:
-      endpoint: http://localhost:4318/v1/traces
-  
-  metrics:
-    export:
-      otlp:
+      endpoint: http://otel-collector:4318/v1/traces
+    metrics:
+      export:
         enabled: true
-        endpoint: http://localhost:4318/v1/metrics
+        endpoint: http://otel-collector:4318/v1/metrics
+
+  metrics:
+    tags:
+      service: order-service
+      environment: production
 ```
 
 ---
 
 ## 12. 面试要点
 
-**Q1：OpenTelemetry 的核心价值是什么？**
+**Q1：OTel 在 LGTM 体系中扮演什么角色？**
 
-统一的可观测性标准，厂商中立，支持 Traces/Metrics/Logs 三大信号。
+OTel 是统一数据采集标准，应用通过 OTel SDK/Agent + OTLP 协议将 Traces/Metrics/Logs 统一发送到 Collector，再由 Collector 分发到 Loki、Tempo、Mimir。核心价值是"一次埋点，全栈覆盖"。
 
-**Q2：什么是 Span 和 Trace？**
+**Q2：为什么 LGTM 推荐 OTLP 而非 Jaeger/Prometheus 原生协议？**
 
-- Trace：一次完整的请求链路
-- Span：链路中的一个操作单元
+OTLP 是统一协议，LGTM 全栈（Loki/Tempo/Mimir）均已原生支持 OTLP 接收。使用 OTLP 可以简化 Collector 配置，减少协议转换损耗。
 
-**Q3：头部采样和尾部采样的区别？**
+**Q3：头部采样和尾部采样的区别？LGTM 推荐哪种？**
 
-- 头部采样：在 Trace 开始时决定
-- 尾部采样：在 Trace 结束后决定（可保留所有错误和慢请求）
+- 头部采样：在 Trace 开始时决策（SDK 层面），10% 概率采样
+- 尾部采样：在 Trace 结束后决策（Collector 层面），可 100% 保留错误和慢请求
+- LGTM 推荐组合使用：SDK 层头部采样 + Collector 层尾部采样，Tempo 的对象存储特性使尾部采样成本可控
 
-**Q4：OTel Collector 的作用？**
+**Q4：OTel Collector 如何实现到 LGTM 的数据分发？**
 
-数据收集、处理和导出，支持多种接收器和导出器。
+通过 Pipeline 配置：Traces 管道 → otlp/tempo exporter，Metrics 管道 → prometheusremotewrite exporter（Mimir），Logs 管道 → otlphttp/loki exporter。
 
-**Q5：如何实现跨服务的链路追踪？**
+**Q5：如何确保 TraceId 在 Loki 和 Tempo 之间关联？**
 
-通过 Context Propagation，在 HTTP Header 或消息头中传播 TraceId 和 SpanId。
+OTel Collector 同时将 TraceId 写入 Tempo（作为 Trace ID）和 Loki（作为日志属性 Label），Grafana 自动通过 TraceId 实现 Loki 日志 ↔ Tempo Trace 的联动跳转。
 
 ---
 
@@ -920,9 +811,10 @@ management:
 
 **官方文档**：
 - [OpenTelemetry 官方文档](https://opentelemetry.io/docs/)
-- [OTel Java](https://opentelemetry.io/docs/instrumentation/java/)
+- [OTel Java Instrumentation](https://opentelemetry.io/docs/instrumentation/java/)
 - [OTel Collector](https://opentelemetry.io/docs/collector/)
+- [Grafana LGTM + OTel 集成指南](https://grafana.com/docs/opentelemetry/)
 
 ---
 
-**下一章预告**：第 34 章将学习 SkyWalking 分布式链路追踪，包括 SkyWalking 架构设计、服务端部署、接收 OTel 数据、链路追踪原理、拓扑图分析、告警配置等内容。
+**下一章预告**：第 34 章将学习 Grafana Tempo 分布式链路追踪，包括 Tempo 架构设计、部署方式、OTel Collector 对接、TraceQL 查询语言、低成本存储原理、服务依赖图生成等内容。

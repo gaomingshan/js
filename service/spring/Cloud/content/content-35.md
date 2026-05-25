@@ -1,503 +1,485 @@
-# 第 35 章：指标监控 - Prometheus & Grafana
+# 第 35 章：指标监控 - Grafana Mimir & Prometheus
 
-> **学习目标**：掌握 Prometheus + Grafana 监控体系、理解时序数据库原理、能够设计监控 Dashboard、能够配置告警策略  
-> **预计时长**：4-5 小时  
+> **学习目标**：掌握 Prometheus + Mimir 分层指标架构、理解 Mimir 水平扩展与高可用原理、能够设计 Grafana 监控 Dashboard、能够配置 Grafana Alerting 统一告警
+> **预计时长**：4-5 小时
 > **难度级别**：⭐⭐⭐⭐⭐ 高级
 
 ---
 
-## 1. Prometheus 架构与数据模型
+## 1. LGTM 指标架构：Prometheus → Mimir → Grafana
 
-### 1.1 Prometheus 简介
+### 1.1 三层指标存储架构
 
-**Prometheus**：开源的监控和告警系统，专为云原生环境设计。
+```
+                        采集层                    存储层                  可视化层
+                    ┌──────────┐           ┌──────────────┐        ┌──────────┐
+  Spring Boot ──→  │Prometheus│ ──remote──→│              │        │          │
+  (Actuator)       │(短期存储)│   write    │  Grafana     │ ──→   │ Grafana  │
+                    └──────────┘           │  Mimir       │        │          │
+  Nginx / K8s ──→  │Prometheus│ ──remote──→│ (长期存储)   │ ──→   │ Dashboard│
+  (Exporter)       │(HA 对)   │   write    │              │        │          │
+                    └──────────┘           └──────────────┘        └──────────┘
+```
 
-**核心特性**：
-- ✅ 多维数据模型（时间序列由指标名和标签定义）
-- ✅ 灵活的查询语言（PromQL）
-- ✅ 不依赖分布式存储
-- ✅ Pull 模式采集数据
-- ✅ 支持服务发现
-- ✅ 丰富的可视化和告警
+**角色分工**：
+- **Prometheus**：短期（2h-30d）本地存储 + 数据采集（Pull）+ 告警规则评估
+- **Mimir**：长期水平扩展存储（对象存储），接收 Prometheus remote write
+- **Grafana**：统一可视化 + Grafana Alerting 统一告警（替代 AlertManager）
 
-### 1.2 架构设计
+### 1.2 为什么需要 Mimir
+
+| 问题 | 仅用 Prometheus | Prometheus + Mimir |
+|------|----------------|-------------------|
+| **存储时限** | 受本地磁盘限制（通常 15d） | 对象存储，可保留 1 年+ |
+| **扩展性** | 单机，垂直扩展有限 | **水平扩展**，对等架构 |
+| **高可用** | 需部署 HA 对（双写） | 自带多副本复制 |
+| **查询性能** | 单机限制 | Querier 水平扩展，查询分流 |
+| **多租户** | 不支持 | 原生支持 `X-Scope-OrgID` |
+| **成本** | 本地 SSD 成本高 | 对象存储成本低 |
+
+---
+
+## 2. Prometheus 架构与数据模型
+
+### 2.1 Prometheus 架构
 
 ```
 Prometheus Server
-    ├─ Retrieval（数据采集）
-    │    ↓ Pull
-    │  Targets（监控目标）
-    │    ├─ Spring Boot Actuator
-    │    ├─ Node Exporter
-    │    ├─ MySQL Exporter
-    │    └─ Custom Exporter
-    │
-    ├─ TSDB（时序数据库）
-    │    ├─ 数据存储
-    │    └─ 数据压缩
-    │
-    ├─ PromQL（查询引擎）
-    │
-    └─ HTTP Server
-         ↓
-    Alertmanager（告警管理）
-         ↓
-    Grafana（可视化）
+    ├─ Retrieval（服务发现 + Pull 拉取）
+    │    ├─ Kubernetes SD（自动发现 Pod）
+    │    ├─ Static Config（静态配置）
+    │    └─ Consul / Eureka SD
+    ├─ TSDB（时序数据库，本地存储）
+    │    ├─ Head Block（内存 + WAL）
+    │    └─ Persistent Blocks（磁盘）
+    ├─ PromQL Engine（查询引擎）
+    └─ Rules Engine（规则引擎）
+         ├─ Recording Rules（预计算指标）
+         └─ Alerting Rules（告警规则）
 ```
 
-### 1.3 数据模型
+### 2.2 数据模型
 
-**时间序列**：
+Prometheus 将指标存为**时间序列**（Time Series），每条由**指标名** + **标签键值对**唯一标识。
 
 ```
-http_requests_total{method="GET", status="200", instance="localhost:8080"}  @1704096000  1234
-                    ↑                                                        ↑            ↑
-                  标签（Labels）                                          时间戳        值
-```
+指标名{标签1="值1", 标签2="值2"} 值 @时间戳
 
-**指标类型**：
-
-1. **Counter**：只增不减的计数器
-```
-http_requests_total
-jvm_gc_count_total
+# 示例
+http_requests_total{method="GET", handler="/api/orders", status="200"} 12345 @1704067200
+http_requests_total{method="POST", handler="/api/orders", status="201"} 891 @1704067200
 ```
 
-2. **Gauge**：可增可减的仪表盘
-```
-jvm_memory_used_bytes
-cpu_usage_percent
-```
+**标签设计原则**：
+- ✅ 低基数标签：`method`(GET/POST)、`status`(200/404/500)、`service`（服务名）
+- ❌ 高基数标签：`user_id`、`order_id`、`request_id`（会导致序列爆炸）
 
-3. **Histogram**：分布统计
-```
-http_request_duration_seconds_bucket{le="0.1"}  100
-http_request_duration_seconds_bucket{le="0.5"}  200
-http_request_duration_seconds_bucket{le="1.0"}  250
-```
+### 2.3 指标类型
 
-4. **Summary**：类似 Histogram，客户端计算分位数
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| **Counter** | 只增不减的累计值 | `http_requests_total` 请求总数 |
+| **Gauge** | 可增可减的瞬时值 | `jvm_memory_used_bytes` 内存使用 |
+| **Histogram** | 按桶分布统计（服务端计算分位数） | `http_request_duration_seconds` 请求耗时分布 |
+| **Summary** | 客户端分位数 | `http_request_duration_seconds{quantile="0.99"}` P99 |
+
+**Histogram 示例**：
+
 ```
-http_request_duration_seconds{quantile="0.5"}  0.15
-http_request_duration_seconds{quantile="0.9"}  0.45
-http_request_duration_seconds{quantile="0.99"}  0.95
+# 桶定义：0.05, 0.1, 0.5, 1, 2, 5, +Inf（秒）
+http_request_duration_seconds_bucket{le="0.05"} 100    # ≤50ms: 100 次
+http_request_duration_seconds_bucket{le="0.1"} 250      # ≤100ms: 250 次
+http_request_duration_seconds_bucket{le="0.5"} 900      # ≤500ms: 900 次
+http_request_duration_seconds_bucket{le="+Inf"} 1000    # 总计: 1000 次
 ```
 
 ---
 
-## 2. Prometheus Server 部署与配置
+## 3. Prometheus Server 部署与基础配置
 
-### 2.1 Docker 部署
-
-```yaml
-version: '3'
-services:
-  prometheus:
-    image: prom/prometheus:v2.45.0
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=15d'
-      - '--web.enable-lifecycle'
-
-volumes:
-  prometheus-data:
-```
-
-### 2.2 配置文件
+### 3.1 核心配置
 
 **prometheus.yml**：
 
 ```yaml
 global:
-  scrape_interval: 15s      # 抓取间隔
-  evaluation_interval: 15s  # 规则评估间隔
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    cluster: 'production'
-    region: 'us-east-1'
+    cluster: production
+    region: cn-east
 
-# 告警配置
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-            - alertmanager:9093
-
-# 规则文件
-rule_files:
-  - 'rules/*.yml'
-
-# 抓取配置
 scrape_configs:
-  # Prometheus 自监控
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-  
   # Spring Boot 应用
   - job_name: 'spring-boot'
     metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets:
-          - 'order-service:8080'
-          - 'user-service:8080'
-          - 'product-service:8080'
+    kubernetes_sd_configs:
+      - role: pod
     relabel_configs:
-      - source_labels: [__address__]
-        target_label: instance
-  
-  # Node Exporter（主机监控）
-  - job_name: 'node'
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: (.+):(?:\d+);(\d+)
+        replacement: $1:$2
+        target_label: __address__
+
+  # 静态配置
+  - job_name: 'order-service'
     static_configs:
-      - targets:
-          - 'node-exporter:9100'
-  
-  # MySQL Exporter
-  - job_name: 'mysql'
-    static_configs:
-      - targets:
-          - 'mysql-exporter:9104'
+      - targets: ['order-service:8080']
+        labels:
+          env: production
 ```
 
-### 2.3 启动 Prometheus
+### 3.2 Docker 部署
 
-```bash
-docker-compose up -d prometheus
+```yaml
+version: '3'
+services:
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-remote-write-receiver'
+      - '--enable-feature=otlp-write-receiver'
 
-# 访问 UI
-http://localhost:9090
+  prometheus-ha-2:
+    image: prom/prometheus:v2.50.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-ha-data:/prometheus
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+
+volumes:
+  prometheus-data:
+  prometheus-ha-data:
 ```
 
 ---
 
-## 3. OTel Metrics 导出到 Prometheus
+## 4. Grafana Mimir 架构与集群部署
 
-### 3.1 OTel Collector 配置
+### 4.1 Mimir 架构
+
+```
+┌─────────────────────────────────────────────────┐
+│                  Grafana Mimir                    │
+│                                                   │
+│  Distributor（分发层）                             │
+│    ├─ 接收 Prometheus remote write                │
+│    ├─ 校验数据合法性                               │
+│    └─ 按 Metric Name Hash 路由到 Ingester          │
+│  Ingester（写入层）                                │
+│    ├─ 内存缓冲最新数据                             │
+│    ├─ TSDB Head Block + WAL（短时持久）             │
+│    └─ 定期刷写 Block 到对象存储                    │
+│  Querier（查询层）                                 │
+│    ├─ 接收 Grafana / PromQL 查询                   │
+│    ├─ 查询 Ingester（最新数据）+ Store-gateway（历史）│
+│    └─ 合并去重返回结果                              │
+│  Store-gateway（历史数据网关）                     │
+│    ├─ 读取对象存储中的 Block                       │
+│    ├─ 缓存 Block Index                            │
+│    └─ 过滤不匹配的 Block                           │
+│  Compactor（压缩层）                               │
+│    ├─ 合并小 Block 为大 Block                      │
+│    ├─ 去重与降采样（Deduplication + Downsampling） │
+│    └─ 清理过期数据                                 │
+│  Query Frontend（查询前端）                        │
+│    ├─ 查询缓存（Query Results Cache）               │
+│    ├─ 查询分片并行执行                             │
+│    └─ 租户隔离                                     │
+└─────────────────────────────────────────────────┘
+        │ 读写
+        ↓
+    对象存储（S3 / MinIO / GCS / Azure Blob）
+```
+
+### 4.2 单机模式（快速体验）
+
+**mimir.yaml**：
 
 ```yaml
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
+target: all
+server:
+  http_listen_port: 9009
 
-processors:
-  batch:
-    timeout: 10s
+ingester:
+  ring:
+    kvstore:
+      store: memberlist
 
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /tmp/mimir/data
+
+ruler:
+  rule_path: /tmp/mimir/rules
+
+memberlist:
+  join_members:
+    - mimir:7946
+```
+
+**Docker 启动**：
+
+```bash
+docker run -d --name mimir \
+  -p 9009:9009 \
+  -v $(pwd)/mimir.yaml:/etc/mimir.yaml \
+  grafana/mimir:latest \
+  -config.file=/etc/mimir.yaml
+```
+
+### 4.3 微服务模式（生产部署）
+
+```yaml
+# mimir-prod.yaml — 使用 target: 指定组件
+# 每个组件单独部署一个进程
+
+# distributor.yaml
+target: distributor
+distributor:
+  pool:
+    health_check_ingesters: true
+ingester_client:
+  grpc_client_config:
+    max_recv_msg_size: 104857600
+    max_send_msg_size: 104857600
+
+# ingester.yaml
+target: ingester
+ingester:
+  ring:
+    replication_factor: 3
+    kvstore:
+      store: consul
+
+# querier.yaml
+target: querier
+querier:
+  max_concurrent: 50
+  query_ingesters_within: 3h
+
+# 统一的对象存储配置（所有组件共用）
+blocks_storage:
+  backend: s3
+  s3:
+    endpoint: s3.amazonaws.com
+    bucket_name: mimir-metrics
+    region: us-east-1
+  tsdb:
+    dir: /data/tsdb
+  bucket_store:
+    sync_dir: /data/tsdb-sync
+```
+
+### 4.4 Docker Compose 微服务部署
+
+```yaml
+version: '3'
+services:
+  mimir-distributor:
+    image: grafana/mimir:latest
+    volumes:
+      - ./distributor.yaml:/etc/mimir.yaml
+    ports:
+      - "9009:9009"
+    command: ["-config.file=/etc/mimir.yaml", "-target=distributor"]
+
+  mimir-ingester-1:
+    image: grafana/mimir:latest
+    volumes:
+      - ./ingester.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=ingester"]
+
+  mimir-ingester-2:
+    image: grafana/mimir:latest
+    volumes:
+      - ./ingester.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=ingester"]
+
+  mimir-ingester-3:
+    image: grafana/mimir:latest
+    volumes:
+      - ./ingester.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=ingester"]
+
+  mimir-querier:
+    image: grafana/mimir:latest
+    volumes:
+      - ./querier.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=querier"]
+
+  mimir-store-gateway:
+    image: grafana/mimir:latest
+    volumes:
+      - ./store-gateway.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=store-gateway"]
+
+  mimir-compactor:
+    image: grafana/mimir:latest
+    volumes:
+      - ./compactor.yaml:/etc/mimir.yaml
+    command: ["-config.file=/etc/mimir.yaml", "-target=compactor"]
+```
+
+---
+
+## 5. OTel Collector → Prometheus/Mimir 指标管道
+
+### 5.1 两条数据通道
+
+```
+通道1：Prometheus 原生路径（Pull 模型）
+  Spring Boot Actuator /metrics ──Pull──→ Prometheus ──remote_write──→ Mimir
+
+通道2：OTel Collector 路径（Push 模型）
+  应用 OTel SDK ──OTLP──→ Collector ──prometheusremotewrite──→ Mimir
+```
+
+### 5.2 Collector 配置（Metrics → Mimir）
+
+```yaml
 exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-    namespace: "otel"
+  prometheusremotewrite:
+    endpoint: "http://mimir:9009/api/v1/push"
+    headers:
+      X-Scope-OrgID: "anonymous"
+    resource_to_telemetry_conversion:
+      enabled: true
+    target_info:
+      enabled: true
 
 service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheusremotewrite]
 ```
 
-### 3.2 Prometheus 抓取 OTel Collector
+### 5.3 Prometheus Remote Write 配置
 
 ```yaml
-scrape_configs:
-  - job_name: 'otel-collector'
-    static_configs:
-      - targets: ['otel-collector:8889']
-```
-
-### 3.3 应用配置
-
-**Spring Boot 3.x**：
-
-```yaml
-management:
-  otlp:
-    metrics:
-      export:
-        enabled: true
-        url: http://localhost:4318/v1/metrics
-  
-  metrics:
-    tags:
-      application: ${spring.application.name}
-      environment: production
+# prometheus.yml — 通过 remote_write 将数据写入 Mimir
+remote_write:
+  - url: http://mimir:9009/api/v1/push
+    headers:
+      X-Scope-OrgID: anonymous
+    queue_config:
+      capacity: 2500
+      max_shards: 200
+      min_shards: 1
+      max_samples_per_send: 500
+      batch_send_deadline: 5s
+    write_relabel_configs:
+      # 过滤不需要长期存储的指标
+      - source_labels: [__name__]
+        regex: 'go_.*|process_.*'
+        action: drop
 ```
 
 ---
 
-## 4. Spring Boot Actuator 集成
+## 6. Spring Boot Actuator + Micrometer 集成
 
-### 4.1 添加依赖
+### 6.1 添加依赖
 
 ```xml
 <dependencies>
-    <!-- Spring Boot Actuator -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    
-    <!-- Micrometer Prometheus -->
     <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-otlp</artifactId>
+    </dependency>
 </dependencies>
 ```
 
-### 4.2 配置
+### 6.2 应用配置
 
 ```yaml
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus,health,info,metrics
-  
+        include: health,info,prometheus,metrics
   metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
     export:
       prometheus:
         enabled: true
-    
-    tags:
-      application: ${spring.application.name}
-      instance: ${HOSTNAME:localhost}
-      environment: ${SPRING_PROFILES_ACTIVE:dev}
-    
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true
+      otlp:
+        enabled: true
+        endpoint: http://otel-collector:4318/v1/metrics
+  endpoint:
+    prometheus:
+      enabled: true
 ```
 
-### 4.3 自定义指标
+### 6.3 自定义业务指标
 
 ```java
 @Component
-@RequiredArgsConstructor
 public class OrderMetrics {
-    
+
     private final MeterRegistry meterRegistry;
-    
-    /**
-     * Counter：订单创建总数
-     */
-    public void recordOrderCreated(Order order) {
-        meterRegistry.counter("order.created.total",
-            "status", order.getStatus().name(),
-            "payment_method", order.getPaymentMethod()
-        ).increment();
-    }
-    
-    /**
-     * Gauge：当前待处理订单数
-     */
-    @PostConstruct
-    public void registerPendingOrdersGauge() {
-        meterRegistry.gauge("order.pending.count",
-            Tags.empty(),
-            this,
-            metrics -> orderRepository.countByStatus(OrderStatus.PENDING)
-        );
-    }
-    
-    /**
-     * Timer：订单处理耗时
-     */
-    public void recordOrderProcessingTime(long durationMs) {
-        meterRegistry.timer("order.processing.duration",
-            Tags.empty()
-        ).record(durationMs, TimeUnit.MILLISECONDS);
-    }
-    
-    /**
-     * Distribution Summary：订单金额分布
-     */
-    public void recordOrderAmount(BigDecimal amount) {
-        meterRegistry.summary("order.amount",
-            Tags.empty()
-        ).record(amount.doubleValue());
-    }
-}
-```
+    private final Counter orderCreatedCounter;
+    private final Timer orderCreationTimer;
 
----
+    public OrderMetrics(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
 
-## 5. Micrometer 与 OTel 集成
+        // 订单创建计数器
+        this.orderCreatedCounter = Counter.builder("order.created.total")
+            .description("订单创建总数")
+            .tag("service", "order-service")
+            .register(meterRegistry);
 
-### 5.1 Micrometer 桥接
-
-**Spring Boot 3.x 原生支持**：
-
-```xml
-<dependency>
-    <groupId>io.micrometer</groupId>
-    <artifactId>micrometer-tracing-bridge-otel</artifactId>
-</dependency>
-```
-
-### 5.2 统一指标
-
-```java
-@Component
-public class UnifiedMetrics {
-    
-    private final MeterRegistry meterRegistry;
-    private final Tracer tracer;
-    
-    public void recordBusinessMetric(String operation, long duration) {
-        // Micrometer 指标
-        meterRegistry.timer("business.operation.duration",
-            "operation", operation
-        ).record(duration, TimeUnit.MILLISECONDS);
-        
-        // OTel Span 属性
-        Span span = tracer.spanBuilder(operation).startSpan();
-        try (Scope scope = span.makeCurrent()) {
-            span.setAttribute("duration_ms", duration);
-        } finally {
-            span.end();
-        }
-    }
-}
-```
-
----
-
-## 6. 核心指标类型（Counter/Gauge/Histogram/Summary）
-
-### 6.1 Counter（计数器）
-
-**使用场景**：统计事件发生次数
-
-```java
-@Component
-public class HttpMetrics {
-    
-    private final Counter requestCounter;
-    
-    public HttpMetrics(MeterRegistry registry) {
-        this.requestCounter = Counter.builder("http.requests.total")
-            .description("HTTP请求总数")
-            .tag("method", "GET")
-            .tag("status", "200")
-            .register(registry);
-    }
-    
-    public void recordRequest() {
-        requestCounter.increment();
-    }
-}
-```
-
-**PromQL 查询**：
-
-```promql
-# 每秒请求数（QPS）
-rate(http_requests_total[5m])
-
-# 总请求数
-sum(http_requests_total)
-
-# 按状态码分组
-sum by (status) (http_requests_total)
-```
-
-### 6.2 Gauge（仪表盘）
-
-**使用场景**：当前状态值
-
-```java
-@Component
-public class SystemMetrics {
-    
-    public SystemMetrics(MeterRegistry registry) {
-        // JVM 内存
-        registry.gauge("jvm.memory.used", 
-            Runtime.getRuntime(), 
-            runtime -> runtime.totalMemory() - runtime.freeMemory()
-        );
-        
-        // 线程数
-        registry.gauge("jvm.threads.count",
-            Thread.activeCount()
-        );
-    }
-}
-```
-
-**PromQL 查询**：
-
-```promql
-# 当前内存使用
-jvm_memory_used_bytes
-
-# 内存使用率
-jvm_memory_used_bytes / jvm_memory_max_bytes * 100
-```
-
-### 6.3 Histogram（直方图）
-
-**使用场景**：分布统计
-
-```java
-@Component
-public class LatencyMetrics {
-    
-    private final DistributionSummary latency;
-    
-    public LatencyMetrics(MeterRegistry registry) {
-        this.latency = DistributionSummary.builder("http.request.duration")
-            .description("HTTP请求耗时分布")
-            .baseUnit("milliseconds")
-            .publishPercentiles(0.5, 0.9, 0.95, 0.99)
-            .publishPercentileHistogram()
-            .register(registry);
-    }
-    
-    public void recordLatency(double ms) {
-        latency.record(ms);
-    }
-}
-```
-
-**PromQL 查询**：
-
-```promql
-# P99 延迟
-histogram_quantile(0.99, 
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
-)
-
-# 平均延迟
-rate(http_request_duration_seconds_sum[5m]) / 
-rate(http_request_duration_seconds_count[5m])
-```
-
-### 6.4 Summary（摘要）
-
-**使用场景**：客户端计算分位数
-
-```java
-@Component
-public class ResponseTimeMetrics {
-    
-    private final Timer timer;
-    
-    public ResponseTimeMetrics(MeterRegistry registry) {
-        this.timer = Timer.builder("api.response.time")
+        // 订单创建耗时分布
+        this.orderCreationTimer = Timer.builder("order.creation.duration")
+            .description("订单创建耗时")
             .publishPercentiles(0.5, 0.95, 0.99)
-            .register(registry);
+            .publishPercentileHistogram(true)
+            .sla(Duration.ofMillis(100), Duration.ofMillis(500), Duration.ofSeconds(1))
+            .register(meterRegistry);
     }
-    
-    public void record(Runnable operation) {
-        timer.record(operation);
+
+    public Order recordOrderCreation(Supplier<Order> supplier) {
+        orderCreatedCounter.increment();
+        return orderCreationTimer.record(supplier);
+    }
+
+    // Gauge 示例：当前待处理订单数
+    @Bean
+    public MeterBinder pendingOrdersGauge(OrderQueue queue) {
+        return registry -> Gauge.builder("order.pending.count", queue, OrderQueue::size)
+            .description("待处理订单数")
+            .register(registry);
     }
 }
 ```
@@ -509,681 +491,446 @@ public class ResponseTimeMetrics {
 ### 7.1 基础查询
 
 ```promql
-# 查询指标
+# 查询所有 HTTP 请求计数
 http_requests_total
 
 # 标签过滤
-http_requests_total{method="GET"}
 http_requests_total{method="GET", status="200"}
 
 # 正则匹配
-http_requests_total{instance=~".*:8080"}
+http_requests_total{handler=~"/api/.*"}
 
-# 范围查询
+# 排除过滤
+http_requests_total{status!~"5.."}
+
+# 时间范围查询（查询 5 分钟内的数据）
 http_requests_total[5m]
 ```
 
-### 7.2 聚合操作
+### 7.2 运算符与函数
 
 ```promql
-# 求和
-sum(http_requests_total)
-
-# 分组求和
-sum by (method) (http_requests_total)
-
-# 平均值
-avg(jvm_memory_used_bytes)
-
-# 最大值
-max(http_request_duration_seconds)
-
-# 最小值
-min(http_request_duration_seconds)
-
-# 计数
-count(up == 1)
-```
-
-### 7.3 速率计算
-
-```promql
-# 每秒增长率
+# rate()：计算每秒增长率（Counter 专用）
 rate(http_requests_total[5m])
 
-# 平均每秒增长（适用于Counter）
+# irate()：瞬时增长率
 irate(http_requests_total[5m])
 
-# 增量
+# increase()：区间内总增长
 increase(http_requests_total[1h])
+
+# sum() by()：按标签求和
+sum(rate(http_requests_total[5m])) by (service)
+
+# topk()：取前 K 个
+topk(5, sum(rate(http_requests_total[5m])) by (service))
+
+# histogram_quantile()：从 Histogram 计算分位数
+histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+
+# count() by()：计数
+count(up == 0) by (service)
+
+# absent()：检测指标缺失
+absent(up{job="order-service"})
 ```
 
-### 7.4 分位数
+### 7.3 常用 SLO 查询
 
 ```promql
+# 可用性（Availability = 成功请求 / 总请求）
+sum(rate(http_requests_total{status=~"2..|3.."}[5m])) by (service)
+  /
+sum(rate(http_requests_total[5m])) by (service)
+  * 100
+
 # P99 延迟
-histogram_quantile(0.99, 
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, method)
+histogram_quantile(0.99,
+  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
 )
-
-# P95 延迟
-histogram_quantile(0.95, 
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
-)
-```
-
-### 7.5 复杂查询
-
-```promql
-# QPS 突增检测（当前 QPS > 过去1小时平均值的2倍）
-rate(http_requests_total[5m]) > 
-2 * avg_over_time(rate(http_requests_total[5m])[1h:5m])
 
 # 错误率
-sum(rate(http_requests_total{status=~"5.."}[5m])) /
-sum(rate(http_requests_total[5m])) * 100
+sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+  /
+sum(rate(http_requests_total[5m])) by (service)
+  * 100
 
-# 可用性（SLA）
-(1 - 
-  sum(rate(http_requests_total{status=~"5.."}[5m])) /
-  sum(rate(http_requests_total[5m]))
-) * 100
+# QPS
+sum(rate(http_requests_total[1m])) by (service)
 ```
 
 ---
 
-## 8. 服务发现配置（static/file/consul/kubernetes）
+## 8. Recording Rules 与 Alerting Rules
 
-### 8.1 Static 配置
+### 8.1 Recording Rules（预计算指标）
 
-```yaml
-scrape_configs:
-  - job_name: 'spring-boot'
-    static_configs:
-      - targets:
-          - 'order-service:8080'
-          - 'user-service:8080'
-```
-
-### 8.2 File 服务发现
-
-**prometheus.yml**：
+**rules/recording.yml**：
 
 ```yaml
-scrape_configs:
-  - job_name: 'spring-boot'
-    file_sd_configs:
-      - files:
-          - 'targets/*.json'
-        refresh_interval: 30s
+groups:
+  - name: slo_metrics
+    interval: 30s
+    rules:
+      # 预计算 QPS
+      - record: job:http_requests_per_second:rate5m
+        expr: sum(rate(http_requests_total[5m])) by (service)
+
+      # 预计算 P99 延迟
+      - record: job:http_request_duration_p99:histogram_quantile
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+          )
+
+      # 预计算错误率
+      - record: job:http_requests_error_rate:rate5m
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(http_requests_total[5m])) by (service)
 ```
 
-**targets/services.json**：
-
-```json
-[
-  {
-    "targets": ["order-service:8080", "user-service:8080"],
-    "labels": {
-      "env": "production",
-      "team": "backend"
-    }
-  }
-]
-```
-
-### 8.3 Consul 服务发现
-
-```yaml
-scrape_configs:
-  - job_name: 'consul-services'
-    consul_sd_configs:
-      - server: 'consul:8500'
-        services: ['order-service', 'user-service']
-    
-    relabel_configs:
-      - source_labels: [__meta_consul_service]
-        target_label: service
-      - source_labels: [__meta_consul_tags]
-        target_label: tags
-```
-
-### 8.4 Kubernetes 服务发现
-
-```yaml
-scrape_configs:
-  - job_name: 'kubernetes-pods'
-    kubernetes_sd_configs:
-      - role: pod
-    
-    relabel_configs:
-      # 只抓取有 prometheus.io/scrape=true 注解的 Pod
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-      
-      # 使用注解指定端口
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        target_label: __address__
-        regex: (.+)
-        replacement: $1
-      
-      # 使用注解指定路径
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
-```
-
-**Pod 注解**：
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: order-service
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/actuator/prometheus"
-```
-
----
-
-## 9. Grafana 安装与数据源配置
-
-### 9.1 Docker 部署
-
-```yaml
-version: '3'
-services:
-  grafana:
-    image: grafana/grafana:10.0.0
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-
-volumes:
-  grafana-data:
-```
-
-### 9.2 配置数据源
-
-**grafana/provisioning/datasources/prometheus.yml**：
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus:9090
-    isDefault: true
-    editable: false
-```
-
-### 9.3 访问 Grafana
-
-```
-URL: http://localhost:3000
-默认用户名: admin
-默认密码: admin
-```
-
----
-
-## 10. Dashboard 设计与导入
-
-### 10.1 导入官方 Dashboard
-
-```
-1. 访问 https://grafana.com/grafana/dashboards/
-2. 搜索"Spring Boot"
-3. 复制 Dashboard ID（如：11378）
-4. Grafana UI → Dashboards → Import
-5. 输入 ID → Load
-6. 选择 Prometheus 数据源 → Import
-```
-
-**推荐 Dashboard**：
-- JVM (Micrometer)：ID 4701
-- Spring Boot 2.1：ID 11378
-- Node Exporter Full：ID 1860
-- MySQL Overview：ID 7362
-
-### 10.2 自定义 Dashboard
-
-**创建 Panel**：
-
-```json
-{
-  "title": "QPS",
-  "targets": [
-    {
-      "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (uri)",
-      "legendFormat": "{{uri}}"
-    }
-  ],
-  "type": "graph"
-}
-```
-
-### 10.3 变量配置
-
-```
-Name: instance
-Type: Query
-Query: label_values(http_server_requests_seconds_count, instance)
-```
-
-**使用变量**：
-
-```promql
-rate(http_server_requests_seconds_count{instance="$instance"}[5m])
-```
-
----
-
-## 11. 告警规则配置（AlertManager）
-
-### 11.1 告警规则
+### 8.2 Alerting Rules
 
 **rules/alerts.yml**：
 
 ```yaml
 groups:
-  - name: service_alerts
-    interval: 15s
+  - name: application_alerts
     rules:
-      # 服务下线告警
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(http_requests_total[5m])) by (service) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} 错误率超过 5%"
+          description: "当前错误率：{{ $value | humanizePercentage }}"
+
+      # P99 延迟告警
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} P99 延迟超过 2 秒"
+
+      # 服务不可用
       - alert: ServiceDown
         expr: up == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "服务 {{ $labels.instance }} 下线"
-          description: "{{ $labels.job }} 服务已下线超过1分钟"
-      
-      # 高错误率告警
-      - alert: HighErrorRate
+          summary: "{{ $labels.job }} 服务不可用"
+
+      # Mimir 专用：Ingester 内存过高
+      - alert: MimirIngesterHighMemory
         expr: |
-          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (uri) /
-          sum(rate(http_server_requests_seconds_count[5m])) by (uri) > 0.05
-        for: 5m
+          max by(pod) (container_memory_usage_bytes{
+            container="ingester",
+            namespace="mimir"
+          }) / 1024 / 1024 / 1024 > 4
+        for: 15m
         labels:
           severity: warning
         annotations:
-          summary: "接口 {{ $labels.uri }} 错误率过高"
-          description: "错误率: {{ $value | humanizePercentage }}"
-      
-      # 高延迟告警
-      - alert: HighLatency
-        expr: |
-          histogram_quantile(0.99,
-            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri)
-          ) > 1
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "接口 {{ $labels.uri }} P99延迟过高"
-          description: "P99延迟: {{ $value }}s"
-      
-      # JVM 内存告警
-      - alert: HighMemoryUsage
-        expr: |
-          jvm_memory_used_bytes{area="heap"} /
-          jvm_memory_max_bytes{area="heap"} > 0.9
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "实例 {{ $labels.instance }} 堆内存使用率过高"
-          description: "堆内存使用率: {{ $value | humanizePercentage }}"
-```
-
-### 11.2 AlertManager 配置
-
-**alertmanager.yml**：
-
-```yaml
-global:
-  resolve_timeout: 5m
-
-route:
-  group_by: ['alertname', 'cluster']
-  group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 12h
-  receiver: 'default'
-  
-  routes:
-    - match:
-        severity: critical
-      receiver: 'critical'
-      continue: true
-    
-    - match:
-        severity: warning
-      receiver: 'warning'
-
-receivers:
-  - name: 'default'
-    webhook_configs:
-      - url: 'http://webhook-service:8080/alerts'
-  
-  - name: 'critical'
-    email_configs:
-      - to: 'ops@example.com'
-        from: 'alertmanager@example.com'
-        smarthost: 'smtp.gmail.com:587'
-        auth_username: 'alertmanager@example.com'
-        auth_password: 'password'
-    
-    webhook_configs:
-      - url: 'https://oapi.dingtalk.com/robot/send?access_token=xxx'
-  
-  - name: 'warning'
-    webhook_configs:
-      - url: 'http://webhook-service:8080/alerts'
-
-inhibit_rules:
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'instance']
+          summary: "Mimir Ingester {{ $labels.pod }} 内存超过 4GB"
 ```
 
 ---
 
-## 12. JVM 监控面板
+## 9. Grafana Alerting 统一告警
 
-### 12.1 关键指标
+### 9.1 为什么用 Grafana Alerting 替代 AlertManager
 
-**JVM 内存**：
+| 对比维度 | AlertManager | Grafana Alerting |
+|---------|-------------|-----------------|
+| **配置方式** | YAML 文件（GitOps） | Grafana UI / API / Terraform |
+| **数据源** | 仅 Prometheus | Prometheus + Loki + Tempo + Mimir 等任意数据源 |
+| **告警管理** | 独立的 Web UI | Grafana 内置统一界面 |
+| **静默与抑制** | 手动配置 | UI 操作 + API |
+| **通知渠道** | Email/Slack/PagerDuty 等 | 同样支持，统一管理 |
+| **多数据源告警** | 不支持 | **支持（如 Loki 日志匹配 + Prometheus 指标同时触发）** |
+
+### 9.2 配置 Grafana Alerting
+
+```
+1. Grafana → Alerting → Alert rules → New alert rule
+2. 选择数据源：Mimir / Prometheus
+3. 输入 PromQL：
+   sum(rate(http_requests_total{status="500"}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+4. 配置评估频率：Every 1m
+5. 配置触发条件：For 5m
+6. 配置标签：severity=critical, team=backend
+7. 配置通知：
+   - Contact point: Slack #ops-alerts
+   - Message: "服务 {{ $labels.service }} 错误率 {{ $values.B.Value | humanizePercentage }}"
+8. 保存
+```
+
+### 9.3 创建 Contact Point
+
+```yaml
+# 通过 Grafana 配置文件
+alerting:
+  contact_points:
+    - name: ops-slack
+      type: slack
+      settings:
+        url: ${SLACK_WEBHOOK_URL}
+        title: "{{ .CommonLabels.alertname }}"
+        text: |
+          *告警：* {{ .CommonAnnotations.summary }}
+          *描述：* {{ .CommonAnnotations.description }}
+          *级别：* {{ .CommonLabels.severity }}
+
+    - name: ops-pagerduty
+      type: pagerduty
+      settings:
+        integration_key: ${PAGERDUTY_KEY}
+```
+
+---
+
+## 10. Grafana Dashboard 设计与 SLO 面板
+
+### 10.1 微服务性能 Dashboard
+
+**关键面板布局**：
+
+```
+┌────────────────────────────────────────────────────┐
+│  Row 1：概览                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐│
+│  │   QPS    │ │  P99延迟  │ │  错误率   │ │ 实例数  ││
+│  │  (Stat)  │ │  (Stat)  │ │  (Stat)  │ │ (Stat) ││
+│  └──────────┘ └──────────┘ └──────────┘ └────────┘│
+├────────────────────────────────────────────────────┤
+│  Row 2：QPS & Latency Trend                        │
+│  ┌──────────────────────┐ ┌──────────────────────┐│
+│  │ QPS by Service       │ │ P99 Latency by Svc   ││
+│  │ (Time Series)        │ │ (Time Series)        ││
+│  └──────────────────────┘ └──────────────────────┘│
+├────────────────────────────────────────────────────┤
+│  Row 3：错误分析                                    │
+│  ┌──────────────────────┐ ┌──────────────────────┐│
+│  │ Error Rate by Svc    │ │ 4xx vs 5xx           ││
+│  │ (Time Series)        │ │ (Stacked Bar)        ││
+│  └──────────────────────┘ └──────────────────────┘│
+├────────────────────────────────────────────────────┤
+│  Row 4：JVM                                         │
+│  ┌──────────┐ ┌──────────┐ ┌────────────────────┐│
+│  │Heap 使用 │ │ GC 次数  │ │ Thread 数           ││
+│  │  (Gauge) │ │ (Counter)│ │ (Gauge)            ││
+│  └──────────┘ └──────────┘ └────────────────────┘│
+└────────────────────────────────────────────────────┘
+```
+
+### 10.2 SLO Dashboard
 
 ```promql
-# 堆内存使用
-jvm_memory_used_bytes{area="heap"}
+# SLO：可用性 99.9%
+# 时间窗口：30 天
 
+# 当前 SLO 达标率
+(
+  sum(rate(http_requests_total{status=~"2..|3.."}[30d])) by (service)
+  /
+  sum(rate(http_requests_total[30d])) by (service)
+) * 100
+
+# 剩余错误预算
+(1 - sum(rate(http_requests_total{status=~"2..|3.."}[30d])) by (service)
+      / sum(rate(http_requests_total[30d])) by (service)) * 100
+
+# 错误预算燃尽率
+sum(rate(http_requests_total{status=~"5.."}[1h])) by (service)
+/
+(
+  sum(rate(http_requests_total[30d])) by (service) * 0.001  -- 0.1% error budget
+) * 100
+```
+
+---
+
+## 11. JVM 监控面板与业务指标自定义
+
+### 11.1 关键 JVM 指标
+
+```promql
 # 堆内存使用率
-jvm_memory_used_bytes{area="heap"} / 
-jvm_memory_max_bytes{area="heap"} * 100
+jvm_memory_used_bytes{area="heap"}
+  / jvm_memory_max_bytes{area="heap"} * 100
 
-# 各内存池使用情况
-jvm_memory_used_bytes{area="heap", id=~".*Eden.*|.*Survivor.*|.*Old.*"}
-```
+# GC 暂停时间
+rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m])
 
-**GC 指标**：
-
-```promql
-# GC 次数
-rate(jvm_gc_pause_seconds_count[5m])
-
-# GC 耗时
-rate(jvm_gc_pause_seconds_sum[5m])
-
-# GC 平均耗时
-rate(jvm_gc_pause_seconds_sum[5m]) /
-rate(jvm_gc_pause_seconds_count[5m])
-```
-
-**线程**：
-
-```promql
-# 线程总数
+# 线程数
 jvm_threads_live_threads
 
-# 守护线程
-jvm_threads_daemon_threads
+# CPU 使用率
+system_cpu_usage * 100
 
-# 峰值线程数
-jvm_threads_peak_threads
+# 数据库连接池使用率
+hikaricp_connections_active / hikaricp_connections_max * 100
 ```
 
-### 12.2 完整 Dashboard
-
-**导入 Dashboard JSON**：
-
-```json
-{
-  "dashboard": {
-    "title": "Spring Boot JVM 监控",
-    "panels": [
-      {
-        "title": "堆内存使用率",
-        "targets": [
-          {
-            "expr": "jvm_memory_used_bytes{area='heap'} / jvm_memory_max_bytes{area='heap'} * 100"
-          }
-        ]
-      },
-      {
-        "title": "GC 次数",
-        "targets": [
-          {
-            "expr": "rate(jvm_gc_pause_seconds_count[5m])"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
----
-
-## 13. 业务指标自定义（Custom Metrics）
-
-### 13.1 订单业务指标
-
-```java
-@Component
-@RequiredArgsConstructor
-public class OrderBusinessMetrics {
-    
-    private final MeterRegistry registry;
-    
-    // 订单创建总数
-    private final Counter orderCreated;
-    
-    // 订单金额分布
-    private final DistributionSummary orderAmount;
-    
-    // 当前待支付订单数
-    private final AtomicInteger pendingOrders = new AtomicInteger(0);
-    
-    @PostConstruct
-    public void init() {
-        // Counter
-        orderCreated = registry.counter("business.order.created.total");
-        
-        // Distribution Summary
-        orderAmount = DistributionSummary.builder("business.order.amount")
-            .baseUnit("CNY")
-            .publishPercentiles(0.5, 0.9, 0.99)
-            .register(registry);
-        
-        // Gauge
-        registry.gauge("business.order.pending.count", pendingOrders);
-    }
-    
-    public void recordOrderCreated(Order order) {
-        orderCreated.increment();
-        orderAmount.record(order.getAmount().doubleValue());
-        pendingOrders.incrementAndGet();
-    }
-}
-```
-
-### 13.2 Grafana 展示
-
-**PromQL 查询**：
+### 11.2 Mimir 自身监控
 
 ```promql
-# 每分钟订单数
-rate(business_order_created_total[5m]) * 60
-
-# 订单金额 P99
-business_order_amount{quantile="0.99"}
-
-# 待支付订单数
-business_order_pending_count
-```
-
----
-
-## 14. 高基数指标治理
-
-### 14.1 高基数问题
-
-**问题**：标签值过多导致时间序列爆炸
-
-```promql
-# ❌ 错误：用户ID作为标签（百万级）
-http_requests_total{user_id="123456"}
-
-# ✅ 正确：使用有限的标签
-http_requests_total{user_type="vip"}
-```
-
-### 14.2 优化策略
-
-**1. 限制标签数量**：
-
-```java
-// ❌ 错误
-meterRegistry.counter("api.calls",
-    "userId", userId,           // 高基数
-    "orderId", orderId,         // 高基数
-    "productId", productId);    // 高基数
-
-// ✅ 正确
-meterRegistry.counter("api.calls",
-    "userType", getUserType(userId),  // 低基数（vip/normal）
-    "category", getCategory(productId)); // 低基数
-```
-
-**2. 使用聚合**：
-
-```promql
-# 按用户类型聚合，而不是具体用户
-sum by (user_type) (business_order_created_total)
-```
-
-**3. 定期清理**：
-
-```yaml
-# Prometheus 配置
-global:
-  scrape_interval: 15s
-  
-# 存储保留时间
---storage.tsdb.retention.time=15d
-```
-
----
-
-## 15. 性能优化与存储配置
-
-### 15.1 性能优化
-
-**采样配置**：
-
-```yaml
-global:
-  scrape_interval: 15s      # 采样间隔
-  scrape_timeout: 10s       # 采样超时
-```
-
-**查询优化**：
-
-```promql
-# ❌ 慢查询：聚合后再计算
-sum(rate(http_requests_total[5m])) / sum(rate(http_requests_total[5m]))
-
-# ✅ 快查询：先计算再聚合
-sum(rate(http_requests_total[5m])) by (status) /
-sum(rate(http_requests_total[5m]))
-```
-
-### 15.2 存储配置
-
-```bash
-# 启动参数
-prometheus \
-  --storage.tsdb.path=/data \
-  --storage.tsdb.retention.time=15d \
-  --storage.tsdb.retention.size=50GB \
-  --storage.tsdb.min-block-duration=2h \
-  --storage.tsdb.max-block-duration=24h
-```
-
-### 15.3 远程存储
-
-**Thanos/Cortex 集成**：
-
-```yaml
-remote_write:
-  - url: "http://thanos-receiver:19291/api/v1/receive"
-    queue_config:
-      capacity: 10000
-      max_shards: 50
-      min_shards: 1
-      max_samples_per_send: 5000
-      batch_send_deadline: 5s
-```
-
----
-
-## 16. 面试要点
-
-**Q1：Prometheus 的数据模型是什么？**
-
-时间序列，由指标名和标签唯一标识，每个时间点有一个数值。
-
-**Q2：PromQL 中 rate 和 irate 的区别？**
-
-- rate：计算范围内的平均速率
-- irate：计算最近两个数据点的瞬时速率
-
-**Q3：如何计算 P99 延迟？**
-
-```promql
-histogram_quantile(0.99, 
-  sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+# Mimir Ingester 写入延迟
+histogram_quantile(0.99,
+  sum(rate(cortex_ingester_client_request_duration_seconds_bucket[5m])) by (le, operation)
 )
+
+# Mimir 压缩速率
+rate(cortex_compactor_blocks_compaction_duration_seconds_count[1h])
 ```
-
-**Q4：什么是高基数问题？**
-
-标签值过多导致时间序列数量爆炸，影响性能和存储。
-
-**Q5：如何优化 Prometheus 性能？**
-
-1. 限制标签基数
-2. 合理配置采样间隔
-3. 使用远程存储
-4. 优化 PromQL 查询
 
 ---
 
-## 17. 参考资料
+## 12. 高基数指标治理
+
+### 12.1 什么是高基数问题
+
+```
+# ❌ 错误：将 user_id 设为标签
+http_requests_total{user_id="user-12345", method="GET"} 1
+# 如果有 100 万用户，就会产生 100 万条时间序列，Mimir 内存爆炸
+
+# ✅ 正确：限制标签基数
+http_requests_total{method="GET", handler="/api/users/{id}"} 12345
+# 用 handler 模板化路径，标签基数可控
+```
+
+### 12.2 Mimir 基数限制
+
+```yaml
+limits:
+  # 单租户活跃序列上限
+  max_global_series_per_user: 1_000_000
+  max_global_series_per_metric: 20_000
+
+  # 单次查询最多返回序列数
+  max_fetched_series_per_query: 10000
+
+  # Label 基数限制
+  max_label_names_per_series: 30
+  max_label_value_length: 1024
+```
+
+### 12.3 最佳实践
+
+- **路径模板化**：`/api/orders/{id}` 而非 `/api/orders/12345`
+- **避免在标签中放用户 ID、请求 ID、IP 等**
+- **使用 Exemplar** 关联具体请求而不用标签
+- **启用 Cardinality Analysis**：Mimir 后端可分析基数最高的标签
+
+---
+
+## 13. 长期存储与对象存储成本优化
+
+### 13.1 降采样（Downsampling）
+
+Mimir 自动对历史数据降采样，降低存储成本：
+
+```
+原始数据（Raw）：   保存 0-6h，  全量精度
+5 分钟聚合：       保存 6h-30d， 5m 分辨率
+1 小时聚合：       保存 30d-1y， 1h 分辨率
+```
+
+### 13.2 对象存储配置
+
+```yaml
+blocks_storage:
+  backend: s3
+  s3:
+    endpoint: s3.amazonaws.com
+    bucket_name: mimir-metrics
+    region: us-east-1
+
+  # Bucket Store 配置
+  bucket_store:
+    # 索引缓存
+    index_cache:
+      backend: memcached
+      memcached:
+        addresses: memcached:11211
+    # 数据块缓存
+    chunks_cache:
+      backend: memcached
+      memcached:
+        addresses: memcached-chunks:11211
+
+  # TSDB 本地 WAL 配置
+  tsdb:
+    dir: /data/tsdb
+    ship_interval: 1m
+    block_ranges_period: [2h, 6h, 12h, 24h]
+```
+
+---
+
+## 14. Mimir vs VictoriaMetrics vs Thanos 对比
+
+| 维度 | Grafana Mimir | VictoriaMetrics | Thanos |
+|------|--------------|-----------------|--------|
+| **架构复杂度** | 中等（组件分离清晰） | **低**（单体/集群） | 高（依赖多） |
+| **存储后端** | 对象存储 | 本地磁盘 / 对象存储 | 对象存储 |
+| **Grafana 集成** | **原生深度集成** | 标准 Prometheus 数据源 | 标准 Prometheus 数据源 |
+| **多租户** | **原生支持** | 需额外配置 | 部分支持 |
+| **写入性能** | 高 | **极高** | 高 |
+| **查询缓存** | **内置**（Query Frontend） | 需外部缓存 | 需外部缓存 |
+| **LGTM 集成** | **天然一体** | 独立项目 | 独立项目 |
+| **License** | AGPLv3 | Apache 2.0 | Apache 2.0 |
+
+---
+
+## 15. 面试要点
+
+**Q1：Prometheus + Mimir 的分层架构优势是什么？**
+
+Prometheus 负责短期采集和告警评估（热数据，本地 SSD），Mimir 负责长期存储和水平扩展查询（冷/温数据，对象存储）。两层的职责分离使得采集层低延迟、存储层低成本。
+
+**Q2：Mimir 如何实现水平扩展？**
+
+所有组件无状态或使用对象存储：Distributor 无状态可横向扩展，Ingester 通过一致性哈希分散写入负载，Querier 无状态可横向扩展，Store-gateway 负载均衡读取对象存储。
+
+**Q3：PromQL 中 rate() 和 irate() 的区别？**
+
+`rate()` 计算区间内平均每秒增长率（平滑），适合长期趋势查看；`irate()` 取区间内最后两个数据点计算瞬时增长率，适合发现突发尖刺。
+
+**Q4：为什么用 Grafana Alerting 而非 AlertManager？**
+
+Grafana Alerting 支持**跨数据源告警**（如 Prometheus 指标异常 + Loki 日志模式匹配同时触发），统一管理告警规则、静默和通知渠道；AlertManager 仅能消费 Prometheus 告警。
+
+**Q5：Histogram 和 Summary 如何选择？**
+
+- Histogram：服务端聚合 + 服务端分位数（PromQL `histogram_quantile` 可跨服务计算全局 P99）
+- Summary：客户端直接计算分位数（无法跨实例聚合，但无需 PromQL 计算）
+- 推荐 Histogram，更灵活且在 LGTM 中 Mimir 可高效处理
+
+---
+
+## 16. 参考资料
 
 **官方文档**：
+- [Grafana Mimir 官方文档](https://grafana.com/docs/mimir/latest/)
 - [Prometheus 官方文档](https://prometheus.io/docs/)
-- [PromQL 教程](https://prometheus.io/docs/prometheus/latest/querying/basics/)
-- [Grafana 官方文档](https://grafana.com/docs/)
+- [PromQL 查询指南](https://prometheus.io/docs/prometheus/latest/querying/basics/)
+- [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/)
 
 ---
 
-**下一章预告**：第 36 章将学习 ELK 日志体系与三大信号关联，包括 ELK 架构、Logstash 日志解析、TraceId/SpanId 日志关联、Kibana 检索、Trace-Metric-Log 三大信号联动分析等内容。
+**下一章预告**：第 36 章将学习 Grafana Loki 日志体系，包括 Loki 架构设计、Label 最佳实践、LogQL 查询语言、Loki → Tempo 联动、LGTM 三信号协同分析等内容。

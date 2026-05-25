@@ -1,914 +1,693 @@
-# 第 34 章：分布式链路追踪 - SkyWalking
+# 第 34 章：分布式链路追踪 - Grafana Tempo
 
-> **学习目标**：掌握 SkyWalking 完整部署、理解链路追踪核心原理、能够分析服务拓扑与性能瓶颈、能够配置告警与自定义监控  
-> **预计时长**：4-5 小时  
+> **学习目标**：掌握 Tempo 完整部署与配置、理解 Tempo 低成本存储原理、能够使用 TraceQL 进行链路检索、能够分析服务拓扑与定位慢调用
+> **预计时长**：4-5 小时
 > **难度级别**：⭐⭐⭐⭐⭐ 高级
 
 ---
 
-## 1. SkyWalking 架构设计（OAP/UI/Agent）
+## 1. Tempo 架构设计
 
-### 1.1 SkyWalking 简介
+### 1.1 Grafana Tempo 简介
 
-**Apache SkyWalking**：开源的 APM（Application Performance Monitoring）系统，专为微服务、云原生和容器化架构设计。
+**Grafana Tempo**：Grafana Labs 开源的分布式链路追踪后端，专为低成本、对象存储和大规模场景设计。
 
-**核心能力**：
-- ✅ 分布式链路追踪
-- ✅ 服务拓扑图
-- ✅ 性能指标监控
-- ✅ 告警通知
-- ✅ 日志分析
-- ✅ 数据库监控
+**核心设计理念**：
+- ✅ **无需索引**：Trace 数据以 Trace ID 为键直接写入对象存储
+- ✅ **对象存储优先**：原生支持 S3/MinIO/GCS/Azure Blob，成本极低
+- ✅ **OTLP 原生**：通过 OTel Collector 接收 OTLP 数据
+- ✅ **与 Grafana 深度集成**：在 Grafana 中直接检索 Trace、查看瀑布图
+- ✅ **TraceQL**：类 PromQL 的 Trace 查询语言
+- ✅ **水平扩展**：组件无状态或使用对象存储，可无限水平扩展
 
 ### 1.2 架构组件
 
 ```
-SkyWalking Agent（探针）
-    ├─ Java Agent
-    ├─ .NET Agent
-    ├─ Node.js Agent
-    └─ Python Agent
-    ↓
-SkyWalking OAP（分析平台）
-    ├─ Receiver（接收器）
-    ├─ Aggregation（聚合）
-    ├─ Analysis（分析）
-    └─ Storage（存储）
-    ↓
-Storage（存储）
-    ├─ Elasticsearch
-    ├─ MySQL
-    ├─ TiDB
-    └─ BanyanDB
-    ↓
-SkyWalking UI（可视化界面）
-    ├─ 服务拓扑
-    ├─ 链路追踪
-    ├─ 性能指标
-    └─ 告警管理
+OTel Collector（数据管道）
+        │ OTLP gRPC (4317)
+        ↓
+┌─────────────────────────────────┐
+│         Grafana Tempo            │
+│                                  │
+│  Distributor（分发层）           │
+│    ├─ 接收 Span 数据             │
+│    ├─ 按 Trace ID 哈希路由       │
+│    └─ 写入 Ingester             │
+│  Ingester（写入层）              │
+│    ├─ 构建 Trace（聚合 Span）    │
+│    ├─ 刷写 Block 到对象存储      │
+│    └─ 内存缓冲最新数据           │
+│  Compactor（压缩层）             │
+│    ├─ 合并小 Block 为大 Block    │
+│    ├─ 后台去重与压缩             │
+│    └─ 提升查询效率               │
+│  Querier（查询层）               │
+│    ├─ 接收 Grafana 查询请求      │
+│    ├─ 搜索 Ingester + 对象存储   │
+│    └─ 合并返回完整 Trace         │
+│  Query Frontend（查询前端）      │
+│    ├─ 查询分片与负载均衡         │
+│    └─ 缓存与限流                 │
+└─────────────────────────────────┘
+        │ 读写
+        ↓
+    对象存储（S3 / MinIO / GCS / Azure Blob）
 ```
 
-### 1.3 数据流
+### 1.3 三种部署模式
 
-```
-应用服务
-    ↓ Agent 拦截
-Trace/Metrics/Logs
-    ↓ gRPC/HTTP
-OAP Server
-    ├─ 实时聚合
-    ├─ 数据分析
-    └─ 持久化存储
-    ↓
-Elasticsearch/MySQL
-    ↑ 查询
-SkyWalking UI
-```
+| 模式 | 适用场景 | 说明 |
+|------|---------|------|
+| **单机模式（Monolithic）** | 开发/测试 | 所有组件打包在一个进程中 |
+| **微服务模式（Scalable Monolithic）** | 生产（中等规模） | 按组件分离部署，可独立扩缩 |
+| **分布式模式（Microservices）** | 大规模生产 | 每个组件独立部署，K8s StatefulSet |
 
 ---
 
-## 2. SkyWalking 服务端部署（单机/集群）
+## 2. Tempo 服务端部署
 
-### 2.1 单机部署
+### 2.1 单机模式部署（快速体验）
 
-**下载 SkyWalking**：
-
-```bash
-# 下载 SkyWalking 9.5.0
-wget https://dlcdn.apache.org/skywalking/9.5.0/apache-skywalking-apm-9.5.0.tar.gz
-
-# 解压
-tar -zxvf apache-skywalking-apm-9.5.0.tar.gz
-cd apache-skywalking-apm-bin
-```
-
-**配置 OAP**（`config/application.yml`）：
+**tempo.yaml**：
 
 ```yaml
-cluster:
-  standalone:
-    # 单机模式
+server:
+  http_listen_port: 3200
 
-core:
-  default:
-    # 服务名称
-    restHost: ${SW_CORE_REST_HOST:0.0.0.0}
-    restPort: ${SW_CORE_REST_PORT:12800}
-    restContextPath: ${SW_CORE_REST_CONTEXT_PATH:/}
-    
-    # gRPC 配置
-    gRPCHost: ${SW_CORE_GRPC_HOST:0.0.0.0}
-    gRPCPort: ${SW_CORE_GRPC_PORT:11800}
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_duration: 30m
+  trace_idle_period: 10s
+  flush_all_on_shutdown: true
+
+compactor:
+  compaction:
+    block_retention: 48h
 
 storage:
-  selector: ${SW_STORAGE:elasticsearch}
-  elasticsearch:
-    namespace: ${SW_NAMESPACE:"skywalking"}
-    clusterNodes: ${SW_STORAGE_ES_CLUSTER_NODES:localhost:9200}
-    protocol: ${SW_STORAGE_ES_HTTP_PROTOCOL:"http"}
-    # 索引设置
-    indexShardsNumber: ${SW_STORAGE_ES_INDEX_SHARDS_NUMBER:1}
-    indexReplicasNumber: ${SW_STORAGE_ES_INDEX_REPLICAS_NUMBER:0}
-    # 数据保留时间
-    recordDataTTL: ${SW_STORAGE_ES_RECORD_DATA_TTL:7}  # 7天
-    metricsDataTTL: ${SW_STORAGE_ES_METRICS_DATA_TTL:7}
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
 
-receiver-sharing-server:
-  default:
+querier:
+  frontend_worker:
+    frontend_address: 0.0.0.0:9095
 
-receiver-trace:
-  default:
-    bufferPath: ${SW_RECEIVER_BUFFER_PATH:../trace-buffer/}
-    bufferOffsetMaxFileSize: ${SW_RECEIVER_BUFFER_OFFSET_MAX_FILE_SIZE:100}
-    bufferDataMaxFileSize: ${SW_RECEIVER_BUFFER_DATA_MAX_FILE_SIZE:500}
-    bufferFileCleanWhenRestart: ${SW_RECEIVER_BUFFER_FILE_CLEAN_WHEN_RESTART:false}
-    sampleRate: ${SW_TRACE_SAMPLE_RATE:10000}  # 采样率（10000 = 100%）
-
-receiver-otel:
-  default:
-    enabledHandlers: ${SW_OTEL_RECEIVER_ENABLED_HANDLERS:"oc"}  # 启用 OTel
-    enabledOtelMetricsRules: ${SW_OTEL_RECEIVER_ENABLED_OTEL_METRICS_RULES:""}
+query_frontend:
+  max_outstanding_per_tenant: 100
 ```
 
-**启动 OAP**：
+**Docker 启动**：
 
 ```bash
-# Linux/Mac
-bin/oapService.sh
-
-# Windows
-bin\oapService.bat
+docker run -d --name tempo \
+  -p 3200:3200 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -v $(pwd)/tempo.yaml:/etc/tempo.yaml \
+  grafana/tempo:latest \
+  -config.file=/etc/tempo.yaml
 ```
 
-**启动 UI**：
+### 2.2 生产部署（对象存储 + 微服务模式）
 
-```bash
-# Linux/Mac
-bin/webappService.sh
-
-# Windows
-bin\webappService.bat
-```
-
-**访问 UI**：http://localhost:8080
-
-### 2.2 集群部署
-
-**配置集群模式**（`config/application.yml`）：
+**tempo-prod.yaml**：
 
 ```yaml
-cluster:
-  selector: ${SW_CLUSTER:zookeeper}
-  zookeeper:
-    namespace: ${SW_NAMESPACE:"skywalking"}
-    hostPort: ${SW_CLUSTER_ZK_HOST_PORT:localhost:2181}
-    # Zookeeper 集群配置
-    baseSleepTimeMs: ${SW_CLUSTER_ZK_SLEEP_TIME:1000}
-    maxRetries: ${SW_CLUSTER_ZK_MAX_RETRIES:3}
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  # 可选：使用 Kafka 作为写入缓冲
+  # kafka:
+  #   topic: tempo-spans
+  #   brokers: [kafka:9092]
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: consul
+      replication_factor: 3
+  max_block_duration: 1h
+  max_block_bytes: 1_000_000_000  # 1GB
+
+compactor:
+  compaction:
+    block_retention: 720h  # 30天
+    compacted_block_retention: 1h
+
+# 对象存储配置（以 MinIO 为例）
+storage:
+  trace:
+    backend: s3
+    s3:
+      endpoint: minio:9000
+      bucket: tempo-traces
+      access_key: ${MINIO_ACCESS_KEY}
+      secret_key: ${MINIO_SECRET_KEY}
+      insecure: true
+    pool:
+      max_workers: 400
+      queue_depth: 2000
+
+# 覆盖写配置
+overrides:
+  max_bytes_per_trace: 50_000_000  # 单条 Trace 最大 50MB
+  max_search_bytes_per_trace: 10_000_000
 ```
 
-**Docker Compose 集群部署**：
+### 2.3 Docker Compose 完整部署
 
 ```yaml
 version: '3'
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+  tempo:
+    image: grafana/tempo:latest
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
     ports:
-      - "9200:9200"
-  
-  oap1:
-    image: apache/skywalking-oap-server:9.5.0
-    environment:
-      - SW_STORAGE=elasticsearch
-      - SW_STORAGE_ES_CLUSTER_NODES=elasticsearch:9200
-      - SW_CLUSTER=zookeeper
-      - SW_CLUSTER_ZK_HOST_PORT=zookeeper:2181
-    ports:
-      - "11800:11800"
-      - "12800:12800"
+      - "3200:3200"   # Tempo API
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    command: ["-config.file=/etc/tempo.yaml"]
     depends_on:
-      - elasticsearch
-      - zookeeper
-  
-  oap2:
-    image: apache/skywalking-oap-server:9.5.0
+      - minio
+
+  minio:
+    image: minio/minio:latest
     environment:
-      - SW_STORAGE=elasticsearch
-      - SW_STORAGE_ES_CLUSTER_NODES=elasticsearch:9200
-      - SW_CLUSTER=zookeeper
-      - SW_CLUSTER_ZK_HOST_PORT=zookeeper:2181
+      MINIO_ROOT_USER: tempo
+      MINIO_ROOT_PASSWORD: tempo123
     ports:
-      - "11801:11800"
-      - "12801:12800"
-    depends_on:
-      - elasticsearch
-      - zookeeper
-  
-  ui:
-    image: apache/skywalking-ui:9.5.0
-    environment:
-      - SW_OAP_ADDRESS=http://oap1:12800,http://oap2:12800
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
+  # Tempo 查询（可选，Grafana 已内置）
+  tempo-query:
+    image: grafana/tempo-query:latest
     ports:
-      - "8080:8080"
-    depends_on:
-      - oap1
-      - oap2
-  
-  zookeeper:
-    image: zookeeper:3.8
-    ports:
-      - "2181:2181"
+      - "16686:16686"
+    command: ["--grpc-storage-plugin.configuration-file=/etc/tempo-query.yaml"]
+    volumes:
+      - ./tempo-query.yaml:/etc/tempo-query.yaml
+
+volumes:
+  minio-data:
 ```
 
 ---
 
-## 3. 接收 OTel 数据（OTel Receiver 配置）
+## 3. OTel Collector → Tempo 链路数据管道
 
-### 3.1 启用 OTel Receiver
+### 3.1 端到端数据流
 
-**配置**（`config/application.yml`）：
-
-```yaml
-receiver-otel:
-  default:
-    enabledHandlers: ${SW_OTEL_RECEIVER_ENABLED_HANDLERS:"otlp-metrics,otlp-traces"}
-    enabledOtelMetricsRules: ${SW_OTEL_RECEIVER_ENABLED_OTEL_METRICS_RULES:"oap,vm,k8s-node,k8s-cluster,k8s/*"}
-
-receiver-sharing-server:
-  default:
-    restHost: ${SW_RECEIVER_SHARING_REST_HOST:0.0.0.0}
-    restPort: ${SW_RECEIVER_SHARING_REST_PORT:12800}
-    restContextPath: ${SW_RECEIVER_SHARING_REST_CONTEXT_PATH:/}
-    gRPCHost: ${SW_RECEIVER_SHARING_GRPC_HOST:0.0.0.0}
-    gRPCPort: ${SW_RECEIVER_SHARING_GRPC_PORT:11800}
+```
+Spring Boot App
+    │ OTel Java Agent
+    │ OTLP gRPC (4317)
+    ↓
+OTel Collector
+    │ 批处理 + 尾部采样
+    │ OTLP gRPC (4317)
+    ↓
+Grafana Tempo
+    │ Distributor → Ingester
+    │ Block 刷写
+    ↓
+对象存储（MinIO / S3）
+    │ Query
+    ↓
+Grafana
+    │ Explorer / Dashboard
+    ↓
+用户
 ```
 
-### 3.2 应用配置 OTel
-
-```yaml
-# 使用 OTel Java Agent 发送数据到 SkyWalking
-otel:
-  exporter:
-    otlp:
-      endpoint: http://localhost:11800
-      protocol: grpc
-  
-  resource:
-    attributes:
-      service.name: order-service
-      service.namespace: production
-```
-
-### 3.3 OTel Collector 转发
-
-**OTel Collector 配置**：
+### 3.2 Collector Tempo 导出器配置
 
 ```yaml
 exporters:
-  otlp/skywalking:
-    endpoint: skywalking-oap:11800
+  otlp/tempo:
+    endpoint: tempo:4317
     tls:
       insecure: true
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 5000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp/skywalking]
-    
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp/skywalking]
+      processors: [memory_limiter, batch, tail_sampling]
+      exporters: [otlp/tempo]
+```
+
+### 3.3 验证数据管道
+
+```bash
+# 1. 检查 Collector 是否连接到 Tempo
+curl http://tempo:3200/ready
+
+# 2. 查看 Tempo 是否正在接收数据
+curl http://tempo:3200/metrics | grep tempo_distributor_spans_received_total
+
+# 3. 在 Grafana Explorer 中搜索 Trace
+# 打开 Grafana → Explore → 选择 Tempo 数据源 → 搜索 Trace ID
 ```
 
 ---
 
-## 4. 链路追踪原理（TraceId/SpanId/Segment）
+## 4. 链路追踪原理
 
-### 4.1 核心概念
-
-**TraceId**：全局唯一标识一次请求链路
-
-**Segment**：一个服务内的链路片段
-
-**Span**：链路中的一个操作单元
-
-**数据模型**：
+### 4.1 Trace 与 Span 在 Tempo 中的表示
 
 ```
-Trace
-  ├─ Segment 1（服务A）
-  │    ├─ Span 1（HTTP请求）
-  │    ├─ Span 2（数据库查询）
-  │    └─ Span 3（Redis操作）
-  │
-  ├─ Segment 2（服务B）
-  │    ├─ Span 1（HTTP请求）
-  │    └─ Span 2（数据库查询）
-  │
-  └─ Segment 3（服务C）
-       └─ Span 1（HTTP请求）
+Trace ID: 4bf92f3577b34da6a3ce929d0e0e4736
+├── Span A (order-service: GET /api/orders)
+│   ├── startTime: 10:00:00.000
+│   ├── duration: 1.2s
+│   ├── Span B (order-service: SELECT orders)
+│   │   ├── startTime: 10:00:00.100
+│   │   └── duration: 800ms
+│   └── Span C (user-service: GET /api/users/1)
+│       ├── startTime: 10:00:00.200
+│       └── duration: 300ms
 ```
 
-### 4.2 Agent 拦截原理
+### 4.2 Span 关键字段
 
-**字节码增强**：
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `traceId` | 全局唯一 Trace ID | `4bf92f3577b34da6a3ce929d0e0e4736` |
+| `spanId` | Span 唯一 ID | `00f067aa0ba902b7` |
+| `parentSpanId` | 父 Span ID | `a1b2c3d4e5f6a7b8` |
+| `name` | 操作名称 | `GET /api/orders` |
+| `startTimeUnixNano` | 开始时间（纳秒） | `1704067200000000000` |
+| `endTimeUnixNano` | 结束时间（纳秒） | `1704067201200000000` |
+| `attributes` | 属性键值对 | `http.status_code`: 200 |
+| `status.code` | 状态码 | `0`=Unset, `1`=OK, `2`=Error |
 
-```
-SkyWalking Agent（基于 Byte Buddy）
-    ↓
-拦截目标方法
-    ├─ HTTP请求/响应
-    ├─ JDBC操作
-    ├─ Redis操作
-    ├─ Kafka消息
-    └─ RPC调用
-    ↓
-创建 Span
-    ├─ 开始时间
-    ├─ 操作类型
-    ├─ Tags（标签）
-    └─ Logs（日志）
-    ↓
-上报到 OAP
-```
+### 4.3 Tempo 存储机制
 
-### 4.3 跨服务传播
-
-**HTTP Header 传播**：
-
-```
-请求 Header：
-sw8: 1-MQ==-MQ==-3-bWVzaC1zdmM=-MS4yMzQ1Njc4OTAuMTIzNDU2Nzg5MC4xMjM0NTY3ODkwLjEyMzQ1Njc4OTA=-MS4xLjEuMS4xMjM0NTY3ODkw-MS4xMjM0NTY3ODkw-L2FwaS91c2Vycw==
-
-解析：
-- TraceId: 1-MQ==-MQ==-3
-- ParentSegmentId: bWVzaC1zdmM=
-- ParentSpanId: 0
-- ...
-```
+Tempo 按 **Trace ID 哈希** 将属于同一 Trace 的所有 Span 路由到同一个 Ingester，Ingester 收集完整的 Trace 后将整个 Trace 序列化为一个 Block 写入对象存储。由于以 Trace ID 为键直接读写（key-value 模式），**无需为 Span 属性建立全文索引**，这是低成本的核心。
 
 ---
 
-## 5. 拓扑图与服务依赖分析
+## 5. 对象存储后端配置
 
-### 5.1 服务拓扑图
-
-**查看拓扑**：
-
-```
-SkyWalking UI → Dashboard → Topology
-
-显示内容：
-- 服务节点
-- 服务调用关系
-- 调用次数
-- 响应时间
-- 错误率
-```
-
-**拓扑示例**：
-
-```
-[Gateway]
-    ↓ 100 cpm, 50ms, 0.1% error
-[Order Service]
-    ├─ → [Inventory Service] (50 cpm, 30ms)
-    ├─ → [Account Service] (50 cpm, 40ms)
-    └─ → [MySQL] (100 cpm, 10ms)
-
-[Inventory Service]
-    └─ → [Redis] (100 cpm, 2ms)
-
-[Account Service]
-    └─ → [MySQL] (50 cpm, 15ms)
-```
-
-### 5.2 服务依赖分析
-
-**依赖关系**：
-
-```sql
--- 查询服务依赖（Elasticsearch）
-GET /skywalking-service_relation-*/_search
-{
-  "query": {
-    "match_all": {}
-  }
-}
-```
-
-**响应**：
-
-```json
-{
-  "source": "order-service",
-  "dest": "inventory-service",
-  "componentId": 1,
-  "latency": 30,
-  "status": true,
-  "cpm": 50
-}
-```
-
-### 5.3 关键路径分析
-
-**查找最慢的调用链**：
-
-```
-SkyWalking UI → Trace → Query
-
-过滤条件：
-- Duration: > 1000ms
-- Service: order-service
-- Endpoint: GET /api/orders
-
-结果：
-- TraceId: xxx
-- 总耗时: 1234ms
-- Spans: 15个
-- 最慢操作: MySQL查询（800ms）
-```
-
----
-
-## 6. 慢调用定位与根因分析
-
-### 6.1 慢调用查询
-
-**查询慢Trace**：
-
-```
-SkyWalking UI → Trace → Query
-
-条件：
-- Min Duration: 1000ms
-- Time Range: 最近1小时
-- Service: order-service
-
-排序：Duration DESC
-```
-
-### 6.2 Trace 详情分析
-
-**Trace 视图**：
-
-```
-TraceId: 4bf92f3577b34da6a3ce929d0e0e4736
-Total Duration: 1234ms
-
-Timeline:
-├─ [0-1234ms] GET /api/orders (order-service)
-│   ├─ [10-50ms] Feign: GET /inventory/check (inventory-service)
-│   ├─ [50-90ms] Feign: GET /account/balance (account-service)
-│   ├─ [90-890ms] MySQL: SELECT * FROM orders WHERE user_id=? ← 慢！
-│   └─ [890-900ms] Redis: SET order:123
-│
-├─ [10-50ms] GET /inventory/check (inventory-service)
-│   └─ [20-45ms] Redis: GET inventory:100
-│
-└─ [50-90ms] GET /account/balance (account-service)
-    └─ [60-85ms] MySQL: SELECT * FROM account WHERE user_id=?
-```
-
-### 6.3 根因分析
-
-**分析步骤**：
-
-```
-1. 识别慢操作
-   → MySQL 查询耗时 800ms
-
-2. 查看 SQL 语句
-   → SELECT * FROM orders WHERE user_id=?
-
-3. 检查执行计划
-   → EXPLAIN SELECT * FROM orders WHERE user_id=?
-   → type: ALL（全表扫描）
-
-4. 根因
-   → user_id 字段未建索引
-
-5. 解决方案
-   → CREATE INDEX idx_user_id ON orders(user_id);
-```
-
-### 6.4 性能优化建议
-
-**SkyWalking 自动分析**：
-
-```
-Performance Insight:
-- 慢SQL检测
-- 慢HTTP请求
-- 高错误率接口
-- 内存泄漏风险
-```
-
----
-
-## 7. 性能指标采集（响应时间/吞吐量/错误率）
-
-### 7.1 服务指标
-
-**查看服务指标**：
-
-```
-SkyWalking UI → Service → 选择服务 → Metrics
-
-指标：
-- Response Time（响应时间）
-  - P99: 500ms
-  - P95: 300ms
-  - P50: 150ms
-  - Avg: 200ms
-
-- Throughput（吞吐量）
-  - CPM: 1000（每分钟调用次数）
-
-- Success Rate（成功率）
-  - 99.9%
-
-- SLA（服务等级协议）
-  - 99.95%
-```
-
-### 7.2 端点指标
-
-**查看端点指标**：
-
-```
-SkyWalking UI → Endpoint → 选择端点
-
-端点：GET /api/orders
-
-指标：
-- Response Time: 150ms
-- CPM: 500
-- Success Rate: 99.8%
-```
-
-### 7.3 实例指标
-
-**查看实例指标**：
-
-```
-SkyWalking UI → Instance → 选择实例
-
-实例：order-service-001
-
-指标：
-- JVM CPU: 45%
-- JVM Memory: 1.2GB / 2GB
-- JVM GC Time: 50ms
-- Thread Count: 120
-```
-
-### 7.4 数据库指标
-
-**查看数据库指标**：
-
-```
-SkyWalking UI → Database → 选择数据库
-
-数据库：MySQL-order-db
-
-指标：
-- Slow SQL Count: 10
-- Average Response Time: 15ms
-- Top 10 Slow SQLs
-```
-
----
-
-## 8. 告警规则配置与通知
-
-### 8.1 告警规则配置
-
-**配置文件**（`config/alarm-settings.yml`）：
+### 5.1 MinIO 配置（开发/自建环境）
 
 ```yaml
-rules:
-  # 服务响应时间告警
-  service_resp_time_rule:
-    metrics-name: service_resp_time
-    op: ">"
-    threshold: 1000  # 响应时间 > 1秒
-    period: 10       # 检查周期：10分钟
-    count: 3         # 连续3次触发
-    silence-period: 5  # 静默期：5分钟
-    message: "服务 {name} 响应时间过长"
-  
-  # 服务成功率告警
-  service_sla_rule:
-    metrics-name: service_sla
-    op: "<"
-    threshold: 9500  # 成功率 < 95%
-    period: 10
-    count: 2
-    silence-period: 3
-    message: "服务 {name} 成功率过低: {value}%"
-  
-  # 端点响应时间告警
-  endpoint_resp_time_rule:
-    metrics-name: endpoint_resp_time
-    op: ">"
-    threshold: 1000
-    period: 10
-    count: 2
-    message: "端点 {name} 响应时间过长: {value}ms"
-  
-  # JVM 内存告警
-  instance_jvm_memory_pool_heap_usage_rule:
-    metrics-name: instance_jvm_memory_pool_heap_usage
-    op: ">"
-    threshold: 90  # 堆内存使用率 > 90%
-    period: 10
-    count: 3
-    message: "实例 {name} 堆内存使用率过高: {value}%"
-  
-  # 数据库慢SQL告警
-  database_access_resp_time_rule:
-    metrics-name: database_access_resp_time
-    threshold: 1000
-    op: ">"
-    period: 10
-    count: 2
-    message: "数据库 {name} 响应时间过长: {value}ms"
-
-webhooks:
-  - http://webhook.example.com/skywalking/alert
-
-dingtalkHooks:
-  - url: https://oapi.dingtalk.com/robot/send?access_token=xxx
-    secret: SEC***
-
-wechatHooks:
-  - url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-
-slackHooks:
-  - url: https://hooks.slack.com/services/xxx
+storage:
+  trace:
+    backend: s3
+    s3:
+      endpoint: minio:9000
+      bucket: tempo-traces
+      access_key: ${MINIO_ACCESS_KEY}
+      secret_key: ${MINIO_SECRET_KEY}
+      insecure: true
+      # 使用路径风格访问（MinIO 需要）
+      forcepathstyle: true
 ```
 
-### 8.2 Webhook 告警
+### 5.2 AWS S3 配置（生产环境）
 
-**实现 Webhook 接收器**：
-
-```java
-@RestController
-@RequestMapping("/skywalking")
-@Slf4j
-public class SkyWalkingAlertController {
-    
-    @PostMapping("/alert")
-    public void receiveAlert(@RequestBody List<AlarmMessage> alarmMessages) {
-        for (AlarmMessage alarm : alarmMessages) {
-            log.error("SkyWalking 告警：{}", alarm);
-            
-            // 处理告警
-            handleAlert(alarm);
-        }
-    }
-    
-    private void handleAlert(AlarmMessage alarm) {
-        // 1. 记录到数据库
-        saveAlertToDb(alarm);
-        
-        // 2. 发送钉钉通知
-        sendDingTalkNotification(alarm);
-        
-        // 3. 发送邮件
-        sendEmailNotification(alarm);
-        
-        // 4. 创建工单
-        createTicket(alarm);
-    }
-}
-
-@Data
-public class AlarmMessage {
-    private int scopeId;
-    private String scope;
-    private String name;
-    private String id0;
-    private String id1;
-    private String ruleName;
-    private String alarmMessage;
-    private long startTime;
-}
+```yaml
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: tempo-traces
+      endpoint: s3.amazonaws.com
+      # 使用 IAM Role 或环境变量认证
+      region: us-east-1
 ```
 
-### 8.3 钉钉告警
+### 5.3 GCS 配置
 
-**钉钉机器人消息格式**：
-
-```java
-@Service
-public class DingTalkNotifier {
-    
-    private final RestTemplate restTemplate;
-    private final String webhookUrl = "https://oapi.dingtalk.com/robot/send?access_token=xxx";
-    
-    public void sendAlert(AlarmMessage alarm) {
-        Map<String, Object> message = new HashMap<>();
-        message.put("msgtype", "markdown");
-        
-        Map<String, String> markdown = new HashMap<>();
-        markdown.put("title", "SkyWalking 告警");
-        markdown.put("text", String.format(
-            "### SkyWalking 告警通知\n\n" +
-            "- **告警规则**：%s\n" +
-            "- **服务名称**：%s\n" +
-            "- **告警内容**：%s\n" +
-            "- **触发时间**：%s\n" +
-            "\n> 请及时处理！",
-            alarm.getRuleName(),
-            alarm.getName(),
-            alarm.getAlarmMessage(),
-            formatTime(alarm.getStartTime())
-        ));
-        
-        message.put("markdown", markdown);
-        
-        restTemplate.postForEntity(webhookUrl, message, String.class);
-    }
-}
+```yaml
+storage:
+  trace:
+    backend: gcs
+    gcs:
+      bucket_name: tempo-traces
+      # 使用 GOOGLE_APPLICATION_CREDENTIALS 环境变量
 ```
 
 ---
 
-## 9. 自定义插件开发
+## 6. TraceQL 查询语言
 
-### 9.1 插件开发基础
+### 6.1 TraceQL 概述
 
-**创建自定义插件**：
+**TraceQL**：Tempo 的原生查询语言，灵感来源于 PromQL，用于从海量 Trace 数据中精确检索感兴趣的 Span。
 
-```java
-@PluginConfig(namespace = "custom-plugin")
-public class CustomInstrumentation extends ClassInstanceMethodsEnhancePluginDefine {
-    
-    @Override
-    protected ClassMatch enhanceClass() {
-        // 指定要增强的类
-        return NameMatch.byName("com.example.CustomService");
-    }
-    
-    @Override
-    public ConstructorInterceptPoint[] getConstructorsInterceptPoints() {
-        return new ConstructorInterceptPoint[0];
-    }
-    
-    @Override
-    public InstanceMethodsInterceptPoint[] getInstanceMethodsInterceptPoints() {
-        return new InstanceMethodsInterceptPoint[] {
-            new InstanceMethodsInterceptPoint() {
-                @Override
-                public ElementMatcher<MethodDescription> getMethodsMatcher() {
-                    // 指定要拦截的方法
-                    return named("customMethod");
-                }
-                
-                @Override
-                public String getMethodsInterceptor() {
-                    // 指定拦截器类
-                    return "com.example.CustomMethodInterceptor";
-                }
-                
-                @Override
-                public boolean isOverrideArgs() {
-                    return false;
-                }
-            }
-        };
-    }
-}
+### 6.2 基础查询
+
+```traceql
+# 查询所有调用 payment-service 的 Trace
+{ .service.name = "payment-service" }
+
+# 查询 HTTP 状态码为 500 的 Trace
+{ .http.status_code = 500 }
+
+# 查询耗时超过 2 秒的 Span
+{ duration > 2s }
+
+# 查询特定接口
+{ .http.method = "POST" && .http.route = "/api/orders" }
+
+# 查询包含错误的 Trace
+{ status = error }
 ```
 
-**实现拦截器**：
+### 6.3 Pipeline 查询（Span 间关系）
 
-```java
-public class CustomMethodInterceptor implements InstanceMethodsAroundInterceptor {
-    
-    @Override
-    public void beforeMethod(EnhancedInstance objInst, Method method, 
-                             Object[] allArguments, Class<?>[] argumentsTypes,
-                             MethodInterceptResult result) {
-        // 方法执行前
-        AbstractSpan span = ContextManager.createLocalSpan("customMethod");
-        span.setComponent(new StringTag(1, "CustomComponent"));
-        span.tag(new StringTag(0, "custom.tag"), "value");
-    }
-    
-    @Override
-    public Object afterMethod(EnhancedInstance objInst, Method method, 
-                              Object[] allArguments, Class<?>[] argumentsTypes,
-                              Object ret) {
-        // 方法执行后
-        ContextManager.stopSpan();
-        return ret;
-    }
-    
-    @Override
-    public void handleMethodException(EnhancedInstance objInst, Method method,
-                                       Object[] allArguments, Class<?>[] argumentsTypes,
-                                       Throwable t) {
-        // 异常处理
-        AbstractSpan span = ContextManager.activeSpan();
-        span.log(t);
-        span.errorOccurred();
-    }
-}
+```traceql
+# 查询调用了 payment-service 并且内部调用了数据库的 Trace
+{ .service.name = "payment-service" } >> { .db.system = "mysql" }
+
+# 查询从 order-service 调用 user-service 且 user-service 返回错误的 Trace
+{ .service.name = "order-service" } >> { .service.name = "user-service" && status = error }
+
+# 查询 order-service 中耗时 > 500ms 的数据库调用
+{ .service.name = "order-service" } >> { .db.system = "mysql" && duration > 500ms }
+```
+
+### 6.4 聚合查询
+
+```traceql
+# 统计每个服务的平均耗时
+{ } | avg(duration) by(.service.name)
+
+# 统计每分钟错误请求数
+{ status = error } | rate() by(.service.name)
+
+# 统计 P99 耗时按服务分组
+{ } | quantile(duration, 0.99) by(.service.name)
+```
+
+### 6.5 Grafana 中的 TraceQL 使用
+
+```
+1. Grafana → Explore
+2. 数据源选择 "Tempo"
+3. Query type 选择 "TraceQL"
+4. 输入查询：{ .service.name = "order-service" && status = error }
+5. 时间范围：Last 30 minutes
+6. 点击 "Run query"
+7. 在结果列表中点击 Trace ID 查看瀑布图
 ```
 
 ---
 
-## 10. SkyWalking vs Jaeger vs Zipkin 对比
+## 7. Grafana 中 Trace 检索与瀑布图分析
 
-### 10.1 功能对比
+### 7.1 配置 Grafana Tempo 数据源
 
-| 功能 | SkyWalking | Jaeger | Zipkin |
-|------|------------|--------|--------|
-| **链路追踪** | ✅ | ✅ | ✅ |
-| **服务拓扑** | ✅ | ⚠️ 有限 | ❌ |
-| **性能指标** | ✅ | ⚠️ 基础 | ❌ |
-| **告警通知** | ✅ | ❌ | ❌ |
-| **日志分析** | ✅ | ❌ | ❌ |
-| **JVM监控** | ✅ | ❌ | ❌ |
-| **数据库监控** | ✅ | ❌ | ❌ |
-| **OTel支持** | ✅ | ✅ | ✅ |
-| **Agent侵入** | 低 | 低 | 低 |
-| **性能开销** | 低 | 低 | 低 |
+**Grafana → Connections → Data sources → Add data source → Tempo**
 
-### 10.2 存储对比
+```yaml
+# 或通过 Grafana 配置文件
+datasources:
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: "loki"        # 关联 Loki 日志
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+        filterByTraceID: true
+        filterBySpanID: true
+        tags: [{ key: "service.name", value: "service_name" }]
+      tracesToMetrics:
+        datasourceUid: "prometheus"  # 关联 Mimir 指标
+        queries:
+          - name: "请求速率"
+            query: "rate(http_requests_total{service_name='$${__span.tags.service.name}'}[5m])"
+```
 
-| 存储 | SkyWalking | Jaeger | Zipkin |
-|------|------------|--------|--------|
-| **Elasticsearch** | ✅ | ✅ | ✅ |
-| **MySQL** | ✅ | ❌ | ✅ |
-| **Cassandra** | ❌ | ✅ | ✅ |
-| **Kafka** | ❌ | ✅ | ❌ |
-| **自研存储** | ✅ BanyanDB | ❌ | ❌ |
+### 7.2 瀑布图分析
 
-### 10.3 使用场景
+在 Grafana 中打开一条 Trace，查看瀑布图（Waterfall）：
 
-**SkyWalking**：
-- ✅ 全功能 APM 需求
-- ✅ 需要服务拓扑和告警
-- ✅ Java 微服务架构
+```
+瀑布图结构：
+┌────────────────────────────────────────────┐
+│ Span Name              │ Duration  │ 时间轴  │
+├────────────────────────────────────────────┤
+│ GET /api/orders         │ 1.2s     │ ████████│
+│  ├─ SELECT orders       │ 800ms    │  ██████ │
+│  ├─ GET /api/users/1    │ 300ms    │   ████  │
+│  └─ INSERT audit_log   │ 50ms     │    █    │
+└────────────────────────────────────────────┘
 
-**Jaeger**：
-- ✅ 专注链路追踪
-- ✅ Kubernetes 环境
-- ✅ 高性能要求
-
-**Zipkin**：
-- ✅ 轻量级需求
-- ✅ 多语言支持
-- ✅ 简单部署
-
----
-
-## 11. 面试要点
-
-**Q1：SkyWalking 的核心组件有哪些？**
-
-- Agent：探针，负责数据采集
-- OAP：分析平台，负责数据处理和存储
-- UI：可视化界面，负责数据展示
-
-**Q2：SkyWalking 如何实现跨服务追踪？**
-
-通过在 HTTP Header 中传播 TraceId、SegmentId、SpanId 等信息。
-
-**Q3：SkyWalking 和 Zipkin 的区别？**
-
-SkyWalking 是全功能 APM，提供链路追踪、服务拓扑、告警等；Zipkin 专注于链路追踪。
-
-**Q4：如何排查慢调用？**
-
-1. 在 UI 中查询慢 Trace
-2. 分析 Trace 详情，找到慢操作
-3. 查看 SQL、HTTP 等具体调用
-4. 优化对应代码或配置
-
-**Q5：如何配置告警？**
-
-编辑 `alarm-settings.yml`，配置告警规则、阈值、通知方式（Webhook/钉钉/邮件）。
+点击 Span 查看详情：
+- Attributes：http.method, http.status_code, db.statement
+- Events：自定义事件（如"订单创建成功"）
+- Resource：service.name, k8s.pod.name
+```
 
 ---
 
-## 12. 参考资料
+## 8. 服务依赖图（Service Graph）
+
+### 8.1 Service Graph 原理
+
+Tempo 自动分析已存储的 Span 数据，提取服务间调用关系，在 Grafana 中生成服务依赖拓扑图。**无需额外部署**，Tempo 内置此功能。
+
+### 8.2 启用 Service Graph
+
+```yaml
+metrics_generator:
+  ring:
+    kvstore:
+      store: consul
+  processor:
+    service_graphs:
+      max_items: 10000
+      wait: 10s
+      dimensions: ["http.method", "http.status_code"]
+
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://mimir:9009/api/v1/push  # 生成的指标写入 Mimir
+        headers:
+          X-Scope-OrgID: anonymous
+```
+
+### 8.3 在 Grafana 中查看服务依赖图
+
+```
+1. Grafana → Explore → Tempo
+2. 选择 "Service Graph" 视图
+3. 查看服务间调用关系：
+   order-service ──→ user-service ──→ database
+          │
+          └──→ payment-service ──→ kafka
+4. 点击连线查看延迟、错误率
+5. 点击节点钻取到具体 Trace
+```
+
+---
+
+## 9. Span Metrics 指标派生
+
+### 9.1 从 Span 自动生成指标
+
+Tempo 的 Metrics Generator 从 Span 属性中自动派生 RED 指标（Rate/Errors/Duration），写入 Mimir。
+
+```yaml
+metrics_generator:
+  processor:
+    span_metrics:
+      dimensions:
+        - service.name
+        - http.method
+        - http.status_code
+        - db.system
+      # 生成 histogram 用于 P99 等分位数计算
+      enable_target_info: true
+      histogram_buckets: [0.05, 0.1, 0.5, 1, 2, 5, 10]
+
+    # 本地 Span 的 RED 指标
+    local_blocks:
+      filter_server_spans: true
+```
+
+### 9.2 在 Grafana 中使用 Span 指标
+
+```
+# 自动生成的指标示例
+traces_spanmetrics_calls_total{service_name="order-service", http_status_code="500"}  通过 Mimir 查询 QPS
+traces_spanmetrics_latency_bucket{service_name="order-service"}                       通过 Mimir 查询 P99 延迟
+traces_spanmetrics_calls_total{service_name="order-service", status_code="STATUS_CODE_ERROR"}  错误率
+```
+
+---
+
+## 10. 低成本存储策略
+
+### 10.1 为什么 Tempo 成本低
+
+| 对比维度 | Elasticsearch / SkyWalking | Grafana Tempo |
+|---------|---------------------------|---------------|
+| **存储方式** | 全量索引（倒排索引） | 无索引，仅按 Trace ID 键值存储 |
+| **存储后端** | 本地磁盘 / 昂贵 SSD | 对象存储（S3 约 $0.023/GB/月） |
+| **扩容方式** | 垂直扩容（加 SSD） | 水平扩容（加对象存储桶） |
+| **存储成本（100TB）** | 约 $3,000-5,000/月（ES 集群） | 约 $2,300/月（S3 标准存储） |
+
+### 10.2 数据压缩
+
+Tempo 自动对 Block 进行 ZSTD 压缩，实际压缩比约 **3-5x**。
+
+```yaml
+compactor:
+  compaction:
+    block_retention: 720h  # 30天保留期
+    compaction_window: 1h
+    max_compaction_objects: 1000000
+```
+
+---
+
+## 11. 采样策略
+
+### 11.1 LGTM 推荐的组合采样
+
+```
+层级1 - SDK 头部采样：
+  └─ 10% 概率采样（过滤大量正常请求）
+
+层级2 - Collector 尾部采样：
+  ├─ 100% 保留错误 Trace
+  ├─ 100% 保留慢请求（> 2s）
+  ├─ 100% 保留关键服务
+  └─ 10% 保留其他正常请求
+```
+
+### 11.2 Collector 尾部采样配置
+
+```yaml
+processors:
+  tail_sampling:
+    decision_wait: 30s
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+
+      - name: slow-requests
+        type: latency
+        latency:
+          threshold_ms: 2000
+
+      - name: critical-services
+        type: string_attribute
+        string_attribute:
+          key: service.name
+          values: ["payment-service", "order-service"]
+
+      - name: probabilistic
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+```
+
+### 11.3 基于规则的采样（Tempo 侧）
+
+```yaml
+overrides:
+  # 默认 10% 采样
+  ingestion_rate_limit_bytes: 15_000_000
+  ingestion_burst_size_bytes: 20_000_000
+
+  # 按租户覆写
+  per_tenant_override_config: /etc/tenant_overrides.yaml
+```
+
+---
+
+## 12. Tempo vs Jaeger vs SkyWalking 对比
+
+| 维度 | Grafana Tempo | Jaeger | SkyWalking |
+|------|--------------|--------|------------|
+| **存储后端** | 对象存储（S3/MinIO/GCS） | Elasticsearch/Cassandra | Elasticsearch/H2/MySQL |
+| **索引方式** | 无需索引（键值存储） | 需要索引 | 需要索引 |
+| **存储成本** | **低**（对象存储） | 中-高 | 中-高 |
+| **查询语言** | **TraceQL**（类 PromQL） | Jaeger UI 搜索 | GraphQL / UI |
+| **Grafana 集成** | **原生深度集成** | 需要数据源 | 需要数据源 |
+| **APM 功能** | 配合 Mimir（指标） | 基础 | **丰富**（JVM/DB 监控） |
+| **OTLP 支持** | **原生优先** | 支持 | 支持 |
+| **水平扩展** | **天然支持**（对象存储） | 受 ES 集群限制 | 受数据库限制 |
+| **适用场景** | LGTM 体系 / 云原生 | 独立使用 | 全功能 APM |
+
+---
+
+## 13. 面试要点
+
+**Q1：Tempo 为什么存储成本低？**
+
+Tempo 采用**无需索引的键值存储**：以 Trace ID 为键，直接查询对象存储。不需要像 Elasticsearch 那样为每个字段建立倒排索引，因此存储成本降低 50-70%。
+
+**Q2：TraceQL 和 Kibana 查询的区别？**
+
+TraceQL 是专门为 Trace 数据设计的查询语言，支持 Span 级别的过滤和 Pipeline 跨服务查询（`>>` 操作符）；而 Kibana KQL 是通用日志查询语言，不支持 Trace 特有的 Span 间关系查询。
+
+**Q3：Tempo 如何处理高基数属性？**
+
+不建立索引。查询时通过并行的 Querier 组件扫描对象存储中的 Block 进行流式过滤。由于不建索引，高基数属性不会导致存储膨胀。
+
+**Q4：Tempo 的 Service Graph 如何生成？**
+
+Tempo 内置 Metrics Generator，解析已存储的 Span 数据，从 Span 属性中提取服务间父子调用关系（client/server span pair），自动在 Grafana 中绘制服务依赖图。
+
+**Q5：如何实现 Loki 日志 → Tempo Trace 跳转？**
+
+在 Grafana 中配置 Trace-to-Logs 关联：Loki 日志中的 `trace_id` 字段可通过 Grafana 内置的 `tracesToLogsV2` 配置自动关联 Tempo 数据源，点击日志旁按钮直接跳转到对应 Trace 瀑布图。
+
+---
+
+## 14. 参考资料
 
 **官方文档**：
-- [SkyWalking 官方文档](https://skywalking.apache.org/docs/)
-- [SkyWalking GitHub](https://github.com/apache/skywalking)
+- [Grafana Tempo 官方文档](https://grafana.com/docs/tempo/latest/)
+- [TraceQL 查询指南](https://grafana.com/docs/tempo/latest/traceql/)
+- [Tempo 部署最佳实践](https://grafana.com/docs/tempo/latest/operations/)
 
 ---
 
-**下一章预告**：第 35 章将学习 Prometheus + Grafana 指标监控，包括 Prometheus 架构、OTel Metrics 导出、PromQL 查询语言、Grafana Dashboard 设计、JVM 监控面板等内容。
+**下一章预告**：第 35 章将学习 Grafana Mimir & Prometheus 指标监控，包括 Prometheus 基础、Mimir 水平扩展架构、OTel Metrics 管道、PromQL 查询、Grafana Alerting 统一告警等内容。
