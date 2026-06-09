@@ -1,85 +1,63 @@
-# Alloy 部署运维指南
+# Alloy 部署指南
 
-> **定位**：Grafana Labs 开源的统一可观测性 Agent，替代 Promtail/Tempo Agent/Loki Agent
-> **适用场景**：指标/日志/链路采集、K8s 原生采集、Pipeline 式处理
-> **难度级别**：⭐⭐ 中等
+> 版本：v1.3.0 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| 操作系统 | Linux | K8s 节点或 VM |
+| 后端 | Mimir / Loki / Tempo | 数据接收端 |
 
-Grafana Alloy 是 Grafana Labs 掐出的统一可观测性 Agent，合并了 Promtail（日志）、Tempo Agent（链路）、Loki Agent、Mimir Agent 的功能，以 Pipeline 式配置处理指标/日志/链路数据。
-
-### 1.2 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| **统一 Agent** | 指标 + 日志 + 链路一个 Agent |
-| **Pipeline** | 声明式处理管道 |
-| **兼容性** | 兼容 Prometheus/OTel/Loki/Tempo |
-| **K8s 原生** | ServiceMonitor/PodMonitor 自动发现 |
-| **低资源** | Go 实现，内存占用低 |
-
-### 1.3 替代关系
-
-| 旧 Agent | Alloy 替代组件 |
-|----------|---------------|
-| Promtail | `loki.source.*` |
-| Tempo Agent | `otelcol.*` |
-| Mimir Agent | `prometheus.*` |
-| Grafana Agent | Alloy 本身 |
-
----
-
-## 2. 部署
-
-### 2.1 Docker 部署
+## 2. 裸机安装（通用）
 
 ```bash
-docker run -d \
-  --name alloy \
-  -v ./conf/alloy.alloy:/etc/alloy/config.alloy \
-  -v /var/log:/var/log:ro \
-  --restart unless-stopped \
-  grafana/alloy:v1.3.0 \
-  run /etc/alloy/config.alloy
+# 下载二进制
+wget https://github.com/grafana/alloy/releases/download/v1.3.0/alloy-linux-amd64.zip
+unzip alloy-linux-amd64.zip
+sudo mv alloy-linux-amd64/alloy /usr/local/bin/
+
+# 创建配置目录
+sudo mkdir -p /etc/alloy /var/lib/alloy
 ```
 
-### 2.2 K8s 部署（Helm）
+## 3. 单机部署
+
+### 适用场景
+
+开发测试、单机采集
+
+### 配置（Prometheus 接收器 + Loki + Tempo）
 
 ```bash
-helm repo add grafana https://grafana.github.io/helm-charts
-helm install alloy grafana/alloy \
-  --set configMaps.alloy-config.content="$(cat alloy.alloy)"
-```
-
----
-
-## 3. 配置文件
-
-### 3.2 开发环境配置（指标 + 日志 + 链路）
-
-```hcl
-# alloy.alloy — 开发环境全采集配置
-
-// === 指标采集（替代 Prometheus Agent）===
+cat > /etc/alloy/config.alloy << 'EOF'
+// === 指标采集 → Mimir/Prometheus ===
 prometheus.scrape "default" {
   targets = [
     {"__address__" = "localhost:9090"},
   ]
-  forward_to = [prometheus.remote_write.default.receiver]
+  forward_to = [prometheus.relabel.default.receiver]
   scrape_interval = "15s"
 }
 
-prometheus.remote_write "default" {
+prometheus.relabel "default" {
+  rule {
+    source_labels = ["__name__"]
+    regex = ".*"
+    action = "keep"
+  }
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.remote_write "mimir" {
   endpoint {
-    url = "http://prometheus:9090/api/v1/write"
+    url = "http://mimir:9009/api/v1/push"
   }
 }
 
-// === 日志采集（替代 Promtail）===
+// === 日志采集 → Loki ===
 loki.source.file "app_logs" {
   targets = [
     {__path__ = "/var/log/app/*.log"},
@@ -93,9 +71,7 @@ loki.write "default" {
   }
 }
 
-// === 链路采集（OTLP）===
-// 注意：Tempo 只接受 traces，不接受 metrics 和 logs
-// metrics 应发往 Prometheus/Mimir，logs 应发往 Loki
+// === 链路采集 → Tempo ===
 otelcol.receiver.otlp "default" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -104,16 +80,10 @@ otelcol.receiver.otlp "default" {
     endpoint = "0.0.0.0:4318"
   }
   output {
-    // metrics → Prometheus（Tempo 不接受 metrics）
-    metrics = [prometheus.remote_write.default.input]
-    // logs → Loki
-    logs    = [loki.write.default.receiver]
-    // traces → Tempo
-    traces  = [otelcol.exporter.otlp.tempo.input]
+    traces = [otelcol.exporter.otlp.tempo.input]
   }
 }
 
-// OTLP exporter 用于 traces → Tempo
 otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo:4317"
@@ -122,19 +92,79 @@ otelcol.exporter.otlp "tempo" {
     }
   }
 }
+EOF
 ```
 
-### 3.3 生产环境配置
+### 启动
 
-```hcl
-# alloy.alloy — 生产环境
+```bash
+alloy run /etc/alloy/config.alloy
+```
 
+### 验证
+
+```
+访问 http://localhost:12345  Alloy UI
+查看组件状态和 Pipeline 流程
+```
+
+### Docker Compose
+
+```yaml
+services:
+  alloy:
+    image: grafana/alloy:v1.3.0
+    ports: ["12345:12345", "4317:4317", "4318:4318"]
+    volumes: ["./conf/config.alloy:/etc/alloy/config.alloy", "/var/log:/var/log:ro"]
+    command: [run, /etc/alloy/config.alloy]
+```
+
+## 4. 生产部署
+
+### 适用场景
+
+K8s/VM 生产环境，统一采集指标 + 日志 + 链路
+
+### systemd 管理
+
+```bash
+cat > /etc/systemd/system/alloy.service << 'EOF'
+[Unit]
+Description=Grafana Alloy
+After=network.target
+
+[Service]
+Type=simple
+User=alloy
+Group=alloy
+ExecStart=/usr/local/bin/alloy run /etc/alloy/config.alloy
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+```bash
+sudo useradd -r -s /bin/false alloy
+sudo systemctl daemon-reload
+sudo systemctl enable --now alloy
+```
+
+### 生产配置（K8s 自动发现 + Prometheus 接收器）
+
+```bash
+cat > /etc/alloy/config.alloy << 'EOF'
 // === 发现 K8s 服务 ===
 discovery.kubernetes "pods" {
   role = "pod"
 }
 
-// === 指标采集（ServiceMonitor 模式）===
+// === 指标采集 → Mimir ===
 prometheus.scrape "k8s" {
   targets    = discovery.kubernetes.pods.targets
   forward_to = [prometheus.relabel.k8s.receiver]
@@ -155,14 +185,13 @@ prometheus.remote_write "mimir" {
   }
 }
 
-// === 日志采集 ===
+// === 日志采集 → Loki ===
 loki.source.kubernetes "pod_logs" {
   forward_to = [loki.process.logs.receiver]
 }
 
 loki.process "logs" {
   forward_to = [loki.write.loki.receiver]
-
   stage.json {
     expressions = {level = "level", msg = "msg"}
   }
@@ -177,7 +206,7 @@ loki.write "loki" {
   }
 }
 
-// === 链路采集 ===
+// === 链路采集 → Tempo ===
 otelcol.receiver.otlp "traces" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -195,34 +224,71 @@ otelcol.exporter.otlp "tempo" {
     }
   }
 }
+EOF
 ```
 
----
+### Docker 生产模式
 
-## 4. 调优
+```yaml
+services:
+  alloy:
+    image: grafana/alloy:v1.3.0
+    ports: ["12345:12345", "4317:4317", "4318:4318"]
+    volumes:
+      - "./conf/config.alloy:/etc/alloy/config.alloy"
+      - "/var/log:/var/log:ro"
+      - "/var/lib/alloy:/var/lib/alloy"
+    restart: unless-stopped
+    command: [run, /etc/alloy/config.alloy]
+    logging:
+      driver: journald
+```
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `scrape_interval` | 采集间隔 | 15s | 与 Prometheus 一致 |
-| 日志 Pipeline | 处理阶段 | 按需 | stage.json → stage.labels → forward_to |
-| 缓冲 | 写入缓冲 | 1000 条 | 防止后端不可用时丢数据 |
-
----
-
-## 5. 运维
+### 验证
 
 ```bash
+# 查看 Alloy 服务状态
+systemctl status alloy
+
 # Alloy UI
-http://alloy:12345/
+http://<host>:12345
 
 # 查看组件状态
-curl http://alloy:12345/api/v0/components
+curl http://localhost:12345/api/v0/components
 ```
 
----
+## 5. 运维速查
 
-## 7. 参考资料
+```bash
+# 查看 Alloy 日志
+journalctl -u alloy -f
 
-- [Alloy Documentation](https://grafana.com/docs/alloy/latest/)
-- [Alloy Configuration](https://grafana.com/docs/alloy/latest/configure/)
-- [Alloy Components](https://grafana.com/docs/alloy/latest/components/)
+# 重载配置（Alloy 支持热重载）
+kill -HUP $(pidof alloy)
+
+# 验证配置语法
+alloy fmt /etc/alloy/config.alloy
+
+# Alloy UI 调试
+http://<host>:12345  →  查看各组件输入输出数据量
+```
+
+## 6. 常见故障
+
+**故障 1：Prometheus 接收器未收到数据**
+
+- 检查 `prometheus.scrape` 的 targets 是否可达
+- 检查 `forward_to` 链路是否完整
+- 查看 Alloy UI 确认 scrape 是否有数据
+
+**故障 2：日志采集权限不足**
+
+- Alloy 容器需挂载宿主机 `/var/log` 目录
+- K8s 模式需配置 RBAC（ClusterRole + ServiceAccount）
+- 检查 `__path__` 通配符是否匹配
+
+**故障 3：Alloy 占用内存过高**
+
+- 减少 `prometheus.scrape` 的 target 数量
+- 增大 `scrape_interval` 到 30s
+- 检查 Pipeline 是否有死循环

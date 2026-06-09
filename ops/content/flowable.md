@@ -1,39 +1,59 @@
-# Flowable 部署运维指南
+# Flowable 部署指南
 
-> **定位**：开源 BPM 工作流引擎，BPMN 2.0 实现
-> **适用场景**：审批流程、业务流程自动化、BPMN/CMMN/DMN 建模
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：7.1.0 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| JDK | 11+ | 运行环境 |
+| MySQL | 5.7+ / 8.0 | 流程数据存储 |
+| Tomcat | 9+ | WAR 部署模式（可选） |
 
-Flowable 是开源的 BPM 工作流引擎，完整实现 BPMN 2.0（业务流程）、CMMN（案例管理）、DMN（决策表）规范，从 Activiti 分支而来。
+> **关键**：`flowable.database-schema-update` 与 Flyway 两者只选其一，不要同时启用。
 
-### 1.2 核心特性
+## 2. 裸机安装（通用）
 
-| 特性 | 说明 |
-|------|------|
-| **BPMN 2.0** | 完整业务流程建模与执行 |
-| **CMMN** | 案例管理模型 |
-| **DMN** | 决策表引擎 |
-| **Flowable UI** | 流程建模器/任务管理/管理控制台 |
-| **REST API** | 完整的 REST 接口 |
-| **Spring Boot** | 原生集成 |
+```bash
+# 1) 下载 Flowable all-in-one WAR 包
+wget https://github.com/flowable/flowable-engine/releases/download/flowable-7.1.0/flowable-7.1.0.zip
+unzip flowable-7.1.0.zip
 
-### 1.3 适用场景
+# 2) 初始化数据库
+mysql -u root -p -e "CREATE DATABASE flowable DEFAULT CHARSET utf8mb4;"
+```
 
-**最佳适用**：审批流程、业务流程自动化、OA 系统、合规流程
+## 3. 单机部署
 
-**不适用**：简单定时任务（→ XXL-JOB）、实时事件流（→ Flink）
+### 适用场景
 
----
+开发测试、流程演示
 
-## 2. 部署
+### WAR 部署 + MySQL
 
-### 2.1 Spring Boot 集成（推荐）
+```bash
+# 将 WAR 复制到 Tomcat webapps
+cp flowable-ui/flowable-ui.war $TOMCAT_HOME/webapps/flowable.war
+
+# 配置数据源（在 $TOMCAT_HOME/conf/Catalina/localhost/flowable.xml 中添加）
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+  <Resource name="jdbc/flowableDB" auth="Container"
+            type="javax.sql.DataSource"
+            driverClassName="com.mysql.cj.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/flowable?useSSL=false&characterEncoding=utf8"
+            username="flowable"
+            password="Flowable!Pass"
+            maxTotal="20" maxIdle="5" maxWaitMillis="30000"/>
+</Context>
+```
+
+### Spring Boot 集成（推荐）
 
 ```xml
 <dependency>
@@ -44,97 +64,97 @@ Flowable 是开源的 BPM 工作流引擎，完整实现 BPMN 2.0（业务流程
 ```
 
 ```yaml
-# application.yml
 flowable:
   database-schema-update: true
   async-executor-activate: true
   history-level: full
-  # 数据源（共享应用数据库）
-  # spring.datasource.*
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/flowable?useSSL=false&characterEncoding=utf8
+    username: flowable
+    password: Flowable!Pass
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
 ```
 
-### 2.2 Docker Compose 部署（Flowable UI）
+### 启动
+
+```bash
+# WAR 模式：启动 Tomcat 即可
+catalina.sh run
+
+# Spring Boot 模式
+mvn spring-boot:run
+# 或
+java -jar flowable-app.jar
+```
+
+### 验证
+
+```
+访问 http://localhost:8080/flowable-ui
+默认 admin/test
+可创建和部署 BPMN 流程
+```
+
+### Docker Compose
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
-
 services:
   flowable:
     image: flowable/all-in-one:7.1.0
-    container_name: flowable
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
+    ports: ["8080:8080"]
     environment:
-      FLOWABLE_DATASOURCE_URL: jdbc:mysql://flowable-mysql:3306/flowable?useSSL=false
+      FLOWABLE_DATASOURCE_URL: jdbc:mysql://mysql:3306/flowable?useSSL=false
       FLOWABLE_DATASOURCE_USERNAME: flowable
       FLOWABLE_DATASOURCE_PASSWORD: Flowable!Pass
       FLOWABLE_ASYNC_EXECUTOR_ENABLE: "true"
-    depends_on:
-      - flowable-mysql
-    networks:
-      - flow-net
+    depends_on: [mysql]
 
-  flowable-mysql:
+  mysql:
     image: mysql:8.0
-    container_name: flowable-mysql
-    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: FlowableMySQL!Pass
       MYSQL_DATABASE: flowable
       MYSQL_USER: flowable
       MYSQL_PASSWORD: Flowable!Pass
-    volumes:
-      - flow-mysql-data:/var/lib/mysql
-    networks:
-      - flow-net
+    volumes: ["flow-mysql-data:/var/lib/mysql"]
 
-volumes:
-  flow-mysql-data:
-
-networks:
-  flow-net:
-    driver: bridge
+volumes: {flow-mysql-data:}
 ```
 
----
+## 4. 集群部署
 
-## 3. 配置
+### 适用场景
 
-### 3.2 生产环境配置
+生产环境，高可用工作流服务
+
+### 节点规划
+
+| 节点 | 角色 | 地址 |
+|------|------|------|
+| node1 | Tomcat | 192.168.1.10:8080 |
+| node2 | Tomcat | 192.168.1.11:8080 |
+
+前端需配置负载均衡（Nginx / HAProxy）。
+
+### 配置
 
 ```yaml
-# application.yml — 生产环境
-
 flowable:
-  # === 数据库 ===
-  # 注意：生产环境禁止启用自动 Schema 更新（database-schema-update: false），必须配合 Flyway 或 Liquibase 等工具管理数据库 Schema 版本变更，确保生产数据库的 Schema 变更可控、可回滚。
-  database-schema-update: false    # 生产禁止自动更新 Schema
-  # 逻辑：自动更新可能导致 Schema 不一致
-  # 生产应使用 Flyway/Liquibase 管理 Schema
-
-  # === 异步执行器 ===
+  database-schema-update: false
   async-executor-activate: true
   async-executor-core-pool-size: 8
   async-executor-max-pool-size: 32
   async-executor-queue-size: 100
-  # 逻辑：异步任务（定时器/异步服务任务）由线程池执行
-  # 核心线程 = CPU 核数，最大线程 = CPU × 4
-
-  # === 历史级别 ===
-  history-level: full              # audit/full
-  # 逻辑：full 记录所有活动实例和表单属性
-  # audit 记录较少但存储量小
-  # none 不记录历史（不推荐）
-
-  # === 引擎配置 ===
+  history-level: full
   process-definition-cache-limit: 256
-  # 逻辑：缓存已部署的流程定义，减少数据库查询
 
 spring:
   datasource:
-    url: jdbc:mysql://mysql:3306/flowable
+    url: jdbc:mysql://<db-host>:3306/flowable?useSSL=false&characterEncoding=utf8
     username: flowable
     password: Flowable!Pass
     hikari:
@@ -142,33 +162,108 @@ spring:
       minimum-idle: 10
 ```
 
----
+### schema-update 与 Flyway 集成说明
 
-## 4. 调优
+| 策略 | 配置 | 说明 |
+|------|------|------|
+| Flowable 自动 | `database-schema-update: true` | 开发用，自动建表/升级 |
+| Flyway 管理 | `database-schema-update: false` + Flyway | 生产用，版本控制 |
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `async-executor-core-pool-size` | 异步线程核心 | 8 | 处理定时器和异步任务的线程数 |
-| `history-level` | 历史级别 | full | full 最全但存储大；audit 折中 |
-| `process-definition-cache-limit` | 流程定义缓存 | 256 | 减少数据库查询 |
+```yaml
+# Flyway 集成（production）
+flowable:
+  database-schema-update: false
 
----
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/flowable
+    baseline-on-migrate: true
+    table: FLYWAY_SCHEMA_HISTORY
 
-## 5. 运维
-
-```bash
-# 备份
-mysqldump -u flowable -p flowable > flowable_backup.sql
-
-# 流程部署
-# Flowable UI → Modeler → 建模 → 部署
-# 或 REST API: POST /repository/deployments
+flowable:
+  flyway-enabled: true       # Flowable 7.0+ 原生支持 Flyway
 ```
 
----
+> 两节点配置相同（除端口），共享同一数据库。`database-schema-update: false` 配合 Flyway 管理 Schema 版本，确保两个节点不会同时执行 DDL。
 
-## 7. 参考资料
+### 验证
 
-- [Flowable Documentation](https://www.flowable.com/open-source/docs/)
-- [Flowable Spring Boot](https://www.flowable.com/open-source/docs/bpmn/ch05a-Spring-Boot)
-- [Flowable GitHub](https://github.com/flowable/flowable-engine)
+```
+通过负载均衡访问 Flowable UI，两节点均正常
+多个节点共享流程实例和任务数据
+```
+
+### Docker Compose
+
+```yaml
+services:
+  flowable-1:
+    image: flowable/all-in-one:7.1.0
+    ports: ["8080:8080"]
+    environment:
+      FLOWABLE_DATASOURCE_URL: jdbc:mysql://mysql:3306/flowable?useSSL=false
+      FLOWABLE_DATASOURCE_USERNAME: flowable
+      FLOWABLE_DATASOURCE_PASSWORD: Flowable!Pass
+    depends_on: [mysql]
+
+  flowable-2:
+    image: flowable/all-in-one:7.1.0
+    ports: ["8081:8080"]
+    environment:
+      FLOWABLE_DATASOURCE_URL: jdbc:mysql://mysql:3306/flowable?useSSL=false
+      FLOWABLE_DATASOURCE_USERNAME: flowable
+      FLOWABLE_DATASOURCE_PASSWORD: Flowable!Pass
+    depends_on: [mysql]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: FlowableMySQL!Pass
+      MYSQL_DATABASE: flowable
+      MYSQL_USER: flowable
+      MYSQL_PASSWORD: Flowable!Pass
+    volumes: ["flow-mysql-data:/var/lib/mysql"]
+
+volumes: {flow-mysql-data:}
+```
+
+## 5. 运维速查
+
+```bash
+# 查看流程引擎状态
+curl http://localhost:8080/flowable-ui/app/rest/management/properties
+
+# 备份数据库
+mysqldump -u flowable -p flowable | gzip > flowable_$(date +%F).sql.gz
+
+# 部署流程（REST API）
+curl -X POST http://localhost:8080/flowable-ui/app/rest/repository/deployments \
+  -F "file=@my-process.bpmn20.xml"
+
+# 清理历史数据
+# Flowable UI → Admin → History → Clean
+```
+
+## 6. 常见故障
+
+**故障 1：database-schema-update 与 Flyway 冲突**
+
+- 两个同时启用会导致重复执行 DDL
+- 生产必须 `database-schema-update: false`，改用 Flyway
+
+**故障 2：异步任务不执行**
+
+- 检查 `async-executor-activate: true`
+- 检查线程池配置是否正确
+
+**故障 3：流程部署后找不到定义**
+
+- 检查部署包正确性
+- 检查租户 ID（TenantId）是否匹配
+- 清空流程定义缓存并重启
+
+**故障 4：Tomcat 集群 Session 不一致**
+
+- 配置共享 Session（Redis / JDBC）
+- 或使用负载均衡的 sticky session

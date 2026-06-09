@@ -1,146 +1,44 @@
-# Kong 部署运维指南
+# Kong 部署指南
 
-> **定位**：开源 API 网关和微服务管理平台，插件化架构
-> **适用场景**：API 网关、微服务流量管理、认证限流、Serverless
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：3.7 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-Kong 是开源的云原生 API 网关，基于 Nginx + OpenResty，以插件化架构著称，支持 Lua/Go/JS 插件，提供 DB-less（声明式）和数据库（PostgreSQL/Cassandra）两种模式。
-
-### 1.2 核心特性
-
-| 特性 | 说明 |
+| 项目 | 要求 |
 |------|------|
-| **插件体系** | 100+ 插件：认证/限流/日志/转换/安全 |
-| **DB-less** | 声明式配置，无需数据库 |
-| **多语言插件** | Lua/Go/JavaScript/Python |
-| **Ingress Controller** | K8s Ingress 集成 |
-| **多协议** | HTTP/gRPC/WebSocket/TCP/TLS |
-| **Kong Manager** | 企业版 GUI |
+| 数据库 | PostgreSQL 15+（DB 模式必需）/ 无（DB-less） |
+| 端口 | 8000（代理 HTTP）、8443（代理 HTTPS）、8001（Admin API） |
+| 内存 | ≥ 512M |
 
-### 1.3 适用场景
+> **Admin API 必须绑定内部 IP**（如 `127.0.0.1` 或内网 IP），`0.0.0.0` 只允许开发环境。
 
-**最佳适用**：API 网关、K8s Ingress、认证限流、微服务流量管理
-
-**不适用**：纯动态路由（→ APISIX 更灵活）、服务网格（→ Envoy/Istio）、简单代理（→ Nginx）
-
----
-
-## 2. 部署
-
-### 2.1 Docker 部署（DB-less）
+## 2. 裸机安装（通用）
 
 ```bash
-docker run -d \
-  --name kong \
-  -p 8000:8000 \
-  -p 8443:8443 \
-  # 安全：生产环境 Admin API 应绑定内网 IP，避免将 8001 暴露到公网
-  -p 8001:8001 \
-  -v ./kong.yml:/kong/declarative/kong.yml \
-  -e KONG_DATABASE=off \
-  -e KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml \
-  --restart unless-stopped \
-  kong:3.7
+# 方法一：包管理器
+wget https://packages.konghq.com/public/gateway/rpm/el/9/x86_64/kong-3.7.0.el9.x86_64.rpm
+sudo yum install -y kong-3.7.0.el9.x86_64.rpm
+
+# 方法二：Docker 镜像（推荐）
+docker pull kong:3.7
 ```
 
-### 2.2 Docker Compose 部署（Kong + PostgreSQL）
+## 3. 单机部署（DB-less 模式）
+
+**适用场景**：K8s GitOps、静态配置、无需动态管理
+
+### 3.1 配置
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  kong-db:
-    image: postgres:16
-    container_name: kong-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: kong
-      POSTGRES_PASSWORD: KongDB!Pass
-      POSTGRES_DB: kong
-    volumes:
-      - kong-db-data:/var/lib/postgresql/data
-    networks:
-      - kong-net
-
-  kong-migration:
-    image: kong:3.7
-    container_name: kong-migration
-    environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-db
-      KONG_PG_PASSWORD: KongDB!Pass
-    command: kong migrations bootstrap
-    depends_on:
-      - kong-db
-    networks:
-      - kong-net
-
-  kong:
-    image: kong:3.7
-    container_name: kong
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-      - "8443:8443"
-      # 安全：生产环境 Admin API 应绑定内网 IP，避免将 8001 暴露到公网
-      - "8001:8001"
-    environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-db
-      KONG_PG_PASSWORD: KongDB!Pass
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_ERROR_LOG: /dev/stderr
-      # 安全：生产环境应绑定内网 IP（如 192.168.x.x），禁止暴露 Admin API
-      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
-    depends_on:
-      - kong-db
-      - kong-migration
-    networks:
-      - kong-net
-
-volumes:
-  kong-db-data:
-
-networks:
-  kong-net:
-    driver: bridge
-```
-
-### 2.3 生产环境部署要点
-
-**DB-less vs DB 模式**：
-
-| 模式 | 存储 | 动态配置 | 适用 |
-|------|------|----------|------|
-| **DB-less** | YAML 文件 | 需重启 | K8s/GitOps |
-| **PostgreSQL** | PG | Admin API 实时 | 传统部署 |
-
-**安全清单**：Admin API 限制访问、认证插件（JWT/Key Auth/OAuth2）、限流插件、CORS 插件
-
----
-
-## 3. 配置文件
-
-### 3.2 DB-less 声明式配置
-
-```yaml
-# kong.yml — DB-less 声明式配置
-
+cat > kong.yml << 'EOF'
 _format_version: "3.0"
 _transform: true
 
 services:
   - name: order-service
-    url: http://app-1:8080
+    url: http://app:8080
     routes:
       - name: order-route
         paths:
@@ -153,153 +51,215 @@ services:
         config:
           minute: 100
           policy: local
-      - name: key-auth
-      - name: prometheus
-
-consumers:
-  - username: app-client
-    keyauth_creds:
-      - key: "app-api-key-2024"
-
-# 逻辑：DB-less 模式所有配置在一个 YAML 文件
-# 修改后需重启 Kong 或通过 Admin API reload
+EOF
 ```
 
-### 3.3 生产环境配置（kong.conf）
+### 3.2 启动
 
-```ini
-# kong.conf — 生产环境
+```bash
+docker run -d \
+  --name kong \
+  -p 8000:8000 \
+  -p 8443:8443 \
+  -p 127.0.0.1:8001:8001 \
+  -v ./kong.yml:/kong/declarative/kong.yml \
+  -e KONG_DATABASE=off \
+  -e KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml \
+  -e KONG_ADMIN_LISTEN=127.0.0.1:8001 \
+  --restart unless-stopped \
+  kong:3.7
+```
 
-# === 数据库 ===
+### 3.3 验证
+
+```bash
+curl -s http://127.0.0.1:8001/status | jq
+# 预期返回数据库状态为 disconnected（DB-less 正常）
+
+curl -s http://127.0.0.1:8000/api/orders -I
+```
+
+### 3.4 Docker Compose
+
+```yaml
+services:
+  kong:
+    image: kong:3.7
+    container_name: kong
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - ./kong.yml:/kong/declarative/kong.yml
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_ADMIN_LISTEN: 127.0.0.1:8001
+```
+
+## 4. 集群部署（DB 模式）
+
+**适用场景**：生产环境，动态配置管理
+
+### 4.1 节点规划
+
+| 节点 | IP | 代理端口 | Admin 端口 |
+|------|-----|----------|------------|
+| kong-1 | 10.0.0.1 | 8000 | 127.0.0.1:8001 |
+| kong-2 | 10.0.0.2 | 8000 | 127.0.0.1:8001 |
+| postgres | 10.0.0.10 | 5432 | - |
+
+### 4.2 配置
+
+```bash
+cat > /etc/kong/kong.conf << 'EOF'
 database = postgres
-pg_host = kong-db
+pg_host = 10.0.0.10
 pg_port = 5432
 pg_user = kong
 pg_password = KongDB!Pass
 pg_database = kong
 
-# === 代理 ===
 proxy_listen = 0.0.0.0:8000, 0.0.0.0:8443 http2 ssl
 admin_listen = 127.0.0.1:8001
 
-# === Worker ===
 nginx_worker_processes = auto
-# 逻辑：同 Nginx，auto = CPU 核数
-
-# === 日志 ===
-proxy_access_log = /var/log/kong/proxy-access.log
-proxy_error_log = /var/log/kong/proxy-error.log
-admin_access_log = /var/log/kong/admin-access.log
-admin_error_log = /var/log/kong/admin-error.log
-log_level = warn
-
-# === DNS ===
-dns_resolver = 10.0.0.1:53
-dns_order = LAST,A,CNAME
-# 逻辑：DNS 解析顺序影响服务发现
-
-# === 其他 ===
-client_max_body_size = 20m
-client_body_buffer_size = 8k
+EOF
 ```
 
----
+**初始化数据库：**
 
-## 4. 调优
+```bash
+kong migrations bootstrap -c /etc/kong/kong.conf
+```
 
-### 4.1 Worker 子系统
+> 注意：数据库初始化只需执行一次，不要在每台 Kong 节点上重复执行。
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `nginx_worker_processes` | Worker 数 | auto | 同 Nginx |
-| `nginx_worker_connections` | 连接数 | 16384 | Kong 底层是 Nginx，调优方式相同 |
+### 4.3 启动
 
-### 4.2 数据库子系统
+```bash
+kong start -c /etc/kong/kong.conf
+```
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `pg_max_concurrent_queries` | PG 并发查询 | 0（不限） | 限制可防止 PG 过载 |
-| `db_cache_ttl` | 配置缓存 TTL | 0（永不过期） | Kong 缓存 PG 中的配置，0 表示依赖 PG 通知 |
+### 4.4 验证
 
-### 4.3 容量规划
+```bash
+curl -s http://127.0.0.1:8001/status | jq
+# 预期 database 状态为 connected
 
-| 规模 | Kong | CPU | 内存 | PG | QPS |
-|------|------|-----|------|-----|------|
-| 小型 | 2 | 4 核 | 4G | 小 | < 1 万 |
-| 中型 | 4 | 8 核 | 8G | 中 | 1-5 万 |
-| 大型 | 8+ | 16 核 | 16G | 大 | 5 万+ |
+curl -s http://127.0.0.1:8001/services | jq
+# 预期返回服务列表
 
----
+curl -s -X POST http://127.0.0.1:8001/services \
+  -d "name=order-service" \
+  -d "url=http://app:8080"
+```
 
-## 5. 运维
+### 4.5 Docker Compose（PostgreSQL + Kong × 2）
 
-### 5.1 日常运维操作
+```yaml
+services:
+  kong-db:
+    image: postgres:16
+    container_name: kong-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: KongDB!Pass
+      POSTGRES_DB: kong
+    volumes:
+      - kong-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kong"]
+      interval: 5s
+      timeout: 3s
+    networks:
+      - kong-net
+
+  kong-migration:
+    image: kong:3.7
+    container_name: kong-migration
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_PASSWORD: KongDB!Pass
+    command: kong migrations bootstrap
+    depends_on:
+      kong-db:
+        condition: service_healthy
+    networks:
+      - kong-net
+
+  kong-1: &kong-node
+    image: kong:3.7
+    container_name: kong-1
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_PASSWORD: KongDB!Pass
+      KONG_ADMIN_LISTEN: 127.0.0.1:8001
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+    depends_on:
+      kong-migration:
+        condition: service_completed_successfully
+    networks:
+      - kong-net
+
+  kong-2:
+    <<: *kong-node
+    container_name: kong-2
+    ports:
+      - "8001:8000"
+      - "8445:8443"
+
+volumes:
+  kong-db-data:
+
+networks:
+  kong-net:
+    driver: bridge
+```
+
+## 5. 运维速查
 
 ```bash
 # Service 管理
-curl -X POST http://localhost:8001/services \
-  -d "name=order-service" \
-  -d "url=http://app-1:8080"
+curl -s http://127.0.0.1:8001/services | jq
+curl -X POST http://127.0.0.1:8001/services -d "name=svc" -d "url=http://target"
 
 # Route 管理
-curl -X POST http://localhost:8001/services/order-service/routes \
-  -d "paths[]=/api/orders"
+curl -X POST http://127.0.0.1:8001/services/svc/routes -d "paths[]=/api"
 
 # Plugin 管理
-curl -X POST http://localhost:8001/services/order-service/plugins \
-  -d "name=rate-limiting" \
-  -d "config.minute=100"
+curl -X POST http://127.0.0.1:8001/services/svc/plugins \
+  -d "name=rate-limiting" -d "config.minute=100"
 
 # Consumer 管理
-curl -X POST http://localhost:8001/consumers \
-  -d "username=app-client"
-```
+curl -X POST http://127.0.0.1:8001/consumers -d "username=app-client"
 
-### 5.2 监控指标
-
-| 指标 | 获取方式 | 告警阈值 |
-|------|----------|----------|
-| **请求速率** | Prometheus 插件 | 异常 |
-| **5xx** | Prometheus 插件 | > 1% |
-| **延迟** | Prometheus 插件 | P99 > 500ms |
-| **DB 连接** | PG 监控 | 接近上限 |
-
-### 5.3 备份与恢复
-
-```bash
-# 导出配置
-curl http://localhost:8001/config > kong-config-backup.json
+# 导出配置（DB-less 模式）
+curl http://127.0.0.1:8001/config > kong-config-backup.json
 
 # DB 备份
 pg_dump -U kong kong > kong-db-backup.sql
+
+# 查看日志
+docker logs kong-1 -f
 ```
 
----
+## 6. 常见故障
 
-## 6. 故障排查
+**插件不生效**：检查插件是否关联到 Service/Route → 检查插件 `config` → 查看 Kong 错误日志
 
-### 6.1 常见故障
+**503 No Route**：检查 Route 配置 → 检查 Host/Path 匹配规则 → 检查 DNS 解析是否正常
 
-#### 故障 1：插件不生效
+**Admin API 暴露到公网**：确认 `KONG_ADMIN_LISTEN` 绑定 `127.0.0.1` 而非 `0.0.0.0`；生产环境禁止将 8001 端口暴露到外部网络
 
-**排查**：检查插件是否关联到 Service/Route → 检查插件 config → 查看错误日志
-
-#### 故障 2：503 No Route
-
-**排查**：检查 Route 配置 → 检查 Host/Path 匹配 → 检查 DNS 解析
-
-### 6.2 诊断工具
-
-| 工具 | 用途 |
-|------|------|
-| Admin API | `:8001` |
-| Prometheus | `/metrics` |
-| 日志 | `/var/log/kong/` |
-
----
-
-## 7. 参考资料
-
-- [Kong Documentation](https://docs.konghq.com/)
-- [Kong DB-less Mode](https://docs.konghq.com/gateway/latest/production/deployment-modes/db-less-and-declarative-config/)
-- [Kong Plugin Hub](https://docs.konghq.com/hub/)
+**迁移冲突**：`kong migrations bootstrap` 只执行一次；如果重复执行会报错，可用 `kong migrations up` 处理

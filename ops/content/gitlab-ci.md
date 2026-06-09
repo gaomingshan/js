@@ -1,88 +1,205 @@
-# GitLab CI 部署运维指南
+# GitLab CI 部署指南
 
-> **定位**：GitLab 内置的 CI/CD 系统，代码托管 + 流水线一体
-> **适用场景**：持续集成、持续部署、代码审查 + 自动化流水线
-> **难度级别**：⭐⭐ 中等
+> 版本：17.3 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-GitLab CI 是 GitLab 内置的 CI/CD 系统，通过 `.gitlab-ci.yml` 定义流水线，Runner 执行构建/测试/部署任务，与代码仓库深度集成。
-
-### 1.2 核心架构
-
-```
-.gitlab-ci.yml → GitLab Server → Runner (Shell/Docker/K8s) → Pipeline → Job
-```
-
-| 组件 | 职责 |
+| 项目 | 要求 |
 |------|------|
-| **GitLab Server** | 流水线调度、状态管理 |
-| **Runner** | 执行 Job 的 Agent |
-| **Pipeline** | 流水线，由 Stage 组成 |
-| **Job** | 具体任务，属于某个 Stage |
-| **Artifact** | Job 产出物 |
+| OS | CentOS 7.9+ / Ubuntu 22.04+ |
+| 内存 | ≥ 4GB (Omnibus 单机推荐 8GB+) |
+| 磁盘 | ≥ 50GB (仓库 + CI 产物) |
+| Runner | 独立于 GitLab Server 部署 |
 
-### 1.3 适用场景
+## 2. 裸机安装（通用）
 
-**最佳适用**：代码托管 + CI/CD 一体化、Docker/K8s 部署、多环境流水线
-
-**不适用**：纯 CI/CD（→ Jenkins 更灵活）、GitOps（→ ArgoCD）
-
----
-
-## 2. 部署
-
-### 2.1 GitLab Runner 安装
+### 2.1 GitLab Server（Omnibus）
 
 ```bash
-# 添加仓库
-curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh | sudo bash
-sudo yum install -y gitlab-runner
+# === CentOS 7/8/9 ===
+curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.rpm.sh | bash
+yum install -y gitlab-ee
 
-# 注册 Runner
+# === Ubuntu 22.04 ===
+curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | bash
+apt install -y gitlab-ee
+```
+
+**配置**：
+
+```bash
+cat > /etc/gitlab/gitlab.rb << 'EOF'
+# 外部访问 URL（必须配置）
+external_url 'https://gitlab.example.com'
+
+# 时区
+gitlab_rails['time_zone'] = 'Asia/Shanghai'
+
+# 邮件
+gitlab_rails['smtp_enable'] = true
+gitlab_rails['smtp_address'] = "smtp.example.com"
+gitlab_rails['smtp_port'] = 587
+gitlab_rails['smtp_user_name'] = "gitlab@example.com"
+gitlab_rails['smtp_password'] = "your-password"
+gitlab_rails['smtp_domain'] = "example.com"
+gitlab_rails['smtp_authentication'] = "login"
+gitlab_rails['smtp_enable_starttls_auto'] = true
+
+# 仓库存储
+gitlab_rails['storage_path'] = "/var/opt/gitlab/git-data"
+
+# CI 制品保留
+gitlab_rails['artifacts_expire_hours'] = 48
+EOF
+```
+
+```bash
+# 应用配置
+sudo gitlab-ctl reconfigure
+
+# 获取 root 初始密码
+sudo cat /etc/gitlab/initial_root_password
+```
+
+### 2.2 GitLab Runner 注册
+
+```bash
+# === 安装 Runner ===
+curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh | bash
+yum install -y gitlab-runner
+
+# === 注册 Runner ===
 sudo gitlab-runner register \
-  --gitlab-url https://gitlab.example.com \
-  --registration-token <token> \
+  --non-interactive \
+  --url https://gitlab.example.com \
+  --token glrt-xxxxxxxxxxxx \
   --executor docker \
   --docker-image maven:3.9 \
-  --description "docker-runner" \
-  --tag-list "docker,maven"
+  --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
+  --description "shared-docker-runner" \
+  --tag-list "docker,linux" \
+  --run-untagged="true"
 
-# 启动
-sudo systemctl start gitlab-runner && sudo systemctl enable gitlab-runner
+# === 启动 ===
+sudo systemctl enable --now gitlab-runner
 ```
 
-### 2.2 Docker 部署 Runner
+**验证**：
 
 ```bash
-docker run -d \
-  --name gitlab-runner \
-  --restart unless-stopped \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v gitlab-runner-config:/etc/gitlab-runner \
-  gitlab/gitlab-runner:alpine-v16.11
-
-# 注册
-docker exec -it gitlab-runner gitlab-runner register \
-  --gitlab-url https://gitlab.example.com \
-  --registration-token <token> \
-  --executor docker \
-  --docker-image maven:3.9
+sudo gitlab-runner list
+sudo gitlab-runner verify
+# UI → Settings → CI/CD → Runners 确认 Runner 在线
 ```
 
----
+## 3. 基础部署
 
-## 3. 配置文件
+**适用场景**：单项目 CI/CD、小团队流水线
 
-### 3.2 .gitlab-ci.yml 示例
+**配置** — 项目根目录创建 `.gitlab-ci.yml`：
 
 ```yaml
-# .gitlab-ci.yml — Spring Boot 项目
+stages:
+  - build
+  - test
+  - deploy
 
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository/
+
+build:
+  stage: build
+  image: maven:3.9
+  script:
+    - mvn clean compile
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 hour
+
+test:
+  stage: test
+  image: maven:3.9
+  script:
+    - mvn test
+  coverage: '/Total.*?([0-9]{1,3})%/'
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl
+  script:
+    - kubectl set image deployment/myapp myapp=harbor.example.com/project/myapp:$CI_COMMIT_SHORT_SHA
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "main"'
+```
+
+> **注意**：`rules` 已替代 `only/except`（GitLab 13+）。`rules` 支持多条件组合、变量判断、`when` 控制，推荐新项目直接使用 `rules`。
+
+**启动**：提交 `.gitlab-ci.yml` 到仓库，自动触发 Pipeline
+
+**验证**：`CI/CD → Pipelines` 查看流水线状态
+
+**Docker Compose**（Runner）：
+
+```yaml
+services:
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine-v17.3
+    container_name: gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner-config:/etc/gitlab-runner
+
+volumes:
+  runner-config:
+```
+
+启动后执行 `docker exec -it gitlab-runner gitlab-runner register` 注册。
+
+## 4. 生产部署
+
+**适用场景**：多项目共享 Runner、S3 缓存、大规模 CI/CD
+
+**配置** — Runner 配置 `/etc/gitlab-runner/config.toml`：
+
+```toml
+concurrent = 10
+check_interval = 10
+
+[[runners]]
+  name = "prod-docker-runner"
+  url = "https://gitlab.example.com"
+  token = "glrt-xxxxxxxxxxxx"
+  executor = "docker"
+
+  [runners.docker]
+    image = "maven:3.9"
+    privileged = true
+    volumes = ["/cache", "/var/run/docker.sock:/var/run/docker.sock"]
+    pull_policy = ["if-not-present"]
+    shm_size = 0
+
+  [runners.cache]
+    Type = "s3"
+    Shared = true
+    [runners.cache.s3]
+      ServerAddress = "minio.example.com:9000"
+      BucketName = "gitlab-runner-cache"
+      AccessKey = "minioadmin"
+      SecretKey = "minioadmin"
+      Insecure = false
+```
+
+**`.gitlab-ci.yml` 生产模板（`rules` 版本）**：
+
+```yaml
 stages:
   - build
   - test
@@ -91,131 +208,145 @@ stages:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  DOCKER_REGISTRY: harbor.example.com
-  APP_NAME: myapp
+  REGISTRY: harbor.example.com
+  APP: myapp
+  IMAGE_TAG: ${CI_COMMIT_SHORT_SHA}
 
-# === 缓存 ===
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - .m2/repository/
-  # 逻辑：缓存 Maven 依赖，加速后续构建
 
-# === 构建阶段 ===
 build:
   stage: build
   image: maven:3.9
   script:
-    - mvn clean compile $MAVEN_OPTS
+    - mvn clean compile
   artifacts:
     paths:
       - target/
     expire_in: 1 hour
-  # 逻辑：artifacts 传递构建产物到下一阶段
-  # expire_in 控制保留时间，减少存储占用
 
-# === 测试阶段 ===
 test:
   stage: test
   image: maven:3.9
   script:
-    - mvn test $MAVEN_OPTS
-  coverage: '/Total.*?([0-9]{1,3})%/'
+    - mvn test
   artifacts:
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
 
-# === 打包阶段 ===
 package:
   stage: package
   image: docker:24
   services:
     - docker:24-dind
   script:
-    - docker build -t $DOCKER_REGISTRY/project/$APP_NAME:$CI_COMMIT_SHORT_SHA .
-    - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $DOCKER_REGISTRY
-    - docker push $DOCKER_REGISTRY/project/$APP_NAME:$CI_COMMIT_SHORT_SHA
-  only:
-    - main
-    - tags
-  # 逻辑：only 限制只在 main 和 tag 分支执行
-  # 注意：GitLab 13+ 推荐使用 `rules` 替代 `only/except`，更灵活且支持复杂条件
+    - docker build -t ${REGISTRY}/project/${APP}:${IMAGE_TAG} .
+    - docker push ${REGISTRY}/project/${APP}:${IMAGE_TAG}
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'
 
-# === 部署阶段 ===
-deploy-prod:
+deploy-staging:
   stage: deploy
   image: bitnami/kubectl
   script:
-    - kubectl set image deployment/$APP_NAME $APP_NAME=$DOCKER_REGISTRY/project/$APP_NAME:$CI_COMMIT_SHORT_SHA -n prod
+    - kubectl set image deployment/${APP} ${APP}=${REGISTRY}/project/${APP}:${IMAGE_TAG} -n staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy-production:
+  stage: deploy
+  image: bitnami/kubectl
+  script:
+    - kubectl set image deployment/${APP} ${APP}=${REGISTRY}/project/${APP}:${IMAGE_TAG} -n prod
+  rules:
+    - if: '$CI_COMMIT_TAG'
+  when: manual
   environment:
     name: production
     url: https://app.example.com
-  only:
-    - tags
-  when: manual
-  # 逻辑：when: manual → 手动触发部署，防止自动上生产
-  # 注意：GitLab 13+ 推荐使用 `rules` 替代 `only/except`，更灵活且支持复杂条件
 ```
 
-### 3.3 Runner 配置
-
-```toml
-# /etc/gitlab-runner/config.toml
-
-[[runners]]
-  name = "docker-runner"
-  url = "https://gitlab.example.com"
-  token = "<token>"
-  executor = "docker"
-
-  [runners.docker]
-    image = "maven:3.9"
-    privileged = true              # Docker-in-Docker 需要
-    volumes = ["/cache"]
-    pull_policy = ["if-not-present"]
-    # 逻辑：if-not-present → 本地有则不拉取，加速构建
-
-  [runners.cache]
-    Type = "s3"
-    Shared = true
-    [runners.cache.s3]
-      ServerAddress = "minio:9000"
-      BucketName = "runner-cache"
-      AccessKey = "minioadmin"
-      SecretKey = "minioadmin"
-    # 逻辑：Runner 缓存存 S3/MinIO，跨 Job 共享
-```
-
----
-
-## 4. 调优
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `concurrent` | Runner 并发 Job 数 | 10 | `config.toml` 全局设置，防止过载 |
-| `pull_policy` | 镜像拉取策略 | if-not-present | 本地有则不拉取，加速构建 |
-| 缓存 | 依赖缓存 | S3/MinIO | 跨 Job 共享 Maven/npm 缓存 |
-| `privileged` | 特权模式 | true（DinD） | Docker-in-Docker 构建需要 |
-
----
-
-## 5. 运维
+**启动与验证**：
 
 ```bash
-# Runner 管理
+sudo systemctl restart gitlab-runner
+sudo journalctl -u gitlab-runner -f
+gitlab-runner list
+# 提交 .gitlab-ci.yml 到仓库，检查 Pipeline 状态
+```
+
+**Docker Compose**：
+
+```yaml
+services:
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine-v17.3
+    container_name: gitlab-runner
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner-config:/etc/gitlab-runner
+    environment:
+      - TZ=Asia/Shanghai
+
+volumes:
+  runner-config:
+```
+
+## 5. 运维速查
+
+```bash
+# GitLab Server
+sudo gitlab-ctl status
+sudo gitlab-ctl tail
+sudo gitlab-ctl reconfigure   # 修改 gitlab.rb 后执行
+sudo gitlab-ctl restart
+
+# Runner
 sudo gitlab-runner list
 sudo gitlab-runner verify
 sudo gitlab-runner restart
-
-# 查看日志
 sudo journalctl -u gitlab-runner -f
+
+# 备份
+sudo gitlab-backup create
+# 备份文件 /var/opt/gitlab/backups/ 下载保存
+
+# 清理 CI 产物
+# UI → Admin → CI/CD → Job Artifacts → 设置保留策略
 ```
 
----
+## 6. 常见故障
 
-## 7. 参考资料
+### 6.1 Runner 注册失败 — token 错误
+```
+ERROR: Registering runner... failed  runner=GR1348941 status=401 Unauthorized
+```
+注册 token 需从 `Settings → CI/CD → Runners → Registration token` 获取，**不是** Personal Access Token。
 
-- [GitLab CI Documentation](https://docs.gitlab.com/ee/ci/)
-- [GitLab Runner](https://docs.gitlab.com/runner/)
-- [.gitlab-ci.yml Reference](https://docs.gitlab.com/ee/ci/yaml/)
+### 6.2 DinD 构建失败 — privileged 未开启
+```
+Cannot connect to the Docker daemon at tcp://docker:2375. Is the docker daemon running?
+```
+Runner `config.toml` 中 `privileged = true` 必须开启，否则 DinD 侧车容器无权限启动 Docker daemon。
+
+### 6.3 Pipeline 不触发
+```yaml
+# 错误：only 在 GitLab 15+ 已弃用
+only:
+  - main
+
+# 正确：使用 rules
+rules:
+  - if: '$CI_COMMIT_BRANCH == "main"'
+```
+确认 `.gitlab-ci.yml` 使用 `rules` 语法（GitLab 13+ 推荐，15+ 弃用 `only/except`）。
+
+### 6.4 Runner 构建慢 — 缓存未生效
+- 确认 `cache.paths` 路径正确
+- 配置 S3/MinIO 分布式缓存共享
+- `pull_policy = ["if-not-present"]` 避免每次都拉镜像

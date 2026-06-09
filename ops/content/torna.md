@@ -1,44 +1,64 @@
-# Torna 部署运维指南
+# Torna 部署指南
 
-> **定位**：开源 API 文档与调试管理平台，Swagger 增强
-> **适用场景**：API 文档管理、接口调试、团队协作、API 全生命周期
-> **难度级别**：⭐ 低
+> 版本：latest | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-Torna 是开源的 API 文档管理平台，弥补 Swagger 只能浏览不能管理的不足，支持 Swagger/OpenAPI 自动推送、接口调试、Mock、权限管理、变更通知。
-
-### 1.2 核心特性
-
-| 特性 | 说明 |
+| 项目 | 要求 |
 |------|------|
-| **自动推送** | Swagger/SpringDoc 自动推送文档到 Torna |
-| **接口调试** | 类 Postman 调试环境 |
-| **Mock 服务** | 自动生成 Mock 数据 |
-| **权限管理** | 空间/项目/模块级权限 |
-| **变更通知** | 接口变更推送钉钉/飞书/企微 |
-| **多环境** | dev/test/prod 调试环境切换 |
+| JDK | JDK 8+（服务端） |
+| MySQL | 5.7+ |
+| 端口 | 7700（服务器）、8080（前端 UI） |
 
-### 1.3 适用场景
+## 2. 裸机安装（通用）
 
-**最佳适用**：API 文档管理、接口调试、前后端协作、API 全生命周期
+```bash
+# 下载 Torna 服务端
+wget https://gitee.com/durcframework/torna/releases/download/v1.0.0/torna-server-1.0.0.jar
+```
 
-**不适用**：API 网关（→ APISIX/Kong）、API 测试自动化（→ Postman/Newman）
+## 3. 单机部署
 
----
+**适用场景**：企业 API 文档管理
 
-## 2. 部署
+### 3.1 配置（MySQL 后端）
 
-### 2.1 Docker Compose 部署
+```bash
+# 初始化数据库
+mysql -u root -p -e "CREATE DATABASE torna DEFAULT CHARACTER SET utf8mb4;"
+
+# 导入 Torna 初始化 SQL（从源码或发行包获取 torna.sql）
+mysql -u root -p torna < torna.sql
+```
+
+```bash
+cat > application.properties << 'EOF'
+server.port=7700
+
+spring.datasource.url=jdbc:mysql://127.0.0.1:3306/torna?characterEncoding=utf8&useSSL=false
+spring.datasource.username=root
+spring.datasource.password=TornaMySQL!Pass
+EOF
+```
+
+### 3.2 启动
+
+```bash
+java -jar torna-server-1.0.0.jar --spring.config.additional-location=application.properties
+```
+
+### 3.3 验证
+
+```bash
+curl -s http://127.0.0.1:7700/about
+# 浏览器访问 http://127.0.0.1:7700，默认管理员账户 admin/admin123
+```
+
+### 3.4 Docker Compose（推荐）
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
-
 services:
   torna-mysql:
     image: mysql:8.0
@@ -52,6 +72,10 @@ services:
     volumes:
       - torna-mysql-data:/var/lib/mysql
       - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
     networks:
       - torna-net
 
@@ -68,7 +92,8 @@ services:
       MYSQL_USERNAME: torna
       MYSQL_PASSWORD: TornaUser!Pass
     depends_on:
-      - torna-mysql
+      torna-mysql:
+        condition: service_healthy
     networks:
       - torna-net
 
@@ -91,10 +116,9 @@ networks:
     driver: bridge
 ```
 
-### 2.2 Spring Boot 集成
+### 3.5 Spring Boot 客户端集成
 
 ```xml
-<!-- 自动推送 API 文档到 Torna -->
 <dependency>
     <groupId>cn.torna</groupId>
     <artifactId>spring-doc-client</artifactId>
@@ -103,42 +127,34 @@ networks:
 ```
 
 ```yaml
-# application.yml
 torna:
   url: http://torna-server:7700
   token: your-project-token
   run-env: prod
 ```
 
----
-
-## 3. 配置
-
-Torna 配置主要通过 UI 界面管理，关键配置项：
-
-| 配置 | 说明 |
-|------|------|
-| 空间 | 顶级组织单元 |
-| 项目 | 空间下的 API 项目 |
-| 模块 | 项目下的 API 分组 |
-| 环境 | dev/test/pre/prod 调试环境 |
-| 推送 Token | 自动推送认证令牌 |
-
----
-
-## 4. 运维
+## 4. 运维速查
 
 ```bash
-# 备份
+# 备份数据库
 mysqldump -u torna -p torna > torna_backup.sql
 
-# 日志
-docker logs torna-server
+# 查看日志
+docker logs torna-server -f
+docker logs torna-ui -f
+
+# 默认管理员账户
+# 用户名: admin
+# 密码:   admin123
+
+# Torna 配置主要通过 UI 管理
+# 关键概念：空间 → 项目 → 模块 → 环境 → 推送 Token
 ```
 
----
+## 5. 常见故障
 
-## 5. 参考资料
+**服务端无法启动**：检查 MySQL 连接配置 → 确认数据库已初始化 → 检查 `torna.sql` 是否导入成功
 
-- [Torna Documentation](https://torna.cn/)
-- [Torna GitHub](https://github.com/torna-group/torna)
+**前端报 502**：确认 torna-server 端口 7700 是否正常 → 检查 torna-ui 到 torna-server 的网络连通性 → 确认 `torna-ui` 环境变量中 API 地址配置
+
+**文档推送失败**：检查项目的推送 Token 是否正确 → 检查 `torna.url` 是否可达 → 确认模块/环境配置匹配

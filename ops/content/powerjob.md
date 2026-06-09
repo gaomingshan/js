@@ -1,86 +1,74 @@
-# PowerJob 部署运维指南
+# PowerJob 部署指南
 
-> **定位**：新一代分布式任务调度与计算框架
-> **适用场景**：定时调度、MapReduce 计算、工作流编排、容器部署
-> **难度级别**：⭐⭐ 中等
+> 版本：4.3.9 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| JDK | 11+ | 运行环境 |
+| MySQL | 5.7+ / 8.0 | 核心存储（必选） |
+| MongoDB | 4.4+ | 扩展存储（可选，容器运行为止不强制） |
 
-PowerJob 是开源的分布式任务调度与计算框架，支持定时调度、MapReduce 分布式计算、工作流（DAG）编排、容器部署，相比 XXL-JOB 功能更丰富。
+> **注意**：PowerJob 配置文件使用 `oms.datasource.*` 前缀，而非 `spring.datasource.*`
 
-### 1.2 与 XXL-JOB 对比
+## 2. 裸机安装（通用）
 
-| 维度 | PowerJob | XXL-JOB |
-|------|----------|---------|
-| **工作流** | DAG 编排 | 无 |
-| **MapReduce** | 原生支持 | 无 |
-| **容器部署** | 支持 | 不支持 |
-| **在线 IDE** | 支持 | GLUE 模式 |
-| **处理器** | Java/Shell/HTTP | Java/Shell/Python |
+```bash
+# 1) 下载
+git clone https://github.com/PowerJob/PowerJob.git
+cd PowerJob
+mvn clean package -DskipTests
 
-### 1.3 适用场景
+# 2) 初始化数据库
+mysql -u root -p -e "CREATE DATABASE powerjob DEFAULT CHARSET utf8mb4;"
+mysql -u root -p powerjob < powerjob-server/powerjob-server-starter/src/main/resources/sql/ddl-POWERJOB.sql
 
-**最佳适用**：定时调度 + MapReduce 计算、DAG 工作流、容器化任务
-
-**不适用**：实时流处理（→ Flink）、简单定时任务（→ XXL-JOB 更轻量）
-
----
-
-## 2. 部署
-
-### 2.1 Docker Compose 部署
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  powerjob-server:
-    image: tjqq/powerjob-server:4.3.9
-    container_name: powerjob-server
-    restart: unless-stopped
-    ports:
-      - "7700:7700"
-      - "10086:10086"
-    environment:
-      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://powerjob-mysql:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
-    depends_on:
-      - powerjob-mysql
-    networks:
-      - pj-net
-
-  powerjob-mysql:
-    image: mysql:8.0
-    container_name: powerjob-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: PowerJobMySQL!Pass
-      MYSQL_DATABASE: powerjob
-      MYSQL_USER: powerjob
-      MYSQL_PASSWORD: PowerJob!Pass
-    volumes:
-      - pj-mysql-data:/var/lib/mysql
-    networks:
-      - pj-net
-
-volumes:
-  pj-mysql-data:
-
-networks:
-  pj-net:
-    driver: bridge
+# 3) 获取 Server jar
+# powerjob-server/powerjob-server-starter/target/powerjob-server-starter-4.3.9.jar
 ```
 
----
+## 3. 单机部署
 
-### 2.2 执行器（Worker）配置
+### 适用场景
+
+开发测试、小型任务调度
+
+### Server 配置
+
+```bash
+cat > application-server.yml << 'EOF'
+server:
+  port: 7700
+
+oms:
+  datasource:
+    core:
+      jdbc-url: jdbc:mysql://localhost:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: powerjob
+      password: PowerJob!Pass
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+  akka:
+    port: 10086
+  instance:
+    status-check-interval: 3000
+EOF
+```
+
+### Server 启动
+
+```bash
+java -jar powerjob-server-starter-4.3.9.jar --spring.config.additional-location=application-server.yml
+```
+
+### Worker 示例配置
 
 ```yaml
-# application.yml — PowerJob Worker 配置
+# application-worker.yml
 server:
   port: 27777
 
@@ -93,18 +81,18 @@ oms:
     port: 27778
   datasource:
     core:
-      jdbc-url: jdbc:mysql://mysql-host:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai
+      jdbc-url: jdbc:mysql://localhost:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai
       username: powerjob
       password: PowerJob!Pass
-  server-address: powerjob-server:7700
+  server-address: localhost:7700
 ```
 
-Worker 启动参数：
 ```bash
-java -jar powerjob-worker.jar --spring.config.location=application.yml
+java -jar powerjob-worker.jar --spring.config.additional-location=application-worker.yml
 ```
 
 Maven 依赖：
+
 ```xml
 <dependency>
     <groupId>com.github.kfcfans</groupId>
@@ -113,31 +101,160 @@ Maven 依赖：
 </dependency>
 ```
 
----
+### 验证
 
-## 3. 配置
-
-通过 Web UI 管理，关键配置：
-
-| 配置 | 说明 |
-|------|------|
-| 应用 | 注册执行器应用 |
-| 任务 | CRON + 处理器类型 + 参数 |
-| 工作流 | DAG 编排多任务 |
-| 容器 | 任务运行在独立容器 |
-
----
-
-## 5. 运维
-
-```bash
-# 备份
-mysqldump -u powerjob -p powerjob > powerjob_backup.sql
+```
+访问 http://localhost:7700  默认 admin/123456
+查看"应用管理"可看到注册的 Worker 在线
+创建并运行一个简单任务验证调度
 ```
 
----
+### Docker Compose
 
-## 7. 参考资料
+```yaml
+services:
+  powerjob-server:
+    image: tjqq/powerjob-server:4.3.9
+    ports: ["7700:7700", "10086:10086"]
+    environment:
+      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://mysql:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
+    depends_on: [mysql]
 
-- [PowerJob Documentation](https://www.yuque.com/powerjob/guidence)
-- [PowerJob GitHub](https://github.com/PowerJob/PowerJob)
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: PowerJobMySQL!Pass
+      MYSQL_DATABASE: powerjob
+      MYSQL_USER: powerjob
+      MYSQL_PASSWORD: PowerJob!Pass
+    volumes: ["pj-mysql-data:/var/lib/mysql"]
+
+volumes: {pj-mysql-data:}
+```
+
+## 4. 集群部署
+
+### 适用场景
+
+生产环境高可用，支持 MapReduce 和 DAG 工作流
+
+### 节点规划
+
+| 节点 | 角色 | 地址 |
+|------|------|------|
+| node1 | Server | 192.168.1.10:7700 |
+| node2 | Server | 192.168.1.11:7700 |
+| node3 | Server | 192.168.1.12:7700 |
+
+后端共享 MySQL + MongoDB（可选，用于扩展存储）。
+
+### Server 配置
+
+```bash
+cat > application-cluster.yml << 'EOF'
+server:
+  port: 7700
+
+oms:
+  datasource:
+    core:
+      jdbc-url: jdbc:mysql://<db-host>:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: powerjob
+      password: PowerJob!Pass
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+  mongodb:
+    uri: mongodb://<mongo-host>:27017/powerjob     # MongoDB 可选
+  akka:
+    port: 10086
+  server:
+    address: 192.168.1.10:7700,192.168.1.11:7700,192.168.1.12:7700
+  instance:
+    status-check-interval: 3000
+EOF
+```
+
+### 启动
+
+```bash
+# 三个节点依次启动，配置相同（server.address 本机地址不同）
+java -jar powerjob-server-starter-4.3.9.jar --spring.config.additional-location=application-cluster.yml
+```
+
+### 验证
+
+```
+访问任意 Server 节点 Web UI
+查看集群信息，多个 Server 在线
+Worker 注册到多个 Server 地址
+```
+
+### Docker Compose
+
+```yaml
+services:
+  powerjob-server-1:
+    image: tjqq/powerjob-server:4.3.9
+    ports: ["7700:7700", "10086:10086"]
+    environment:
+      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://mysql:3306/powerjob?useSSL=false --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
+    depends_on: [mysql]
+
+  powerjob-server-2:
+    image: tjqq/powerjob-server:4.3.9
+    ports: ["7701:7700", "10087:10086"]
+    environment:
+      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://mysql:3306/powerjob?useSSL=false --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
+    depends_on: [mysql]
+
+  powerjob-server-3:
+    image: tjqq/powerjob-server:4.3.9
+    ports: ["7702:7700", "10088:10086"]
+    environment:
+      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://mysql:3306/powerjob?useSSL=false --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
+    depends_on: [mysql]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: PowerJobMySQL!Pass
+      MYSQL_DATABASE: powerjob
+      MYSQL_USER: powerjob
+      MYSQL_PASSWORD: PowerJob!Pass
+    volumes: ["pj-mysql-data:/var/lib/mysql"]
+
+volumes: {pj-mysql-data:}
+```
+
+## 5. 运维速查
+
+```bash
+# 查看 Server 日志
+tail -f /data/logs/powerjob-server/*.log
+
+# 备份数据库
+mysqldump -u powerjob -p powerjob | gzip > powerjob_$(date +%F).sql.gz
+
+# Server 健康检查
+curl http://localhost:7700/actuator/health
+
+# Worker 状态（需在 Web UI 中查看执行器应用列表）
+```
+
+## 6. 常见故障
+
+**故障 1：Server 启动报 "oms.datasource" 配置无效**
+
+- 确认使用了 `oms.datasource.core.jdbc-url` 而非 `spring.datasource.url`
+- PowerJob 不走 Spring Boot 默认数据源
+
+**故障 2：Worker 连不上 Server**
+
+- 检查 `oms.server-address` 指向的端口是否正确（默认 7700）
+- 检查防火墙，Akka 端口（10086）需互通
+
+**故障 3：任务调度成功但执行失败**
+
+- 查看 Worker 端日志 `/data/logs/powerjob-worker/`
+- 检查任务处理器类是否在 Worker classpath 中

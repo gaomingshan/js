@@ -1,72 +1,153 @@
-# ZooKeeper 部署运维指南
+# ZooKeeper 部署指南
 
-> **定位**：Apache 分布式协调服务，分布式系统的"基石"
-> **适用场景**：Kafka/Kafka KRaft 前置、Hadoop/HBase 协调、分布式锁、Leader 选举
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：3.9.2 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-Apache ZooKeeper 是分布式协调服务，提供分布式锁、配置管理、命名服务、Leader 选举等原语，基于 ZAB（ZooKeeper Atomic Broadcast）协议保证强一致性。
-
-### 1.2 核心特性
-
-| 特性 | 说明 |
+| 项目 | 要求 |
 |------|------|
-| **ZAB 协议** | 强一致性（CP），Leader 选举 + 原子广播 |
-| **Watcher** | 数据变更通知机制 |
-| **临时节点** | 会话结束自动删除，用于服务发现和锁 |
-| **顺序节点** | 自增序号，用于队列和选举 |
-| **ACL** | 节点级访问控制 |
+| JDK | JDK 11+（推荐 JDK 17） |
+| 内存 | 单机 ≥ 1G，集群 ≥ 2G/节点 |
+| 端口 | **2181**（客户端）、2888（Peer 通信）、3888（选举） |
+| 磁盘 | 事务日志建议独立 SSD |
 
-### 1.3 适用场景
+> 客户端连接端口为 **2181**，非 2185。
 
-**最佳适用**：Kafka（3.3 前版本）、Hadoop/HBase 协调、分布式锁、Leader 选举、Dubbo 注册中心
-
-**不适用**：新部署 Kafka（→ KRaft）、通用配置中心（→ Nacos）、服务网格（→ Consul）
-
----
-
-## 2. 部署
-
-### 2.1 裸机部署
+## 2. 裸机安装（通用）
 
 ```bash
-# 下载
 wget https://archive.apache.org/dist/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2-bin.tar.gz
 tar xzf apache-zookeeper-3.9.2-bin.tar.gz && cd apache-zookeeper-3.9.2-bin
-
-# 配置
-cp conf/zoo_sample.cfg conf/zoo.cfg
-# 编辑 conf/zoo.cfg
-
-# 启动
-bin/zkServer.sh start
-bin/zkServer.sh status
 ```
 
-### 2.2 Docker 部署
+## 3. 单机部署
+
+**适用场景**：开发测试
+
+### 3.1 配置
 
 ```bash
-docker run -d \
-  --name zookeeper \
-  -p 2181:2181 \
-  -v zk-data:/data \
-  -v zk-logs:/datalog \
-  -v ./conf/zoo.cfg:/conf/zoo.cfg \
-  --restart unless-stopped \
-  zookeeper:3.9.2
+cat > conf/zoo.cfg << 'EOF'
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/tmp/zookeeper/data
+dataLogDir=/tmp/zookeeper/logs
+clientPort=2181
+maxClientCnxns=60
+EOF
 ```
 
-### 2.3 Docker Compose 部署（3 节点集群）
+### 3.2 启动
+
+```bash
+bin/zkServer.sh start
+```
+
+### 3.3 验证
+
+```bash
+bin/zkServer.sh status
+# 预期输出 Mode: standalone
+
+echo ruok | nc localhost 2181
+# 预期输出 imok
+```
+
+### 3.4 Docker Compose
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
+services:
+  zookeeper:
+    image: zookeeper:3.9.2
+    container_name: zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
+    volumes:
+      - zk-data:/data
+      - zk-datalog:/datalog
 
+volumes:
+  zk-data:
+  zk-datalog:
+```
+
+## 4. 集群部署
+
+**适用场景**：生产环境高可用
+
+### 4.1 节点规划
+
+| 节点 | 角色 | IP | 端口 |
+|------|------|-----|------|
+| zk-1 | Leader/Follower | 10.0.0.1 | 2181 |
+| zk-2 | Follower/Leader | 10.0.0.2 | 2181 |
+| zk-3 | Follower/Leader | 10.0.0.3 | 2181 |
+
+### 4.2 配置
+
+**Step 1：zoo.cfg（每节点相同）**
+
+```bash
+cat > conf/zoo.cfg << 'EOF'
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/data/zookeeper/data
+dataLogDir=/data/zookeeper/logs
+clientPort=2181
+maxClientCnxns=60
+
+server.1=10.0.0.1:2888:3888
+server.2=10.0.0.2:2888:3888
+server.3=10.0.0.3:2888:3888
+
+autopurge.snapRetainCount=10
+autopurge.purgeInterval=1
+4lw.commands.whitelist=mntr,conf,ruok,srvr
+EOF
+```
+
+**Step 2：myid 文件（每节点不同）**
+
+```bash
+# zk-1（10.0.0.1）
+echo "1" > /data/zookeeper/data/myid
+
+# zk-2（10.0.0.2）
+echo "2" > /data/zookeeper/data/myid
+
+# zk-3（10.0.0.3）
+echo "3" > /data/zookeeper/data/myid
+```
+
+### 4.3 启动
+
+```bash
+# 每个节点依次启动
+bin/zkServer.sh start
+```
+
+### 4.4 验证
+
+```bash
+bin/zkServer.sh status
+# 预期 1 个 leader + 2 个 follower
+
+echo mntr | nc localhost 2181 | grep zk_server_state
+# leader 输出 zk_server_state leader
+# follower 输出 zk_server_state follower
+```
+
+### 4.5 Docker Compose
+
+```yaml
 services:
   zk-1:
     image: zookeeper:3.9.2
@@ -125,169 +206,33 @@ networks:
     driver: bridge
 ```
 
-### 2.4 生产环境部署要点
-
-**节点数**：≥ 3（奇数），5 节点允许 2 故障
-
-**磁盘**：事务日志必须放独立磁盘（SSD），`dataLogDir` 与 `dataDir` 分离
-
----
-
-## 3. 配置文件
-
-### 3.2 开发环境配置
-
-```properties
-# conf/zoo.cfg — 开发环境
-tickTime=2000
-initLimit=10
-syncLimit=5
-dataDir=/data
-clientPort=2181
-```
-
-### 3.3 生产环境配置
-
-```properties
-# conf/zoo.cfg — 生产环境
-
-# === 基础时间 ===
-tickTime=2000                      # ZAB 心跳间隔 2 秒
-# 逻辑：所有超时都是 tickTime 的倍数
-
-# === 集群同步 ===
-initLimit=10                       # Follower 初始化同步允许 10 个 tick（20 秒）
-syncLimit=5                        # Follower 与 Leader 同步允许 5 个 tick（10 秒）
-# 逻辑：initLimit 太小 → 大数据量时 Follower 初始化失败
-# syncLimit 太小 → 网络抖动时 Follower 被踢出
-
-# === 存储 ===
-dataDir=/data                      # 快照目录
-dataLogDir=/datalog                # 事务日志目录
-# 逻辑：事务日志是顺序写，放独立 SSD 可大幅提升性能
-# 快照是随机写，放 HDD 也可以
-
-# === 网络 ===
-clientPort=2181
-maxClientCnxns=60                  # 单 IP 最大连接数
-# 逻辑：防止单客户端耗尽连接
-
-# === 集群 ===
-server.1=zk-1:2888:3888
-server.2=zk-2:2888:3888
-server.3=zk-3:2888:3888
-# 格式：server.N=host:peerPort:electionPort
-# peerPort → Follower 与 Leader 通信
-# electionPort → Leader 选举通信
-
-# === 快照 ===
-autopurge.snapRetainCount=10       # 保留最近 10 个快照
-autopurge.purgeInterval=1          # 每小时自动清理
-# 逻辑：不配置 autopurge → 快照和日志无限增长导致磁盘满
-
-# === JVM（通过 zkEnv.sh）===
-# JVMFLAGS="-Xmx2g -Xms2g"
-# 逻辑：ZK 是 Java 应用，JVM 堆存事务日志和快照索引
-# 堆太大 → GC 停顿长；堆太小 → 事务日志缓存不够
-
-# === 其他 ===
-4lw.commands.whitelist=mntr,conf,ruok,envi,srvr  # 四字命令白名单
-admin.enableServer=true            # Admin Server
-```
-
----
-
-## 4. 调优
-
-### 4.1 JVM 子系统
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `-Xmx` | 堆最大值 | 2G-4G | ZK 数据在内存中，堆大小决定能存多少 ZNode。堆太大 → GC 停顿 |
-| `-Xms` | 堆初始值 | = Xmx | 避免动态伸缩 |
-| GC 策略 | 垃圾收集器 | G1 | G1 停顿时间可控，适合 ZK |
-
-### 4.2 IO 子系统
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `dataLogDir` | 事务日志目录 | 独立 SSD | **最重要的调优**。事务日志顺序写，独立磁盘避免与快照 IO 争用 |
-| `preAllocSize` | 事务日志预分配 | 64MB | 减少文件扩展开销 |
-| `snapCount` | 快照间隔事务数 | 100000 | 太频繁 → IO 压力；太少 → 恢复慢 |
-
-### 4.3 容量规划
-
-| 规模 | 节点 | CPU | 内存 | JVM 堆 | 磁盘 |
-|------|------|-----|------|--------|------|
-| 小型 | 3 | 2 核 | 4G | 1G | 50G SSD |
-| 中型 | 3 | 4 核 | 8G | 2G | 200G SSD |
-| 大型 | 5 | 8 核 | 16G | 4G | 500G SSD |
-
----
-
-## 5. 运维
-
-### 5.1 日常运维操作
+## 5. 运维速查
 
 ```bash
-# 状态
+# 服务状态
 bin/zkServer.sh status
 
 # 客户端连接
 bin/zkCli.sh -server localhost:2181
 
-# 常用四字命令
-echo mntr | nc localhost 2181     # 监控指标
-echo ruok | nc localhost 2181    # 是否正常
+# 四字命令
+echo mntr | nc localhost 2181    # 监控指标
+echo ruok | nc localhost 2181    # 是否正常 imok
 echo cons | nc localhost 2181    # 连接信息
-```
+echo srvr | nc localhost 2181    # 服务器信息
 
-### 5.2 监控指标
+# 查看日志
+tail -f logs/zookeeper.out
 
-| 指标 | 获取方式 | 告警阈值 |
-|------|----------|----------|
-| **Leader 状态** | `mntr → zk_server_state` | 非 Leader（对 Follower） |
-| **ZNode 数** | `mntr → zk_znode_count` | 异常增长 |
-| **延迟** | `mntr → zk_avg_latency` | > 10ms |
-| **Watch 数** | `mntr → zk_watch_count` | 异常增长 |
-| **连接数** | `mntr → zk_num_alive_connections` | 接近 maxClientCnxns |
-
-### 5.3 备份与恢复
-
-```bash
 # 快照备份
-cp /data/version-2/snapshot.* /backup/
-
-# 事务日志备份
-cp /datalog/version-2/log.* /backup/
+cp /data/zookeeper/data/version-2/snapshot.* /backup/
+cp /data/zookeeper/logs/version-2/log.* /backup/
 ```
 
----
+## 6. 常见故障
 
-## 6. 故障排查
+**集群无 Leader**：检查 `myid` 文件是否正确 → 检查节点间 2888/3888 端口连通性 → 检查 `server.N` 配置与 IP 是否匹配
 
-### 6.1 常见故障
+**Follower 频繁断连**：增大 `syncLimit`（当前 `5` → `10`） → 检查网络延迟 → 检查磁盘 IO 是否过高
 
-#### 故障 1：集群无 Leader
-
-**排查**：`bin/zkServer.sh status` → 检查节点间 2888/3888 端口连通
-
-#### 故障 2：Follower 频繁断连
-
-**排查**：增大 `syncLimit` → 检查网络延迟 → 检查磁盘 IO
-
-### 6.2 诊断工具
-
-| 工具 | 用途 |
-|------|------|
-| `zkServer.sh status` | 节点角色 |
-| `zkCli.sh` | 交互式操作 |
-| `mntr` 四字命令 | 监控指标 |
-| Prometheus（jmx_exporter） | JVM + ZK 指标 |
-
----
-
-## 7. 参考资料
-
-- [ZooKeeper Documentation](https://zookeeper.apache.org/doc/current/)
-- [ZooKeeper Admin Guide](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html)
+**客户端连不上**：确认端口为 **2181**（非 2185） → 检查防火墙 → 检查 `maxClientCnxns` 是否被耗尽

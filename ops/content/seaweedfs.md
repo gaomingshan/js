@@ -1,205 +1,149 @@
-# SeaweedFS 部署运维指南
+# SeaweedFS 部署指南
 
-> **定位**：轻量级分布式文件系统，POSIX 兼容，小文件优化
-> **适用场景**：图片/视频存储、小文件高频读写、POSIX 挂载、CDN 源站
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：3.72 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-SeaweedFS 是开源的分布式文件系统，以 Volume Server 存储小文件、Master 管理元数据、Filer 提供 POSIX 兼容接口为核心架构。针对小文件（< 1MB）场景做了深度优化，单 Volume 可存数十万小文件。
-
-### 1.2 核心架构
-
-```
-┌──────────────────────────────────────┐
-│  Client                               │
-│  S3 API │ Filer (POSIX) │ HTTP API   │
-├──────────────────────────────────────┤
-│  Filer + Filer Store (MySQL/PG/Redis) │
-├──────────────────────────────────────┤
-│  Master (元数据 + 调度)               │
-├──────────────────────────────────────┤
-│  Volume Server × N (数据存储)         │
-└──────────────────────────────────────┘
-```
-
-| 组件 | 职责 | 部署数量 |
-|------|------|----------|
-| **Master** | 集群元数据、Volume 分配、Leader 选举 | ≥ 3（HA） |
-| **Volume Server** | 存储文件数据，每个 Volume 一个文件 | 按容量扩展 |
-| **Filer** | POSIX/S3 接口，目录树，元数据存储 | ≥ 2（HA） |
-| **S3 Gateway** | S3 兼容 API 网关 | ≥ 2（HA） |
-
-### 1.3 适用场景
-
-**最佳适用**：图片/视频 CDN 源站、小文件高频读写、需要 POSIX 挂载、K8s PVC
-
-**不适用**：大文件顺序写入（→ MinIO/Ceph RBD）、PB 级对象存储（→ Ceph）、纯 S3 场景（→ MinIO）
+| 项目 | 最低 | 推荐 |
+|------|------|------|
+| CPU | 2 核 | 8 核+ |
+| 内存 | 4G | 16G+（Master 2G + Volume 按数据量） |
+| 磁盘 | 50G | 1T+ NVMe（Volume 节点） |
+| 系统 | CentOS 7.9+ / Ubuntu 22.04+ | |
 
 ---
 
-## 2. 部署
-
-### 2.1 裸机部署
+## 2. 裸机安装（通用）
 
 ```bash
-# 下载
 wget https://github.com/seaweedfs/seaweedfs/releases/download/3.72/linux_amd64.tar.gz
 tar xzf linux_amd64.tar.gz
-sudo mv weed /usr/local/bin/
-
-# 启动 Master
-weed master -mdir=/data/seaweedfs/master -port=9333 \
-  -peers=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 \
-  -defaultReplication=001
-
-# 启动 Volume Server
-weed volume -dir=/data/seaweedfs/volume -max=100 \
-  -mserver=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 \
-  -port=8080
-
-# 启动 Filer
-weed filer -master=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 \
-  -port=8888 -dir=/data/seaweedfs/filer
-
-# 启动 S3 Gateway
-weed s3 -filer=10.0.0.1:8888 -port=8333
+mv weed /usr/local/bin/
+weed version
 ```
 
-### 2.2 Docker 部署
+---
+
+## 3. 单机部署（Master + Volume 合并）
+
+### 适用场景
+
+开发测试、小文件存储（< 1TB）、学习环境。
+
+### 配置
 
 ```bash
-docker run -d \
-  --name seaweedfs-master \
-  -p 9333:9333 \
-  -p 19333:19333 \
-  -v sw-master:/data \
-  chrislusf/seaweedfs:3.72 \
-  master -mdir=/data -port=9333
+mkdir -p /data/seaweedfs/{master,volume}
 ```
 
-### 2.3 Docker Compose 部署
+### 启动
+
+```bash
+# all-in-one（Master + Volume + Filer + S3 合并启动）
+weed server \
+  -master.dir=/data/seaweedfs/master \
+  -volume.dir=/data/seaweedfs/volume \
+  -volume.max=50 \
+  -filer=true \
+  -filer.dir=/data/seaweedfs/filer \
+  -s3=true \
+  -s3.port=8333 \
+  -master.port=9333 \
+  -volume.port=8080 \
+  -filer.port=8888
+```
+
+### 验证
+
+```bash
+curl http://localhost:9333/cluster/status
+curl http://localhost:9333/dir/assign
+# 应返回 fid 和 volume server 地址
+```
+
+### Docker Compose
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
-
 services:
-  master:
+  seaweedfs:
     image: chrislusf/seaweedfs:3.72
-    container_name: sw-master
+    container_name: seaweedfs
     restart: unless-stopped
     ports:
       - "9333:9333"
-      - "19333:19333"
-    volumes:
-      - master-data:/data
-    command: master -mdir=/data -port=9333
-
-  volume:
-    image: chrislusf/seaweedfs:3.72
-    container_name: sw-volume
-    restart: unless-stopped
-    ports:
       - "8080:8080"
-    volumes:
-      - volume-data:/data
-    command: volume -dir=/data -max=100 -mserver=master:9333 -port=8080
-    depends_on:
-      - master
-
-  filer:
-    image: chrislusf/seaweedfs:3.72
-    container_name: sw-filer
-    restart: unless-stopped
-    ports:
       - "8888:8888"
-    volumes:
-      - filer-data:/data
-    command: filer -master=master:9333 -port=8888 -dir=/data
-    depends_on:
-      - master
-
-  s3:
-    image: chrislusf/seaweedfs:3.72
-    container_name: sw-s3
-    restart: unless-stopped
-    ports:
       - "8333:8333"
-    command: s3 -filer=filer:8888 -port=8333
-    depends_on:
-      - filer
+    volumes:
+      - sw-master:/data/master
+      - sw-volume:/data/volume
+    command: server -master.dir=/data/master -volume.dir=/data/volume -volume.max=50 -filer=true -filer.dir=/data/filer -s3=true -s3.port=8333
 
 volumes:
-  master-data:
-  volume-data:
-  filer-data:
+  sw-master:
+  sw-volume:
 ```
-
-### 2.4 生产环境部署要点
-
-**高可用**：Master ≥ 3（Raft 选举）、Filer ≥ 2（无状态，LB）、Volume 按容量扩展
-
-**副本策略**：`-defaultReplication=001` 表示同 Rack 1 副本；`010` 跨 Rack 1 副本；`100` 跨 DC 1 副本
-
-**安全清单**：Master 启用 `--secure`、Filer Store 使用 MySQL/PG 持久化元数据、网络隔离
 
 ---
 
-## 3. 配置文件
+## 4. 生产部署（Master × 3 + Volume × 3 + Filer）
 
-> **核心原则**：SeaweedFS 通过命令行参数和配置文件（JSON/YAML）管理。以下按场景提供关键配置。
+### 适用场景
 
-### 3.2 开发环境配置
+生产高可用，海量小文件（图片/视频/CDN 源站），要求 POSIX/S3 兼容。
 
+### 节点规划
+
+| 组件 | 节点数 | 推荐配置 |
+|------|--------|----------|
+| **Master** | 3 | 4 核 8G，Raft 选举，至少 3 节点 |
+| **Volume** | 3+ | 按容量扩展，每节点最大 500 Volume |
+| **Filer** | 2+ | 无状态，前端 LB 负载均衡 |
+| **S3 Gateway** | 2+ | 无状态，前端 LB |
+
+副本策略：`replication=001`（单副本，同 Rack 存 1 份）/ `replication=011`（双副本，跨 Rack 存 2 份）。
+
+### 配置
+
+**Master** `/etc/seaweedfs/master.json`（各节点相同，peers 列表全量）：
 ```bash
-# 开发环境：单进程 all-in-one
-weed server -mdir=/data/seaweedfs \
-  -volume.dir=/data/seaweedfs/volume \
-  -filer.dir=/data/seaweedfs/filer \
-  -s3 -volume.max=50
-```
-
-### 3.3 测试环境配置
-
-```json
-// filer.json — Filer 配置（元数据存储）
-{
-  "filer": {
-    "port": 8888,
-    "store": {
-      "type": "memory",
-      "capacity": 100000
-    }
-  }
-}
-```
-
-### 3.4 生产环境配置
-
-**Master 配置** `master.json`：
-
-```json
+cat > /etc/seaweedfs/master.json << 'EOF'
 {
   "master": {
     "port": 9333,
     "mdir": "/data/seaweedfs/master",
     "peers": ["10.0.0.1:9333", "10.0.0.2:9333", "10.0.0.3:9333"],
-    "defaultReplication": "001",
+    "defaultReplication": "011",
     "volumeSizeLimitMB": 30000,
     "garbageThreshold": 0.03,
     "pulseSeconds": 5
   }
 }
+EOF
 ```
 
-**Filer 配置** `filer.json`（生产必须用持久化 Store）：
+**Volume** `/etc/seaweedfs/volume.json`：
+```bash
+cat > /etc/seaweedfs/volume.json << 'EOF'
+{
+  "volume": {
+    "port": 8080,
+    "dir": "/data/seaweedfs/volume",
+    "max": 100,
+    "mserver": "10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333",
+    "indexType": "memory",
+    "dataCenter": "dc1",
+    "rack": "rack1"
+  }
+}
+EOF
+```
 
-```json
+**Filer** `/etc/seaweedfs/filer.json`（生产必须用持久化 Store）：
+```bash
+cat > /etc/seaweedfs/filer.json << 'EOF'
 {
   "filer": {
     "port": 8888,
@@ -212,146 +156,228 @@ weed server -mdir=/data/seaweedfs \
     }
   }
 }
+EOF
 ```
 
-> **为什么 Filer 必须用持久化 Store**：默认内存 Store 重启后目录树丢失。生产必须用 MySQL/PostgreSQL/Redis/Cassandra 等持久化后端。
+### 启动
 
-**Volume Server 配置** `volume.json`：
+**Master 节点**（各节点启动，Raft 自动选举 Leader）：
+```bash
+cat > /etc/systemd/system/seaweedfs-master.service << 'EOF'
+[Unit]
+Description=SeaweedFS Master
+After=network.target
 
-```json
-{
-  "volume": {
-    "port": 8080,
-    "dir": "/data/seaweedfs/volume",
-    "max": 100,
-    "mserver": "10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333",
-    "indexType": "memory",
-    "dataCenter": "dc1",
-    "rack": "rack1"
-  }
-}
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/weed master -mdir=/data/seaweedfs/master -port=9333 -peers=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 -defaultReplication=011 -volumeSizeLimitMB=30000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload && systemctl enable seaweedfs-master && systemctl start seaweedfs-master
 ```
 
----
+**Volume 节点**：
+```bash
+cat > /etc/systemd/system/seaweedfs-volume.service << 'EOF'
+[Unit]
+Description=SeaweedFS Volume
+After=network.target
 
-## 4. 调优
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/weed volume -dir=/data/seaweedfs/volume -max=100 -mserver=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 -port=8080 -dataCenter=dc1 -rack=rack1
+Restart=always
 
-### 4.1 Volume 子系统
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload && systemctl enable seaweedfs-volume && systemctl start seaweedfs-volume
+```
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `volumeSizeLimitMB` | 单 Volume 大小 | 30000（30GB） | 太小 → Volume 数量多，Master 压力大；太大 → 单 Volume 文件多，索引大 |
-| `max` | 最大 Volume 数 | 100-500 | 每节点 Volume 数。100 Volume × 30GB = 3TB/节点 |
-| `indexType` | 索引类型 | memory | 内存索引查询快。超大 Volume 可用 `leveldb` 减少内存但查询慢 |
-| `garbageThreshold` | 垃圾回收阈值 | 0.03 | 删除文件后 Volume 中碎片占比超过阈值触发压缩 |
+**Filer 节点**：
+```bash
+cat > /etc/systemd/system/seaweedfs-filer.service << 'EOF'
+[Unit]
+Description=SeaweedFS Filer
+After=network.target
 
-### 4.2 副本子系统
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/weed filer -master=10.0.0.1:9333,10.0.0.2:9333,10.0.0.3:9333 -port=8888 -collection=default
+Restart=always
 
-| 复制策略 | 含义 | 适用 |
-|----------|------|------|
-| `000` | 无副本 | 开发/测试 |
-| `001` | 同 Rack 1 副本 | 单机架高可用 |
-| `010` | 跨 Rack 1 副本 | 跨机架高可用 |
-| `100` | 跨 DC 1 副本 | 灾备 |
-| `110` | 跨 Rack + 跨 DC | 最高可用 |
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload && systemctl enable seaweedfs-filer && systemctl start seaweedfs-filer
+```
 
-### 4.3 容量规划
-
-| 规模 | Volume 节点 | Volume/节点 | 单 Volume | 总容量 | 小文件数 |
-|------|------------|-------------|-----------|--------|----------|
-| 小型 | 3 | 50 | 30GB | 4.5TB | 4500 万 |
-| 中型 | 10 | 100 | 30GB | 30TB | 3 亿 |
-| 大型 | 30+ | 200 | 30GB | 180TB+ | 18 亿+ |
-
----
-
-## 5. 运维
-
-### 5.1 日常运维操作
+### 验证
 
 ```bash
-# 集群状态
+# Master 状态
+curl http://localhost:9333/cluster/status
+# 应显示所有 Volume 节点在线
+
+# 上传测试
+weed upload -server=localhost:9333 /etc/hostname
+# 返回 fid
+
+# Filer 验证
+curl http://localhost:8888/
+```
+
+### Docker Compose
+
+```yaml
+services:
+  master-1:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-master-1
+    hostname: sw-master-1
+    restart: unless-stopped
+    ports:
+      - "9333:9333"
+    volumes:
+      - master-1-data:/data
+    command: master -mdir=/data -port=9333 -peers=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -defaultReplication=011
+
+  master-2:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-master-2
+    hostname: sw-master-2
+    restart: unless-stopped
+    volumes:
+      - master-2-data:/data
+    command: master -mdir=/data -port=9333 -peers=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -defaultReplication=011
+
+  master-3:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-master-3
+    hostname: sw-master-3
+    restart: unless-stopped
+    volumes:
+      - master-3-data:/data
+    command: master -mdir=/data -port=9333 -peers=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -defaultReplication=011
+
+  volume-1:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-volume-1
+    hostname: sw-volume-1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - volume-1-data:/data
+    command: volume -dir=/data -max=100 -mserver=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -port=8080 -dataCenter=dc1 -rack=rack1
+
+  volume-2:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-volume-2
+    hostname: sw-volume-2
+    restart: unless-stopped
+    volumes:
+      - volume-2-data:/data
+    command: volume -dir=/data -max=100 -mserver=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -port=8080 -dataCenter=dc1 -rack=rack1
+
+  volume-3:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-volume-3
+    hostname: sw-volume-3
+    restart: unless-stopped
+    volumes:
+      - volume-3-data:/data
+    command: volume -dir=/data -max=100 -mserver=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -port=8080 -dataCenter=dc1 -rack=rack1
+
+  filer:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-filer
+    hostname: sw-filer
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    command: filer -master=sw-master-1:9333,sw-master-2:9333,sw-master-3:9333 -port=8888
+
+  s3:
+    image: chrislusf/seaweedfs:3.72
+    container_name: sw-s3
+    restart: unless-stopped
+    ports:
+      - "8333:8333"
+    command: s3 -filer=sw-filer:8888 -port=8333
+
+volumes:
+  master-1-data:  master-2-data:  master-3-data:
+  volume-1-data:  volume-2-data:  volume-3-data:
+```
+
+---
+
+## 5. 运维速查
+
+```bash
+# 交互式管理
 weed shell
-# > cluster.list
-# > volume.list
-# > volume.balance
+
+# 集群状态
+curl http://localhost:9333/cluster/status
+curl http://localhost:9333/dir/status
 
 # Volume 管理
-weed volume.list -master=10.0.0.1:9333
-weed volume.balance -master=10.0.0.1:9333 -force
+weed volume.list -master=localhost:9333
+weed volume.balance -master=localhost:9333 -force
+weed volume.vacuum -master=localhost:9333
 
-# 垃圾回收
-weed volume.vacuum -master=10.0.0.1:9333
+# 垃圾回收（压缩碎片）
+weed volume.vacuum -master=localhost:9333 -garbageThreshold=0.03
 
 # Filer 操作
 weed filer.cat http://filer:8888/path/to/file
 weed filer.copy /local/file http://filer:8888/remote/path
-weed mount -filer=filer:8888 -dir=/mnt/seaweedfs  # POSIX 挂载
-```
 
-### 5.2 监控指标
+# POSIX 挂载
+weed mount -filer=filer:8888 -dir=/mnt/seaweedfs
 
-| 指标 | 获取方式 | 告警阈值 |
-|------|----------|----------|
-| **Volume 使用率** | `weed shell → volume.list` | > 85% |
-| **Volume 健康状态** | Master API | 有 readonly |
-| **Master Leader** | `weed shell → cluster.list` | 无 Leader |
-| **Filer 连接** | Filer health API | 不可达 |
-
-**Prometheus**：Master/Filer/Volume 各自暴露 `/metrics` 端点
-
-### 5.3 备份与恢复
-
-```bash
-# Volume 级备份（复制 Volume 文件）
+# 备份 Volume
 weed volume.copy -source=http://volume:8080 -dir=/backup
 
-# Filer 元数据备份（备份 Store 数据库）
-# mysqldump / pg_dump
-
-# S3 兼容备份
-aws s3 sync s3://mybucket /backup/mybucket --endpoint-url=http://s3:8333
+# 备份 Filer 元数据
+mysqldump -u filer -p seaweedfs_filer > /backup/filer-$(date +%Y%m%d).sql
 ```
 
----
+**副本策略参考**：
 
-## 6. 故障排查
-
-### 6.1 常见故障
-
-#### 故障 1：Volume 只读
-
-**现象**：写入返回 read-only 错误
-
-**原因**：Volume 空间满或被标记为 readonly
-
-**解决**：`weed shell → volume.configure -volumeId=<id> -writable` 或分配新 Volume
-
-#### 故障 2：Master 无 Leader
-
-**排查**：检查 Master 节点间网络连通性和 Raft 日志
-
-**解决**：确保多数 Master 节点可用 → 重启异常节点
-
-#### 故障 3：Filer 元数据丢失
-
-**排查**：检查 Filer Store 后端数据库连接
-
-**解决**：恢复数据库 → 重启 Filer
-
-### 6.2 诊断工具
-
-| 工具 | 用途 |
-|------|------|
-| `weed shell` | 交互式管理 |
-| `weed volume.list` | Volume 状态 |
-| `weed filer.cat` | 文件查看 |
-| `/metrics` | Prometheus 指标 |
+| 策略 | 含义 | 适用场景 |
+|------|------|----------|
+| `000` | 无副本 | 开发测试 |
+| `001` | 同 Rack 1 副本 | 单机架 |
+| `011` | 跨 Rack 2 副本 | 生产高可用 |
+| `100` | 跨 DC 1 副本 | 灾备 |
 
 ---
 
-## 7. 参考资料
+## 6. 常见故障
 
-- [SeaweedFS Documentation](https://seaweedfs.com/)
-- [SeaweedFS GitHub](https://github.com/seaweedfs/seaweedfs)
-- [SeaweedFS Architecture](https://seaweedfs.com/architecture)
+### 故障 1：Volume 只读
+
+**现象**：写入返回 `read-only` 错误。
+
+**解决**：
+```bash
+weed shell
+# volume.configure -volumeId=<id> -writable
+# 或分配新 Volume
+```
+
+### 故障 2：Master 无 Leader
+
+**排查**：检查 Master 间网络连通性和 Raft 日志。
+**解决**：确保多数 Master 节点可用，重启异常节点。
+
+### 故障 3：Filer 元数据丢失
+
+**排查**：检查 Filer Store 后端数据库连接。
+**解决**：恢复数据库 → 重启 Filer。

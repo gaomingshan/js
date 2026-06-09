@@ -1,93 +1,40 @@
-# Mimir 部署运维指南
+# Mimir 部署指南
 
-> **定位**：Grafana Labs 开源的 Prometheus 长期存储后端，TSDB 兼容
-> **适用场景**：Prometheus 长期存储、多租户指标、全局视图
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：2.12.0 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| 对象存储 | S3 / MinIO | 长期存储（必需） |
+| Memcached | 1.6+ | 前置缓存（生产推荐） |
+| Prometheus | 2.45+ | 指标采集，remote_write 到 Mimir |
 
-Grafana Mimir 是开源的 Prometheus 长期存储后端，100% 兼容 PromQL，支持多租户、水平扩展、对象存储，解决 Prometheus 单机存储和保留时间限制。
+## 2. 裸机安装（通用）
 
-### 1.2 与 Thanos 对比
+```bash
+# 下载二进制
+wget https://github.com/grafana/mimir/releases/download/2.12.0/mimir_2.12.0_Linux_x86_64.tar.gz
+tar -xzf mimir_2.12.0_Linux_x86_64.tar.gz
+sudo mv mimir /usr/local/bin/
 
-| 维度 | Mimir | Thanos |
-|------|-------|--------|
-| **架构** | 微服务/单进程 | Sidecar + 组件 |
-| **多租户** | 原生支持 | 需额外配置 |
-| **写入路径** | Push-based | Pull-based |
-| **对象存储** | 必须 | 可选 |
-| **部署复杂度** | 中 | 高 |
-
-### 1.3 核心架构
-
-```
-Prometheus → remote_write → Mimir (Distributor/Ingester/Querier) → Grafana
-                                    ↓
-                              Storage (S3/MinIO)
+# 创建数据目录
+sudo mkdir -p /data/mimir/{tsdb,tsdb-sync,compactor,rules,alertmanager}
 ```
 
----
+## 3. 单机部署（Monolithic Mode）
 
-## 2. 部署
+### 适用场景
 
-### 2.1 Docker Compose 部署（单进程模式）
+开发测试、小规模指标存储（< 5 万样本/秒）
 
-```yaml
-# docker-compose.yml
-version: '3.8'
+### 配置
 
-services:
-  mimir:
-    image: grafana/mimir:2.12.0
-    container_name: mimir
-    restart: unless-stopped
-    ports:
-      - "9009:9009"     # HTTP API
-      - "9095:9095"     # gRPC
-    volumes:
-      - ./conf/mimir.yaml:/etc/mimir/mimir.yaml
-      - mimir-data:/data
-    command: -config.file=/etc/mimir/mimir.yaml -target=all
-    networks:
-      - mimir-net
-
-  minio:
-    image: minio/minio
-    container_name: mimir-minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-    environment:
-      MINIO_ROOT_USER: mimir
-      MINIO_ROOT_PASSWORD: MimirMinIO!Pass
-    volumes:
-      - minio-data:/data
-    command: server /data
-    networks:
-      - mimir-net
-
-volumes:
-  mimir-data:
-  minio-data:
-
-networks:
-  mimir-net:
-    driver: bridge
-```
-
----
-
-## 3. 配置文件
-
-### 3.2 开发环境配置
-
-```yaml
-# mimir.yaml — 开发环境（单进程模式）
-target: all
+```bash
+cat > /etc/mimir.yaml << 'EOF'
+target: all                    # 单进程模式，运行所有组件
 
 multitenancy_enabled: false
 
@@ -107,15 +54,75 @@ alertmanager:
 ruler:
   rule_path: /data/rules
   alertmanager_url: http://localhost:9009
+EOF
 ```
 
-### 3.3 生产环境配置
+### 启动
+
+```bash
+mimir -config.file=/etc/mimir.yaml
+```
+
+### 验证
+
+```bash
+# 健康检查
+curl http://localhost:9009/ready
+
+# PromQL 查询（无多租户不需要 Header）
+curl 'http://localhost:9009/prometheus/api/v1/query?query=up'
+```
+
+### Docker Compose
 
 ```yaml
-# mimir.yaml — 生产环境
+services:
+  mimir:
+    image: grafana/mimir:2.12.0
+    ports: ["9009:9009"]
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml", "mimir-data:/data"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=all]
 
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ROOT_USER: mimir
+      MINIO_ROOT_PASSWORD: MimirMinIO!Pass
+    command: server /data
+    volumes: ["minio-data:/data"]
+
+volumes: {mimir-data:, minio-data:}
+```
+
+## 4. 集群部署（微服务模式）
+
+### 适用场景
+
+生产环境，大规模指标（5 万+ 样本/秒，多租户）
+
+### 节点规划
+
+| 组件 | 实例数 | 说明 |
+|------|--------|------|
+| Distributor | 2 | 接收写入，验证数据 |
+| Ingester | 2 | 内存中汇聚 Block，上传 S3 |
+| Querier | 2 | PromQL 查询 |
+| Store Gateway | 2 | 对象存储查询加速 |
+| Compactor | 1 | Block 合并 + 过期删除 |
+| Ruler | 1 | 告警规则评估 |
+| Alertmanager | 1 | 告警管理 |
+
+### 前置缓存依赖
+
+```
+Memcached （索引缓存 + Chunk 缓存） → 减少对象存储读取，加速查询
+```
+
+### 配置
+
+```yaml
+# mimir.yaml — 微服务模式
 multitenancy_enabled: true
-# 逻辑：多租户通过 X-Scope-OrgID Header 区分
 
 blocks_storage:
   backend: s3
@@ -130,33 +137,25 @@ blocks_storage:
     index_cache:
       backend: memcached
       memcached:
-        # 生产配置引用 memcached 需先在 docker-compose 中定义 Memcached 服务
         addresses: dns+memcached:11211
-    # 逻辑：索引缓存用 Memcached，加速查询
     chunks_cache:
       backend: memcached
       memcached:
-        # 生产配置引用 memcached 需先在 docker-compose 中定义 Memcached 服务
         addresses: dns+memcached:11211
   tsdb:
     dir: /data/tsdb
     ship_interval: 5m
-    # 逻辑：TSDB block 每 5 分钟上传到对象存储
 
 limits:
-  ingestion_rate: 100000           # 每租户每秒 10 万样本
+  ingestion_rate: 100000
   ingestion_burst_size: 200000
-  max_query_length: 8760h          # 最大查询 1 年
-  max_total_query_length: 8760h
-  retention_period: 730d           # 保留 2 年
-  # 逻辑：Mimir 的核心价值 = 长期存储
-  # Prometheus 本地只能存 30 天，Mimir 可存数年
+  max_query_length: 8760h
+  retention_period: 730d
 
 compactor:
   data_dir: /data/compactor
   compaction_interval: 15m
   retention_enabled: true
-  # 逻辑：compactor 合并小 block + 执行保留策略
 
 store_gateway:
   sharding_enabled: true
@@ -173,7 +172,7 @@ ingester:
 
 ruler:
   rule_path: /data/rules
-  alertmanager_url: http://localhost:9009
+  alertmanager_url: http://alertmanager:9009
   evaluation_interval: 15s
 
 alertmanager:
@@ -181,68 +180,131 @@ alertmanager:
   external_url: https://alertmanager.example.com
 ```
 
-**Prometheus 远程写入配置**：
+### Prometheus 远程写入配置
 
 ```yaml
 # prometheus.yml 追加
 remote_write:
-  - url: http://mimir:9009/api/v1/push
+  - url: http://<mimir-distributor>:9009/api/v1/push
     # 多租户时添加 Header
     # headers:
     #   X-Scope-OrgID: tenant-1
 ```
 
----
-
-## 4. 调优
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `retention_period` | 数据保留 | 730d | Mimir 核心价值，长期存储 |
-| `ingestion_rate` | 写入速率 | 10 万样本/s | 每租户限制 |
-| 索引缓存 | Memcached | 独立部署 | 加速查询，减少对象存储读取 |
-| `ship_interval` | Block 上传间隔 | 5m | 越短数据越安全但 IO 越大 |
-
-### 4.2 容量规划
-
-| 规模 | 样本/秒 | CPU | 内存 | 存储 | 节点 |
-|------|---------|-----|------|------|------|
-| 小型 | < 5 万 | 4 核 | 8G | MinIO 500G | 1 |
-| 中型 | 5-50 万 | 8 核 | 16G | MinIO 2T | 3 |
-| 大型 | 50 万+ | 16 核 | 32G | S3 无限 | 5+ |
-
----
-
-## 5. 运维
+### 启动
 
 ```bash
-# 查看租户
-curl http://mimir:9009/api/v1/tenant
-
-# 查看限制
-curl -H "X-Scope-OrgID: tenant-1" http://mimir:9009/api/v1/limits
-
-# PromQL 查询（兼容 Prometheus）
-curl -H "X-Scope-OrgID: tenant-1" \
-  'http://mimir:9009/prometheus/api/v1/query?query=up'
+# 每个组件指定 target
+mimir -config.file=/etc/mimir.yaml -target=distributor
+mimir -config.file=/etc/mimir.yaml -target=ingester
+mimir -config.file=/etc/mimir.yaml -target=querier
+mimir -config.file=/etc/mimir.yaml -target=store-gateway
+mimir -config.file=/etc/mimir.yaml -target=compactor
+mimir -config.file=/etc/mimir.yaml -target=ruler
+mimir -config.file=/etc/mimir.yaml -target=alertmanager
 ```
 
----
+### 验证
 
-## 6. 故障排查
+```bash
+# 查询（多租户需加 Header）
+curl -H "X-Scope-OrgID: tenant-1" 'http://<querier>:9009/prometheus/api/v1/query?query=up'
 
-#### 故障 1：写入限流
+# 查看租户
+curl http://localhost:9009/api/v1/tenant
 
-**排查**：检查 `limits.ingestion_rate` → 增大限制 → 减少 Target 数
+# 查看限制
+curl -H "X-Scope-OrgID: tenant-1" http://localhost:9009/api/v1/limits
+```
 
-#### 故障 2：查询慢
+### Docker Compose
 
-**排查**：检查 Memcached 命中率 → 增大缓存 → 缩小查询范围
+```yaml
+services:
+  memcached:
+    image: memcached:1.6
+    command: ["-m", "1024"]
 
----
+  mimir-distributor:
+    image: grafana/mimir:2.12.0
+    ports: ["9009:9009"]
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=distributor]
+    depends_on: [memcached, minio]
 
-## 7. 参考资料
+  mimir-ingester:
+    image: grafana/mimir:2.12.0
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml", "mimir-ingester-data:/data"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=ingester]
+    depends_on: [memcached, minio]
 
-- [Mimir Documentation](https://grafana.com/docs/mimir/latest/)
-- [Mimir Configuration](https://grafana.com/docs/mimir/latest/configure/)
-- [Mimir Architecture](https://grafana.com/docs/mimir/latest/architecture/)
+  mimir-querier:
+    image: grafana/mimir:2.12.0
+    ports: ["9010:9009"]
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=querier]
+    depends_on: [memcached, minio]
+
+  mimir-store-gateway:
+    image: grafana/mimir:2.12.0
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=store-gateway]
+    depends_on: [memcached, minio]
+
+  mimir-compactor:
+    image: grafana/mimir:2.12.0
+    volumes: ["./conf/mimir.yaml:/etc/mimir/mimir.yaml", "mimir-compactor-data:/data"]
+    command: [-config.file=/etc/mimir/mimir.yaml, -target=compactor]
+    depends_on: [memcached, minio]
+
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ROOT_USER: mimir
+      MINIO_ROOT_PASSWORD: MimirMinIO!Pass
+    command: server /data
+    volumes: ["minio-data:/data"]
+
+volumes:
+  mimir-ingester-data:
+  mimir-compactor-data:
+  minio-data:
+```
+
+## 5. 运维速查
+
+```bash
+# 查看 Ingester Ring 状态
+curl http://localhost:9009/ingester/ring
+
+# 查看 Store Gateway 缓存状态
+curl http://localhost:9009/store-gateway/tenants
+
+# 手动压缩（Compactor）
+curl -X POST http://localhost:9009/compactor/trigger
+
+# 调整租户写入限制（运行时）
+curl -X POST -H "X-Scope-OrgID: tenant-1" \
+  -d 'ingestion_rate=50000' \
+  http://localhost:9009/api/v1/limits/override
+```
+
+## 6. 常见故障
+
+**故障 1：写入限流**
+
+- 检查 `limits.ingestion_rate` 是否过低
+- 增大限制或减少 Prometheus Target 数
+- 扩容 Distributor + Ingester
+
+**故障 2：查询慢 / 超时**
+
+- 检查 Memcached 命中率（`store_gateway` 指标）
+- 索引缓存未命中时直接查询对象存储，延迟高
+- 缩小查询时间范围
+
+**故障 3：Memcached 连接失败**
+
+- 检查 Memcached 服务是否正常
+- 检查 `dns+memcached:11211` 地址解析是否正确
+- Memcached 必须作为前置依赖先启动

@@ -1,81 +1,194 @@
-# Kafka 部署运维指南
+# Kafka 部署指南
 
-> **定位**：分布式流处理平台，高吞吐消息队列的事实标准
-> **适用场景**：日志收集、事件流、实时数据管道、流处理
-> **难度级别**：⭐⭐⭐ 中高
-
----
-
-## 1. 概述
-
-### 1.1 是什么
-
-Apache Kafka 是分布式流处理平台，以 Topic-Partition-Offset 模型组织数据，顺序写磁盘 + 零拷贝实现极高吞吐。KRaft 模式（3.3+）去除了 ZooKeeper 依赖。
-
-### 1.2 核心概念
-
-```
-Producer → Topic (分区) → Consumer Group
-              ↓
-         Broker (存储)
-              ↓
-         KRaft Controller (元数据)
-```
-
-| 概念 | 说明 |
-|------|------|
-| **Broker** | Kafka 服务节点 |
-| **Topic** | 消息类别，逻辑分区 |
-| **Partition** | 有序消息序列，并行度单元 |
-| **Consumer Group** | 消费者组，组内分区单消费 |
-| **Offset** | 分区内消息偏移量 |
-| **KRaft** | 内置共识协议，替代 ZooKeeper |
-
-### 1.3 适用场景
-
-**最佳适用**：日志收集、事件流、实时数据管道、CDC、流处理（Kafka Streams/Flink）
-
-**不适用**：复杂路由（→ RabbitMQ）、RPC（→ gRPC）、海量 IoT 连接（→ EMQX）
+> 版本：3.7+ | 系统：CentOS 7.9+ / Ubuntu 22.04+
+> 部署模式：KRaft（去 ZooKeeper）
 
 ---
 
-## 2. 部署
+## 1. 环境要求
 
-### 2.1 裸机部署（KRaft 模式，Kafka 3.7）
+| 部署模式 | 最低配置 | 推荐配置 | 磁盘 |
+|----------|---------|---------|------|
+| 单机 KRaft | 1 核 / 2G | 2 核 / 4G | 50G SSD |
+| 3 节点 KRaft 集群 | 3 × 2 核 / 4G | 3 × 4 核 / 16G | 3 × 200G SSD |
+| 生产集群（3+3） | 6 × 2 核 / 4G | 6 × 8 核 / 32G | 6 × 500G SSD |
+
+---
+
+## 2. 裸机安装（通用）
 
 ```bash
-# 下载
+# 下载（以 3.7.0 为例）
 wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
-tar xzf kafka_2.13-3.7.0.tgz && cd kafka_2.13-3.7.0
+tar xzf kafka_2.13-3.7.0.tgz -C /opt
+ln -s /opt/kafka_2.13-3.7.0 /opt/kafka
 
-# 生成 Cluster UUID
-KAFKA_CLUSTER_ID=$(/bin/kafka-storage.sh random-uuid)
+# 创建数据目录
+mkdir -p /data/kafka/data
+```
 
-# 格式化存储（每个 Controller/Broker 节点）
-bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/kraft/server.properties
+---
+
+## 3. 单机部署
+
+**适用场景**：开发测试、本地验证
+
+### 配置文件
+
+```bash
+cat > /opt/kafka/config/server.properties << 'EOF'
+node.id=1
+process.roles=broker,controller
+listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+advertised.listeners=PLAINTEXT://localhost:9092
+controller.listener.names=CONTROLLER
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+controller.quorum.voters=1@localhost:9093
+
+log.dirs=/data/kafka/data
+num.partitions=1
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+auto.create.topics.enable=true
+EOF
+```
+
+### 启动
+
+```bash
+# 生成 Cluster ID
+KAFKA_CLUSTER_ID=$(/opt/kafka/bin/kafka-storage.sh random-uuid)
+
+# 格式化存储目录
+/opt/kafka/bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /opt/kafka/config/server.properties
 
 # 启动
-bin/kafka-server-start.sh -daemon config/kraft/server.properties
+/opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/server.properties
 ```
 
-### 2.2 Docker 部署
+### 验证
 
 ```bash
-docker run -d \
-  --name kafka \
-  -p 9092:9092 \
-  -v kafka-data:/var/lib/kafka/data \
-  -v ./conf/server.properties:/opt/kafka/config/server.properties \
-  --restart unless-stopped \
-  apache/kafka:3.7.0
+# 创建测试 topic
+/opt/kafka/bin/kafka-topics.sh --create --topic test --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
+
+# 列出 topic
+/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# 生产-消费验证
+echo "hello" | /opt/kafka/bin/kafka-console-producer.sh --topic test --bootstrap-server localhost:9092
+/opt/kafka/bin/kafka-console-consumer.sh --topic test --from-beginning --bootstrap-server localhost:9092
 ```
 
-### 2.3 Docker Compose 部署（3 Broker KRaft 集群）
+### Docker Compose
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    hostname: kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ
+    volumes:
+      - kafka-data:/var/lib/kafka/data
 
+volumes:
+  kafka-data:
+```
+
+---
+
+## 4. 集群部署
+
+### 4.1 KRaft 集群（combined 角色）
+
+**适用场景**：中小规模生产，节点数 3-5
+
+### 节点规划
+
+| 节点 | hostname | IP | 角色 | 端口 |
+|------|----------|----|------|------|
+| 1 | kafka-1 | 192.168.1.10 | broker,controller | 9092 / 9093 |
+| 2 | kafka-2 | 192.168.1.11 | broker,controller | 9092 / 9093 |
+| 3 | kafka-3 | 192.168.1.12 | broker,controller | 9092 / 9093 |
+
+### 配置文件
+
+节点 1 (kafka-1)：
+
+```bash
+cat > /opt/kafka/config/server.properties << 'EOF'
+node.id=1
+process.roles=broker,controller
+listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+advertised.listeners=PLAINTEXT://kafka-1:9092
+controller.listener.names=CONTROLLER
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+controller.quorum.voters=1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+
+log.dirs=/data/kafka/data
+num.partitions=6
+offsets.topic.replication.factor=3
+transaction.state.log.replication.factor=3
+transaction.state.log.min.isr=2
+min.insync.replicas=2
+
+log.retention.hours=168
+log.segment.bytes=1073741824
+
+num.network.threads=8
+num.io.threads=16
+
+auto.create.topics.enable=false
+EOF
+```
+
+节点 2 (kafka-2)：`node.id=2`，`advertised.listeners=PLAINTEXT://kafka-2:9092`
+
+节点 3 (kafka-3)：`node.id=3`，`advertised.listeners=PLAINTEXT://kafka-3:9092`
+
+其余配置相同。
+
+### 启动
+
+```bash
+# 任选一个节点生成 Cluster ID（全局唯一）
+KAFKA_CLUSTER_ID=$(/opt/kafka/bin/kafka-storage.sh random-uuid)
+echo $KAFKA_CLUSTER_ID  # 记下此值，所有节点共用
+
+# 所有节点格式化
+/opt/kafka/bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /opt/kafka/config/server.properties
+
+# 所有节点启动
+/opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/server.properties
+```
+
+### 验证
+
+```bash
+/opt/kafka/bin/kafka-topics.sh --create --topic test --partitions 3 --replication-factor 3 --bootstrap-server kafka-1:9092
+/opt/kafka/bin/kafka-topics.sh --describe --topic test --bootstrap-server kafka-1:9092
+# 确认 3 个副本都在 ISR 中
+```
+
+### Docker Compose
+
+```yaml
 services:
   kafka-1:
     image: apache/kafka:3.7.0
@@ -95,8 +208,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ"   # 预生成的 Cluster ID
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ
     volumes:
       - kafka-1-data:/var/lib/kafka/data
     networks:
@@ -118,8 +230,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ
     volumes:
       - kafka-2-data:/var/lib/kafka/data
     networks:
@@ -141,8 +252,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDxCRkpIQ0ZQ
     volumes:
       - kafka-3-data:/var/lib/kafka/data
     networks:
@@ -158,299 +268,178 @@ networks:
     driver: bridge
 ```
 
-### 2.4 生产环境部署要点
+### 4.2 生产集群（3 Controller + 3 Broker 分离）
 
-**分区规划**：
-- 分区数 = 目标吞吐 / 单分区吞吐
-- 单分区顺序写入约 10-20MB/s
-- 分区数不宜过多（影响选举和恢复时间）
+**适用场景**：大规模生产，元数据与数据负载分离
 
-**安全清单**：SASL 认证（PLAIN/SCRAM）、TLS 加密、ACL 权限控制、网络隔离
+### 节点规划
 
----
+| 节点 | hostname | IP | 角色 | 端口 |
+|------|----------|----|------|------|
+| C1 | controller-1 | 192.168.1.10 | controller | 9093 |
+| C2 | controller-2 | 192.168.1.11 | controller | 9093 |
+| C3 | controller-3 | 192.168.1.12 | controller | 9093 |
+| B1 | broker-1 | 192.168.1.20 | broker | 9092 |
+| B2 | broker-2 | 192.168.1.21 | broker | 9092 |
+| B3 | broker-3 | 192.168.1.22 | broker | 9092 |
 
-## 3. 配置文件
+### 配置文件
 
-> **核心原则**：Kafka 通过 `server.properties` 配置，以下按场景提供完整配置。
+Controller 节点（所有 3 个 Controller 配置相同，仅 `node.id` 不同）：
 
-### 3.2 开发环境配置
-
-```properties
-# conf/server-dev.properties — 开发环境（单节点 KRaft）
-
+```bash
+cat > /opt/kafka/config/controller.properties << 'EOF'
 node.id=1
-process.roles=broker,controller
-listeners=PLAINTEXT://:9092,CONTROLLER://:9093
-advertised.listeners=PLAINTEXT://localhost:9092
+process.roles=controller
+listeners=CONTROLLER://:9093
 controller.listener.names=CONTROLLER
-listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-controller.quorum.voters=1@localhost:9093
+listener.security.protocol.map=CONTROLLER:PLAINTEXT
+controller.quorum.voters=1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
 
-log.dirs=/tmp/kafka-logs
-num.partitions=1
-offsets.topic.replication.factor=1
-transaction.state.log.replication.factor=1
-transaction.state.log.min.isr=1
+log.dirs=/data/kafka/controller-data
+EOF
 ```
 
-### 3.3 测试环境配置
+Controller 2：`node.id=2`
+Controller 3：`node.id=3`
 
-```properties
-# conf/server-test.properties — 测试环境
+Broker 节点（所有 3 个 Broker 配置相同，仅 `node.id` 和 `advertised.listeners` 不同）：
 
-node.id=1
-process.roles=broker,controller
-listeners=PLAINTEXT://:9092,CONTROLLER://:9093
-advertised.listeners=PLAINTEXT://kafka-1:9092
-controller.listener.names=CONTROLLER
-listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-controller.quorum.voters=1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+```bash
+cat > /opt/kafka/config/broker.properties << 'EOF'
+node.id=101
+process.roles=broker
+listeners=PLAINTEXT://:9092
+advertised.listeners=PLAINTEXT://broker-1:9092
+controller.quorum.voters=1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
 
-log.dirs=/var/lib/kafka/data
-num.partitions=3
+log.dirs=/data/kafka/broker-data
+num.partitions=6
 offsets.topic.replication.factor=3
 transaction.state.log.replication.factor=3
 transaction.state.log.min.isr=2
+min.insync.replicas=2
 
-# === 日志保留 ===
-log.retention.hours=72            # 保留 3 天
-log.segment.bytes=1073741824      # 1GB 一个 segment
+log.retention.hours=168
+log.segment.bytes=1073741824
 
-# === 自动创建 ===
-auto.create.topics.enable=true     # 测试环境允许自动创建
+num.network.threads=8
+num.io.threads=16
+
+auto.create.topics.enable=false
+EOF
 ```
 
-### 3.4 生产环境配置
+Broker 2：`node.id=102`，`advertised.listeners=PLAINTEXT://broker-2:9092`
+Broker 3：`node.id=103`，`advertised.listeners=PLAINTEXT://broker-3:9092`
 
-```properties
-# conf/server-prod.properties — 生产环境
+### 启动
 
-node.id=1
-process.roles=broker,controller
-listeners=SASL_PLAINTEXT://:9092,CONTROLLER://:9093
-advertised.listeners=SASL_PLAINTEXT://kafka-1:9092
-controller.listener.names=CONTROLLER
-listener.security.protocol.map=CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT
-controller.quorum.voters=1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+```bash
+# 生成 Cluster ID
+KAFKA_CLUSTER_ID=$(/opt/kafka/bin/kafka-storage.sh random-uuid)
 
-log.dirs=/data/kafka/log1,/data/kafka/log2   # 多目录多磁盘
+# 所有 6 个节点格式化（各自的配置文件）
+/opt/kafka/bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /opt/kafka/config/controller.properties  # controller 节点
+/opt/kafka/bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /opt/kafka/config/broker.properties      # broker 节点
 
-# === 分区 ===
-num.partitions=6                   # 默认分区数（按需调整）
-num.recovery.threads.per.data.dir=2  # 恢复线程
+# 先启动所有 Controller
+/opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/controller.properties
 
-# === 副本 ===
-offsets.topic.replication.factor=3
-transaction.state.log.replication.factor=3
-transaction.state.log.min.isr=2
-min.insync.replicas=2              # 最小同步副本数，与 acks=all 配合保证不丢
+# 再启动所有 Broker
+/opt/kafka/bin/kafka-server-start.sh -daemon /opt/kafka/config/broker.properties
+```
 
-# === 日志保留 ===
-log.retention.hours=168            # 保留 7 天
-log.retention.check.interval.ms=300000
-log.segment.bytes=1073741824       # 1GB 一个 segment
-log.segment.delete.delay.ms=60000
+### 验证
 
-# === 日志压缩（可选，Change Log 场景）===
-# log.cleanup.policy=compact
-# log.cleaner.min.cleanable.ratio=0.5
+```bash
+# 查看 broker 列表（应显示 3 个 broker）
+/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server broker-1:9092
 
-# === 网络 ===
-num.network.threads=8              # 网络线程数（处理请求）
-num.io.threads=16                  # IO 线程数（磁盘操作）
-socket.send.buffer.bytes=102400
-socket.receive.buffer.bytes=102400
-socket.request.max.bytes=104857600 # 最大请求 100MB
-
-# === 消息大小 ===
-message.max.bytes=1048576          # 单消息最大 1MB
-# 大消息场景需增大此值，但影响内存使用和磁盘 IO
-
-# === 拉取配置 ===
-fetch.max.bytes=5767168            # 消费者单次拉取最大 5MB
-max.partition.fetch.bytes=1048576
-
-# === 复制 ===
-replica.fetch.max.bytes=1048576
-replica.fetch.wait.max.ms=500
-replica.lag.time.max.ms=10000      # 副本落后超过 10 秒移出 ISR
-
-# === 组协调 ===
-group.initial.rebalance.delay.ms=3000  # 初始再平衡等待 3 秒
-group.min.session.timeout.ms=6000
-group.max.session.timeout.ms=300000
-
-# === 自动创建 ===
-auto.create.topics.enable=false    # 生产禁止自动创建
-
-# === 安全（SASL）===
-sasl.enabled.mechanisms=PLAIN
-sasl.mechanism.inter.broker.protocol=PLAIN
-sasl.mechanism.controller.protocol=PLAIN
-
-# === JVM（通过环境变量 KAFKA_HEAP_OPTS）===
-# KAFKA_HEAP_OPTS=-Xmx6g -Xms6g
+# 创建 topic 验证
+/opt/kafka/bin/kafka-topics.sh --create --topic orders --partitions 6 --replication-factor 3 --bootstrap-server broker-1:9092
+/opt/kafka/bin/kafka-topics.sh --describe --topic orders --bootstrap-server broker-1:9092
 ```
 
 ---
 
-## 4. 调优
+## 5. 运维速查
 
-### 4.1 内存子系统（JVM）
-
-**核心逻辑**：Kafka 依赖 OS 页缓存而非 JVM 堆。JVM 堆只需 6-8G，剩余内存留给 OS 做页缓存。
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `KAFKA_HEAP_OPTS` | JVM 堆大小 | 6G-8G | **不要设太大**。Kafka 数据缓存依赖 OS 页缓存，JVM 堆太大反而减少 OS 缓存 |
-| `log.dirs` | 日志目录 | 多目录多磁盘 | 多磁盘并行 IO，提升吞吐。`/disk1/kafka,/disk2/kafka` |
-| 文件系统 | 底层文件系统 | XFS | XFS 对大文件顺序写性能优于 ext4。**必须 noatime 挂载** |
-
-### 4.2 IO 子系统
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `num.io.threads` | IO 线程数 | 磁盘数 × 2 | 处理磁盘读写请求。SSD 可设更高 |
-| `log.flush.interval.messages` | 刷盘消息数 | 不设（依赖 OS） | Kafka 设计依赖 OS 刷盘而非应用 fsync。设太小严重降低性能 |
-| `log.flush.interval.ms` | 刷盘间隔 | 不设 | 同上。让 OS 管理刷盘时机 |
-| `log.segment.bytes` | Segment 大小 | 1GB | 太小 → 频繁滚动；太大 → 文件过大 |
-
-### 4.3 网络子系统
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `num.network.threads` | 网络线程 | 8+ | 处理入站/出站请求。CPU 使用率高时增大 |
-| `socket.send/receive.buffer` | Socket 缓冲 | 102400 | 高延迟网络需增大 |
-| `message.max.bytes` | 最大消息 | 1MB | 增大需同步调整 `replica.fetch.max.bytes` 和消费者 `fetch.max.bytes` |
-
-### 4.4 副本子系统
-
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `min.insync.replicas` | 最小同步副本 | 2 | 配合 `acks=all` 保证至少 2 副本写入成功。设 1 可能丢数据 |
-| `replica.lag.time.max.ms` | 副本落后超时 | 10000 | 超过此时间未追赶则移出 ISR。设太小 → ISR 频繁收缩 |
-| `unclean.leader.election.enable` | 脏选举 | false | 非 ISR 副本能否当选 Leader。设 true 可能丢数据；设 false 可能不可用 |
-
-### 4.5 容量规划
-
-| 规模 | Broker | CPU | 内存 | 磁盘 | 分区/ Broker | TPS |
-|------|--------|-----|------|------|-------------|-----|
-| 小型 | 3 | 4 核 | 16G | 500G SSD | 100 | < 5 万 |
-| 中型 | 5 | 8 核 | 32G | 2T SSD | 500 | 5-20 万 |
-| 大型 | 10+ | 16 核 | 64G | 4T NVMe | 1000 | 20 万+ |
-
----
-
-## 5. 运维
-
-### 5.1 日常运维操作
+### 常用命令
 
 ```bash
 # Topic 管理
-bin/kafka-topics.sh --create --topic orders --partitions 6 --replication-factor 3 --bootstrap-server localhost:9092
-bin/kafka-topics.sh --describe --topic orders --bootstrap-server localhost:9092
-bin/kafka-topics.sh --alter --topic orders --partitions 12 --bootstrap-server localhost:9092  # 只能增不能减
+kafka-topics.sh --create --topic <name> --partitions <n> --replication-factor <n> --bootstrap-server localhost:9092
+kafka-topics.sh --describe --topic <name> --bootstrap-server localhost:9092
+kafka-topics.sh --alter --topic <name> --partitions <n> --bootstrap-server localhost:9092  # 只能增加
 
 # 消费者组
-bin/kafka-consumer-groups.sh --list --bootstrap-server localhost:9092
-bin/kafka-consumer-groups.sh --describe --group order-group --bootstrap-server localhost:9092
+kafka-consumer-groups.sh --list --bootstrap-server localhost:9092
+kafka-consumer-groups.sh --describe --group <group> --bootstrap-server localhost:9092
 
-# 重置 Offset
-bin/kafka-consumer-groups.sh --reset-offsets --group order-group --topic orders --to-earliest --execute --bootstrap-server localhost:9092
+# 重置 offset
+kafka-consumer-groups.sh --reset-offsets --group <group> --topic <topic> --to-earliest --execute --bootstrap-server localhost:9092
 
-# 配置修改
-bin/kafka-configs.sh --alter --entity-type topics --entity-name orders --add-config retention.ms=86400000 --bootstrap-server localhost:9092
+# 动态配置
+kafka-configs.sh --alter --entity-type topics --entity-name <topic> --add-config retention.ms=86400000 --bootstrap-server localhost:9092
+
+# 日志目录信息
+kafka-log-dirs.sh --describe --bootstrap-server localhost:9092
 ```
 
-### 5.2 监控指标
+### 关键告警指标
 
 | 指标 | 获取方式 | 告警阈值 |
 |------|----------|----------|
-| **消息堆积** | Consumer Group Lag | 持续增长 |
-| **ISR 缩小** | `UnderReplicatedPartitions` | > 0 |
-| **Offline 分区** | `OfflinePartitionsCount` | > 0 |
-| **活跃 Controller** | `ActiveControllerCount` | ≠ 1 |
-| **网络请求队列** | `RequestQueueSize` | 持续 > 0 |
-| **磁盘使用率** | OS `df` | > 80% |
-
-**Prometheus（kafka_exporter）**：
-
-```bash
-docker run -d \
-  --name kafka-exporter \
-  -p 9308:9308 \
-  -e KAFKA_SERVER=kafka-1:9092 \
-  danielqsj/kafka-exporter
-```
-
-### 5.3 备份与恢复
-
-```bash
-# MirrorMaker 2（跨集群复制）
-bin/kafka-mirror-maker-2.sh \
-  --replication.config.file mm2.properties
-
-# Topic 数据导出
-bin/kafka-console-consumer.sh --topic orders --from-beginning --bootstrap-server localhost:9092 > orders_backup.txt
-```
+| 消费者堆积 | Consumer Group Lag | 持续增长 |
+| 副本不同步 | `UnderReplicatedPartitions` | > 0 |
+| 离线分区 | `OfflinePartitionsCount` | > 0 |
+| 主节点数量 | `ActiveControllerCount` | ≠ 1 |
+| 请求排队 | `RequestQueueSize` | 持续 > 0 |
+| 磁盘使用率 | OS `df` | > 80% |
 
 ---
 
-## 6. 故障排查
+## 6. 常见故障
 
-### 6.1 常见故障
-
-#### 故障 1：消息堆积（Consumer Lag）
+### 故障 1：消息堆积（Consumer Lag）
 
 **排查链路**：
 
 ```
 现象：Consumer Lag 持续增长
   → kafka-consumer-groups.sh --describe
-    → 消费者是否在线？
-      → 否 → 重启消费者
+    → 消费者在线？
+      → 否 → 启动消费者
       → 是 → 消费速度 < 生产速度
-        → 增加分区数 + 消费者实例
-        → 优化消费者处理逻辑
+        → 增加分区 + 消费者实例
+        → 优化消费逻辑
 ```
 
-#### 故障 2：ISR 缩小
-
-**排查**：
+### 故障 2：ISR 收缩
 
 ```bash
-bin/kafka-topics.sh --describe --topic orders --bootstrap-server localhost:9092
-# ISR 列表 < 副本列表 → 有副本落后
+kafka-topics.sh --describe --topic <topic> --bootstrap-server localhost:9092
+# 对比 Replicas 和 ISR 列表
 ```
 
-**解决**：检查落后 Broker 磁盘/网络 → 重启落后 Broker → 等待自动追赶
+**解决**：检查落后 Broker 磁盘 IO / 网络带宽 → 重启落后 Broker → 等待同步追赶
 
-#### 故障 3：Leader 均衡
+### 故障 3：磁盘写满
 
 ```bash
-# 查看分区 Leader 分布
-bin/kafka-topics.sh --describe --topic orders --bootstrap-server localhost:9092
+# 紧急处理：临时调整保留时间
+kafka-configs.sh --alter --entity-type topics --entity-name <topic> \
+  --add-config retention.ms=3600000 --bootstrap-server localhost:9092
 
-# 重新均衡
-bin/kafka-leader-election.sh --bootstrap-server localhost:9092 \
-  --election-type preferred-replica
+# 长期：扩容磁盘或增加 log.dirs 多目录
 ```
 
-### 6.2 诊断工具
+### 故障 4：Controller 选举异常
 
-| 工具 | 用途 |
-|------|------|
-| `kafka-topics.sh` | Topic 管理 |
-| `kafka-consumer-groups.sh` | 消费者组管理 |
-| `kafka-configs.sh` | 动态配置 |
-| `kafka-log-dirs.sh` | 日志目录查询 |
-| JMX + Prometheus | 指标监控 |
+```bash
+# 查看集群元数据状态
+kafka-metadata-shell.sh --snapshot /tmp/kafka-metadata.log
+```
 
----
-
-## 7. 参考资料
-
-- [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
-- [Kafka KRaft Mode](https://kafka.apache.org/documentation/#kraft)
-- [Kafka Configuration](https://kafka.apache.org/documentation/#brokerconfigs)
-- [kafka_exporter](https://github.com/danielqsj/kafka-exporter)
+**解决**：检查 Controller 节点网络连通性 → 确保 `controller.quorum.voters` 配置正确 → 重启故障 Controller

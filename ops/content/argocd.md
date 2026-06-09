@@ -1,89 +1,49 @@
-# ArgoCD 部署运维指南
+# ArgoCD 部署指南
 
-> **定位**：Kubernetes 原生的 GitOps 持续交付工具
-> **适用场景**：GitOps 部署、K8s 多集群管理、声明式交付、应用生命周期
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：2.12 | 系统：Kubernetes 1.25+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-ArgoCD 是 Kubernetes 原生的 GitOps 持续交付工具，以 Git 仓库为唯一事实来源，自动将 K8s 集群状态同步到 Git 声明的期望状态。
-
-### 1.2 核心理念
-
-```
-Git Repo (期望状态) → ArgoCD → K8s Cluster (实际状态)
-                         ↑
-                    自动检测 Drift → 自动/手动同步
-```
-
-| 概念 | 说明 |
+| 项目 | 要求 |
 |------|------|
-| **Application** | ArgoCD 管理单元，关联 Git 路径 + K8s 集群 |
-| **Sync** | 将 Git 状态应用到 K8s |
-| **Drift Detection** | 检测集群状态与 Git 的偏差 |
-| **App of Apps** | 用一个 Application 管理多个 Application |
-| **Project** | 应用分组和权限隔离 |
+| Kubernetes | ≥ 1.25 |
+| K8s 内存 | ≥ 2GB (argocd namespace) |
+| Ingress Controller | nginx-ingress / traefik / haproxy |
+| RBAC | 集群级别权限（cluster-admin 或自定义） |
 
-### 1.3 适用场景
+## 2. 裸机安装（通用）
 
-**最佳适用**：K8s GitOps 部署、多集群管理、声明式交付、审计追踪
-
-**不适用**：非 K8s 部署（→ Jenkins）、传统 VM 部署（→ Ansible）
-
----
-
-## 2. 部署
-
-### 2.1 K8s 部署（Helm）
+**K8s 无 Helm 裸部署**：
 
 ```bash
-# 添加仓库
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo update
+# 创建 namespace
+kubectl create namespace argocd
 
 # 安装
-helm install argocd argo/argo-cd \
-  --namespace argocd \
-  --create-namespace \
-  --set server.service.type=NodePort \
-  # 生产不建议使用 --insecure，应配置正确 TLS 证书
-  # --set server.extraArgs[0]=--insecure
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
 
-# 获取 admin 密码
+**验证**：
+
+```bash
+kubectl -n argocd get pods -w
+# 等待所有 pod 状态为 Running
+
+# 获取 admin 初始密码
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d
 ```
 
-### 2.2 argocd CLI
+## 3. 基础部署
 
-```bash
-# 安装
-curl -sLO https://github.com/argoproj/argo-cd/releases/download/v2.12.0/argocd-linux-amd64
-chmod +x argocd-linux-amd64 && sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+**适用场景**：开发测试环境、GitOps 快速验证
 
-# 登录
-argocd login argocd.example.com --username admin --password <password>
-
-# 管理
-argocd app list
-argocd app get <app-name>
-argocd app sync <app-name>
-argocd app diff <app-name>
-```
-
----
-
-## 3. 配置文件
-
-### 3.2 Application 示例
+**配置** — 创建 Application：
 
 ```yaml
-# application.yaml — ArgoCD Application 定义
-
+cat > application.yaml << 'EOF'
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -92,174 +52,260 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://gitlab.example.com/devops/myapp-manifests.git
+    repoURL: https://github.com/example/myapp-manifests.git
     targetRevision: main
-    path: overlays/prod
-    # 逻辑：Kustomize overlay 模式
-    # base/ → 基础配置
-    # overlays/prod/ → 生产覆盖
+    path: overlays/dev
   destination:
     server: https://kubernetes.default.svc
-    namespace: prod
-
-  # === 同步策略 ===
-  syncPolicy:
-    automated:
-      prune: true              # 自动删除 Git 中不存在的资源
-      selfHeal: true           # 自动修复 Drift
-      allowEmpty: false
-    syncOptions:
-      - CreateNamespace=true
-      - PrunePropagationPolicy=background  # background 比 foreground 更安全，避免删除卡住
-  # 逻辑：
-  #   prune=true → Git 删除的资源自动从集群删除
-  #   selfHeal=true → 集群状态被手动修改后自动恢复
-  #   两者是 GitOps 的核心：Git 是唯一事实来源
-
-  # === 忽略差异 ===
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-  # 逻辑：HPA 管理副本数时，忽略 replicas 差异避免误报
-```
-
-### 3.3 App of Apps 模式
-
-```yaml
-# apps.yaml — 管理多个 Application 的 Application
-
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: apps
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://gitlab.example.com/devops/apps-manifests.git
-    targetRevision: main
-    path: apps/
-    directory:
-      recurse: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: myapp-dev
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+EOF
 ```
 
-### 3.4 Project 配置
+```bash
+kubectl apply -f application.yaml
+```
+
+**CLI 登录**：
+
+```bash
+# 安装 CLI
+curl -sLO https://github.com/argoproj/argo-cd/releases/download/v2.12.0/argocd-linux-amd64
+chmod +x argocd-linux-amd64 && sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+
+# 端口转发（无 Ingress）
+kubectl port-forward -n argocd svc/argocd-server 8080:443 &
+
+# CLI 登录（⚠️ 仅开发环境用 --insecure）
+argocd login localhost:8080 --insecure --username admin
+# Password: 从 kubectl get secret 获取
+```
+
+**网页登录**：
+
+```bash
+kubectl port-forward -n argocd svc/argocd-server 8080:443 &
+# 浏览器访问 https://localhost:8080
+```
+
+**验证**：
+
+```bash
+argocd app list
+argocd app get myapp
+argocd app sync myapp
+```
+
+**Docker Compose**：
+
+> ArgoCD 是 K8s 原生工具，无 Docker Compose 部署方式。本地测试可使用 `argocd cli` + `k3d`/`kind`。
+
+## 4. 生产部署
+
+**适用场景**：生产 GitOps、多集群管理、SSO 集成
+
+**配置 — TLS 证书**：
+
+```bash
+# 方式一：自签名证书创建 Secret
+kubectl -n argocd create secret tls argocd-server-tls \
+  --cert=/etc/ssl/certs/argocd.crt \
+  --key=/etc/ssl/private/argocd.key
+
+# 方式二：cert-manager 自动签发
+cat > issuer.yaml << 'EOF'
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+EOF
+kubectl apply -f issuer.yaml
+```
+
+**配置 — Ingress（不加 `--insecure`）**：
 
 ```yaml
-# project.yaml — 项目隔离
-
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
+cat > argocd-ingress.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: team-a
+  name: argocd-server
   namespace: argocd
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
-  description: Team A Project
-  sourceRepos:
-    - "https://gitlab.example.com/team-a/*"
-  destinations:
-    - namespace: team-a-*
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: ""
-      kind: Namespace
-  namespaceResourceBlacklist:
-    - group: ""
-      kind: ResourceQuota
-  # 逻辑：Project 限制团队只能部署到指定 namespace
-  # 只能使用指定 Git 仓库
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - argocd.example.com
+      secretName: argocd-server-tls
+  rules:
+    - host: argocd.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 443
+EOF
+kubectl apply -f argocd-ingress.yaml
 ```
 
----
+> **重要**：生产禁止使用 `--insecure` 参数或 `server.extraArgs[0]=--insecure`。配置正确 TLS 证书后，ArgoCD 自动响应 HTTPS。
 
-## 4. 调优
+**配置 — SSO（以 Dex + OIDC 为例）**：
 
-| 参数 | 作用 | 推荐值 | 调优逻辑 |
-|------|------|--------|----------|
-| `syncPolicy.automated` | 自动同步 | prune+selfHeal | GitOps 核心，但生产初期可先手动 |
-| `status.refreshInterval` | 状态刷新间隔 | 3m（默认） | 越短检测越快但 API 调用越多 |
-| Repo Cache | Git 仓库缓存 | 默认 24h | 减少 Git API 调用 |
-| Resource Hooks | 生命周期钩子 | PreSync/PostSync | 执行数据库迁移等前置/后置任务 |
+```yaml
+cat > argocd-cm.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+data:
+  url: https://argocd.example.com
+  dex.config: |
+    connectors:
+    - type: oidc
+      id: keycloak
+      name: Keycloak
+      config:
+        issuer: https://sso.example.com/auth/realms/your-realm
+        clientID: argocd
+        clientSecret: $dex-client-secret
+        insecureEnableGroups: true
+  oidc.config: |
+    name: Keycloak
+    issuer: https://sso.example.com/auth/realms/your-realm
+    clientID: argocd
+    clientSecret: $oidc-client-secret
+    requestedScopes:
+      - openid
+      - profile
+      - email
+      - groups
+EOF
+kubectl apply -f argocd-cm.yaml
+```
 
----
+**CLI 登录（生产）**：
 
-## 5. 运维
+```bash
+argocd login argocd.example.com --username admin
+# Password: 从 initial-admin-secret 获取
+# 登录后立即修改密码：argocd account update-password
+```
+
+**验证**：
+
+```bash
+argocd app list
+argocd app diff myapp
+argocd app sync myapp
+argocd app history myapp
+argocd app rollback myapp 1
+```
+
+**Docker Compose**：
+
+> 同基础部署，无 Docker Compose 方式。生产安装推荐 Helm Chart：
+
+```bash
+helm repo add argo https://argoproj.github.io/argo-helm
+helm upgrade --install argocd argo/argo-cd \
+  --namespace argocd \
+  --create-namespace \
+  --set global.domain=argocd.example.com \
+  --set server.ingress.enabled=true \
+  --set server.ingress.annotations."cert-manager\.io/cluster-issuer"=letsencrypt-prod \
+  --set server.ingress.tls=true \
+  --set server.ingress.hosts[0]=argocd.example.com \
+  --set configs.secret.argocdServerAdminPassword=""
+# 不设 --insecure，通过 ingress TLS 终止
+```
+
+## 5. 运维速查
 
 ```bash
 # 应用管理
 argocd app list
-argocd app sync myapp
-argocd app diff myapp           # 查看与 Git 的差异
-argocd app history myapp        # 同步历史
-argocd app rollback myapp <revision>
+argocd app sync myapp         # 手动同步
+argocd app diff myapp         # 查看与 Git 差异
+argocd app history myapp      # 同步历史
+argocd app rollback myapp 1   # 回滚到历史版本
 
 # 集群管理
 argocd cluster list
-argocd cluster add <context>
+argocd cluster add eks-cluster-1  # 添加外部集群
 
 # 项目管理
 argocd proj list
-argocd proj add team-a
-```
+argocd proj create team-a
 
-### 5.2 监控指标
-
-| 指标 | 获取方式 | 告警阈值 |
-|------|----------|----------|
-| **应用状态** | `argocd app get` | OutOfSync/Degraded |
-| **同步状态** | ArgoCD UI | Sync Failed |
-| **Drift** | `argocd app diff` | 有差异 |
-
-**Prometheus**：ArgoCD 内置 `/metrics` 端点
-
-### 5.3 备份与恢复
-
-```bash
-# ⚠️ 注意：kubectl get applications 包含运行时状态，不能直接用于恢复
-# 推荐使用 argocd admin export 命令（更干净）
+# 备份（推荐）
 argocd admin export -n argocd > argocd-backup.yaml
+# 实质：Application/Project/ConfigMap 定义都在 Git 中，Git 就是备份
 
-# 或备份 Git 仓库（Application 的 Source 在 Git 中）
-# 这才是 ArgoCD 的"唯一事实来源"
+# 查看密码
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d
+
+# 修改密码
+argocd account update-password
 ```
 
----
+## 6. 常见故障
 
-## 6. 故障排查
+### 6.1 应用 OutOfSync
+```bash
+argocd app diff myapp
+# 检查是否有人手动修改集群资源
+# argocd app sync myapp 恢复
+# 检查 ignoreDifferences 是否遗漏字段
+```
 
-### 6.1 常见故障
+### 6.2 Sync Failed — 资源冲突
+```
+error: the object has been modified; please apply your changes to the latest version
+```
+资源被其他控制器（如 HPA）修改。在 `ignoreDifferences` 中忽略相关字段，或在 syncOptions 添加 `ServerSideApply=true`。
 
-#### 故障 1：应用 OutOfSync
+### 6.3 Ingress 502 — backend protocol 不匹配
+ArgoCD server 默认监听 8080 (HTTP) 和 8083 (HTTPS)。Ingress 指向 HTTPS 端口 443 时，需设置：
 
-**排查**：`argocd app diff` 查看差异 → 检查是否有人手动修改集群 → `argocd app sync` 恢复
+```yaml
+annotations:
+  nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+```
 
-#### 故障 2：Sync Failed
+### 6.4 RBAC 权限不足
+```
+error: applications.argoproj.io is forbidden
+```
+确认部署 ArgoCD 的 ServiceAccount 有 cluster-admin 或包含 argoproj.io API 资源的 RBAC 权限。
 
-**排查**：`argocd app logs` → 检查 K8s 事件 → 检查资源配额/权限
-
-### 6.2 诊断工具
-
-| 工具 | 用途 |
-|------|------|
-| ArgoCD UI | `:8080` 可视化 |
-| `argocd` CLI | 命令行管理 |
-| `argocd app diff` | 状态差异 |
-| K8s Events | 资源事件 |
-
----
-
-## 7. 参考资料
-
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-- [ArgoCD Getting Started](https://argo-cd.readthedocs.io/en/stable/getting_started/)
-- [GitOps Principles](https://opengitops.dev/)
-- [App of Apps Pattern](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/)
+### 6.5 SSO 登录失败
+- 检查 `argocd-cm` 中 `url` 与访问地址一致
+- 检查 OIDC `clientSecret` 是否正确
+- 查看 `argocd-dex-server` 日志：`kubectl -n argocd logs deploy/argocd-dex-server`

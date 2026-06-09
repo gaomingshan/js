@@ -1,112 +1,247 @@
-# OpenSearch 部署运维指南
+# OpenSearch 部署指南
 
-> **定位**：Elasticsearch 开源分支，AWS 主导，社区驱动
-> **适用场景**：全文搜索、日志分析、可观测性、安全分析
-> **难度级别**：⭐⭐⭐ 中高
+> 版本：2.15 | 系统：CentOS 7.9+ / Ubuntu 22.04+
 
 ---
 
-## 1. 概述
+## 1. 环境要求
 
-### 1.1 是什么
-
-OpenSearch 是 Elasticsearch 7.10 的开源分支（AWS 主导），核心 API 兼容 ES 7.x，新增安全分析、SQL/PPL 查询、通知插件等特性。
-
-### 1.2 与 Elasticsearch 对比
-
-| 维度 | OpenSearch | Elasticsearch |
-|------|-----------|---------------|
-| **许可证** | Apache 2.0 | Elastic License / SSPL |
-| **安全插件** | 内置免费 | 需付费（基本版有限） |
-| **SQL** | 内置 | 需付费 |
-| **PPL** | 内置 | 无 |
-| **API 兼容** | 兼容 ES 7.x | 8.x 不兼容 |
-| **社区** | AWS + 社区 | Elastic 公司 |
-
-### 1.3 适用场景
-
-**最佳适用**：需要开源许可的场景、AWS 生态、日志分析、安全分析、可观测性
-
-**不适用**：需要 ES 8.x 新特性（向量搜索增强）、已有 ES 8.x 集群
+| 部署模式 | 最低配置 | 推荐配置 | 磁盘 |
+|----------|----------|----------|------|
+| 单机（开发） | 4C 8G | 4C 16G | 100G SSD |
+| 生产集群（3 节点 + Dashboard） | 4C 16G | 8C 32G | 500G+ SSD/节点 |
 
 ---
 
-## 2. 部署
+## 2. 裸机安装（通用）
 
-### 2.1 Docker 部署
+**注意：OpenSearch 不能用 root 运行，安装后会自动创建 opensearch 用户，所有操作在该用户下运行。**
 
 ```bash
-docker run -d \
-  --name opensearch \
-  -p 9200:9200 \
-  -p 9600:9600 \
-  -e discovery.type=single-node \
-  -e OPENSEARCH_JAVA_OPTS="-Xms1g -Xmx1g" \
-  -e DISABLE_SECURITY_PLUGIN=true \
-  -v os-data:/usr/share/opensearch/data \
-  --restart unless-stopped \
-  opensearchproject/opensearch:2.15
+# CentOS
+cat > /etc/yum.repos.d/opensearch.repo << 'EOF'
+[opensearch]
+name=OpenSearch repository
+baseurl=https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.opensearch.org/publickeys/opensearch.pgp
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+sudo yum install -y opensearch-2.15.0
+
+# Ubuntu
+curl -fsSL https://artifacts.opensearch.org/publickeys/opensearch.pgp | sudo gpg --dearmor -o /usr/share/keyrings/opensearch-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/opensearch-keyring.gpg] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main" | sudo tee /etc/apt/sources.list.d/opensearch.list
+sudo apt update && sudo apt install -y opensearch=2.15.0
+
+# 关键目录
+# /etc/opensearch/opensearch.yml        配置
+# /var/lib/opensearch/                  数据
+# /var/log/opensearch/                  日志
+# /usr/share/opensearch/                安装目录
 ```
 
-### 2.2 Docker Compose 部署（3 节点 + Dashboard）
+---
+
+## 3. 单机部署
+
+**适用场景**：开发测试、本地验证（关闭安全插件）
+
+### 配置文件（完整）
+
+```bash
+cat > /etc/opensearch/opensearch.yml << 'EOF'
+cluster.name: dev-cluster
+node.name: node-1
+path.data: /var/lib/opensearch
+path.logs: /var/log/opensearch
+network.host: 0.0.0.0
+http.port: 9200
+discovery.type: single-node
+
+# 关闭安全插件（单机开发时）
+plugins.security.disabled: true
+EOF
+```
+
+```bash
+# JVM 配置（/etc/opensearch/jvm.options.d/jvm.options）
+-Xms1g
+-Xmx1g
+```
+
+### 启动
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable opensearch
+sudo systemctl start opensearch
+sudo journalctl -u opensearch -f
+```
+
+### 验证
+
+```bash
+curl http://localhost:9200
+curl http://localhost:9200/_cluster/health?pretty
+```
+
+### Docker Compose
 
 ```yaml
-# docker-compose.yml
-version: '3.8'
-
 services:
-  os-1:
+  os:
     image: opensearchproject/opensearch:2.15
-    container_name: os-1
-    hostname: os-1
+    container_name: os
     restart: unless-stopped
     ports:
       - "9200:9200"
+      - "9600:9600"
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - os-data:/usr/share/opensearch/data
+
+volumes:
+  os-data:
+```
+
+---
+
+## 4. 集群部署
+
+**适用场景**：生产环境、高可用、需要安全认证
+
+**注意**：
+- 所有节点的 `DISABLE_SECURITY_PLUGIN` 值**必须一致**（生产集群统一为 `false`），否则节点间无法通信
+- `plugins.security.allow_default_init_securityindex: true` 仅首次初始化安全索引时使用，初始化后**必须改回 `false`**，防止安全配置被篡改
+
+### 节点规划
+
+| 主机名 | IP | 角色 |
+|--------|----|------|
+| os-1 | 192.168.1.10 | cluster_manager, data |
+| os-2 | 192.168.1.11 | cluster_manager, data |
+| os-3 | 192.168.1.12 | cluster_manager, data |
+| os-dashboard | 192.168.1.30 | Dashboard |
+
+### 配置文件
+
+```bash
+cat > /etc/opensearch/opensearch.yml << 'EOF'
+cluster.name: prod-cluster
+node.name: os-1                 # 各节点按实际名称修改
+path.data: /var/lib/opensearch
+path.logs: /var/log/opensearch
+path.repo: /data/opensearch/snapshots
+
+# === 节点角色 ===
+node.roles: [cluster_manager, data]
+
+# === 集群发现 ===
+discovery.seed_hosts: ["os-1:9300", "os-2:9300", "os-3:9300"]
+cluster.initial_cluster_manager_nodes: ["os-1", "os-2", "os-3"]
+
+# === 网络 ===
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# === 安全（内置）===
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.transport.enabled: true
+plugins.security.ssl.http.pemcert_filepath: /etc/opensearch/certs/node.pem
+plugins.security.ssl.http.pemkey_filepath: /etc/opensearch/certs/node-key.pem
+plugins.security.ssl.http.pemtrusted_filepath: /etc/opensearch/certs/ca.pem
+
+# 安全索引初始化控制
+# 首次部署：设置为 true → 重启 → 执行 securityadmin.sh
+# 初始化完成后：必须改为 false（默认）
+plugins.security.allow_default_init_securityindex: false
+EOF
+```
+
+```bash
+# JVM 配置
+# /etc/opensearch/jvm.options.d/jvm.options
+-Xms8g
+-Xmx8g
+```
+
+```bash
+# 首次部署安全索引初始化（仅在一个节点执行）
+# securityadmin.sh 位于插件目录，需要配置好证书后运行
+/usr/share/opensearch/plugins/opensearch-security/tools/securityadmin.sh \
+  -cd /usr/share/opensearch/plugins/opensearch-security/securityconfig \
+  -icl -nhnv \
+  -cacert /etc/opensearch/certs/ca.pem \
+  -cert /etc/opensearch/certs/admin.pem \
+  -key /etc/opensearch/certs/admin-key.pem
+```
+
+### 启动
+
+```bash
+# 所有节点
+sudo systemctl daemon-reload
+sudo systemctl enable opensearch
+sudo systemctl start opensearch
+```
+
+### 验证
+
+```bash
+# 集群健康
+curl -k https://localhost:9200/_cluster/health?pretty -u admin:Admin!Pass
+
+# 节点列表
+curl -k https://localhost:9200/_cat/nodes?v -u admin:Admin!Pass
+
+# 安全插件状态
+curl -k https://localhost:9200/_plugins/_security/authinfo -u admin:Admin!Pass
+```
+
+### Docker Compose
+
+```yaml
+services:
+  os-1: &os-node
+    image: opensearchproject/opensearch:2.15
+    container_name: os-1
+    restart: unless-stopped
     environment:
       cluster.name: prod-cluster
       node.name: os-1
+      node.roles: '["cluster_manager","data"]'
       discovery.seed_hosts: os-1,os-2,os-3
       cluster.initial_cluster_manager_nodes: os-1,os-2,os-3
-      OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
       DISABLE_SECURITY_PLUGIN: "false"
+      OPENSEARCH_JAVA_OPTS: "-Xms8g -Xmx8g"
+      plugins.security.allow_default_init_securityindex: "false"
     volumes:
       - os-1-data:/usr/share/opensearch/data
     networks:
       - os-net
 
   os-2:
-    image: opensearchproject/opensearch:2.15
+    <<: *os-node
     container_name: os-2
-    hostname: os-2
-    restart: unless-stopped
     environment:
-      cluster.name: prod-cluster
       node.name: os-2
-      discovery.seed_hosts: os-1,os-2,os-3
-      cluster.initial_cluster_manager_nodes: os-1,os-2,os-3
-      OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
-      DISABLE_SECURITY_PLUGIN: "false"
     volumes:
       - os-2-data:/usr/share/opensearch/data
-    networks:
-      - os-net
 
   os-3:
-    image: opensearchproject/opensearch:2.15
+    <<: *os-node
     container_name: os-3
-    hostname: os-3
-    restart: unless-stopped
     environment:
-      cluster.name: prod-cluster
       node.name: os-3
-      discovery.seed_hosts: os-1,os-2,os-3
-      cluster.initial_cluster_manager_nodes: os-1,os-2,os-3
-      OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
-      DISABLE_SECURITY_PLUGIN: "false"
     volumes:
       - os-3-data:/usr/share/opensearch/data
-    networks:
-      - os-net
 
   dashboard:
     image: opensearchproject/opensearch-dashboards:2.15
@@ -133,100 +268,65 @@ networks:
 
 ---
 
-## 3. 配置文件
-
-### 3.2 开发环境配置
-
-```yaml
-# opensearch.yml — 开发环境
-cluster.name: dev-cluster
-node.name: os-1
-discovery.type: single-node
-plugins.security.disabled: true
-```
-
-### 3.3 生产环境配置
-
-```yaml
-# opensearch.yml — 生产环境
-
-cluster.name: prod-cluster
-node.name: os-data-1
-path.data: /data/opensearch
-path.logs: /var/log/opensearch
-
-# === 节点角色 ===
-node.roles: [data, data_hot, data_content]
-
-# === 集群发现 ===
-discovery.seed_hosts: ["os-master-1","os-master-2","os-master-3"]
-cluster.initial_cluster_manager_nodes: ["os-master-1","os-master-2","os-master-3"]
-
-# === 网络 ===
-network.host: 0.0.0.0
-http.port: 9200
-transport.port: 9300
-
-# === 安全（内置）===
-plugins.security.ssl.http.enabled: true
-plugins.security.ssl.transport.enabled: true
-plugins.security.ssl.http.pemcert_filepath: certs/node.pem
-plugins.security.ssl.http.pemkey_filepath: certs/node-key.pem
-plugins.security.ssl.http.pemtrusted_filepath: certs/ca.pem
-# 安全：仅首次初始化时用 true；初始化后必须改为 false，防止安全配置被篡改
-plugins.security.allow_default_init_securityindex: false
-
-# === 快照仓库 ===
-path.repo: /data/opensearch/snapshots
-# 逻辑：不配置 path.repo 则无法使用快照备份
-
-# === 内存 ===
-# OPENSEARCH_JAVA_OPTS: "-Xms16g -Xmx16g"
-# 同 ES：堆设 50% 物理内存，不超过 31G
-```
-
----
-
-## 4. 调优
-
-调优逻辑与 Elasticsearch 基本一致，核心参数相同：
-
-- JVM 堆 ≤ 31G，留 50% 给 OS 文件系统缓存
-- 分片大小 30-50GB
-- `refresh_interval` 批量写入时增大
-- Fielddata 缓存设上限
-
-详见 [Elasticsearch 调优](elasticsearch.md#4-调优)
-
----
-
-## 5. 运维
+## 5. 运维速查
 
 ```bash
-# 集群状态
-curl https://localhost:9200/_cluster/health -u admin:Admin!Pass -k
+# 集群状态（需认证）
+curl -k https://localhost:9200/_cluster/health?pretty -u admin:Admin!Pass
+curl -k https://localhost:9200/_cat/nodes?v -u admin:Admin!Pass
+curl -k https://localhost:9200/_cat/shards?v -u admin:Admin!Pass
 
 # SQL 查询
-curl https://localhost:9200/_sql -u admin:Admin!Pass -k \
+curl -k https://localhost:9200/_sql -u admin:Admin!Pass \
   -H 'Content-Type: application/json' \
-  -d '{"query": "SELECT * FROM orders WHERE amount > 100"}'
+  -d '{"query": "SELECT * FROM orders LIMIT 10"}'
 
 # PPL 查询
-curl https://localhost:9200/_plugins/_ppl -u admin:Admin!Pass -k \
+curl -k https://localhost:9200/_plugins/_ppl -u admin:Admin!Pass \
   -H 'Content-Type: application/json' \
-  -d '{"query": "source=orders | where amount > 100 | stats avg(amount)"}'
+  -d '{"query": "source=orders | stats count()"}'
+
+# 修改密码
+curl -k -X PUT "https://localhost:9200/_plugins/_security/api/internalusers/admin" \
+  -u admin:Admin!Pass \
+  -H 'Content-Type: application/json' \
+  -d '{"password": "New!Pass123"}'
+
+# 快照仓库
+curl -k -X PUT "https://localhost:9200/_snapshot/backup" -u admin:Admin!Pass \
+  -H 'Content-Type: application/json' \
+  -d '{"type": "fs", "settings": {"location": "/data/opensearch/snapshots"}}'
 ```
 
+### 监控指标
+
+| 指标 | 获取方式 | 告警阈值 |
+|------|----------|----------|
+| 集群状态 | `_cluster/health` | RED |
+| JVM 堆使用率 | `_nodes/stats` | > 85% |
+| 磁盘水位 | `_cat/allocation` | > 85% |
+| 安全插件 | `_plugins/_security/health` | 异常 |
+
 ---
 
-## 6. 故障排查
+## 6. 常见故障
 
-与 Elasticsearch 故障排查方法一致，详见 [Elasticsearch 故障排查](elasticsearch.md#6-故障排查)
+### 故障 1：安全索引未初始化
 
----
+**现象**：连接被拒绝 / 认证失败
 
-## 7. 参考资料
+**解决**：
+1. 设置 `plugins.security.allow_default_init_securityindex: true`
+2. 重启该节点
+3. 执行 `securityadmin.sh` 初始化安全索引
+4. 改回 `false`，重启所有节点
 
-- [OpenSearch Documentation](https://opensearch.org/docs/)
-- [OpenSearch Security Plugin](https://opensearch.org/docs/latest/security-plugin/)
-- [OpenSearch SQL/PPL](https://opensearch.org/docs/latest/query-dsl/sql/)
+### 故障 2：DISABLE_SECURITY_PLUGIN 不一致
+
+**现象**：节点间无法通信，集群无法形成
+
+**解决**：确保所有节点的 `DISABLE_SECURITY_PLUGIN` 值一致（全部 `false` 或全部 `true`）
+
+### 故障 3：集群未形成
+
+**排查**：检查 `discovery.seed_hosts` 和 `cluster.initial_cluster_manager_nodes` → 检查节点间网络连通性（9300 端口）→ 检查防火墙规则
