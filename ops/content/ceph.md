@@ -59,7 +59,7 @@ sudo yum install -y cephadm
 sudo cephadm bootstrap \
   --mon-ip 10.0.0.1 \
   --initial-dashboard-password=Str0ngCeph!Pass \
-  --dashboard-port-nfs=8443
+  --dashboard-port 8443
 
 # 添加其他节点
 sudo cephadm ssh-copy-id root@10.0.0.2

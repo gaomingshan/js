@@ -73,7 +73,7 @@ data_volume: /data/harbor
 
 trivy:
   ignore_unfixed: true
-  skip_update: false
+  skip_update: false  # 离线环境需设为 true 并手动导入漏洞数据库
   # 逻辑：Trivy 扫描镜像漏洞
   # ignore_unfixed → 忽略无修复版本的漏洞
 
@@ -106,8 +106,13 @@ docker push harbor.example.com/project/myapp:latest
 # 复制
 # UI → Administration → Replication → 创建规则
 
-# 备份
-# 备份 /data/harbor/database/ 和 harbor.yml
+# 备份（完整备份清单）
+# 1. /data/harbor/database/ — PostgreSQL 数据库
+# 2. /data/harbor/registry/ — 镜像存储（Blob）
+# 3. /data/harbor/redis/ — Redis 数据
+# 4. /data/harbor/trivy/ — Trivy 漏洞库（离线环境需单独备份）
+# 5. harbor.yml — 配置文件
+# 建议每周全量备份 + 每日增量备份
 ```
 
 ---

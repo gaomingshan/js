@@ -47,7 +47,7 @@ services:
       - "7700:7700"
       - "10086:10086"
     environment:
-      PARAMS: "--spring.datasource.core.url=jdbc:mysql://powerjob-mysql:3306/powerjob?useSSL=false --spring.datasource.core.username=powerjob --spring.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
+      PARAMS: "--oms.datasource.core.jdbc-url=jdbc:mysql://powerjob-mysql:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true --oms.datasource.core.username=powerjob --oms.datasource.core.password=PowerJob!Pass --oms.akka.port=10086"
     depends_on:
       - powerjob-mysql
     networks:
@@ -73,6 +73,44 @@ volumes:
 networks:
   pj-net:
     driver: bridge
+```
+
+---
+
+### 2.2 执行器（Worker）配置
+
+```yaml
+# application.yml — PowerJob Worker 配置
+server:
+  port: 27777
+
+spring:
+  application:
+    name: order-worker
+
+oms:
+  akka:
+    port: 27778
+  datasource:
+    core:
+      jdbc-url: jdbc:mysql://mysql-host:3306/powerjob?useSSL=false&serverTimezone=Asia/Shanghai
+      username: powerjob
+      password: PowerJob!Pass
+  server-address: powerjob-server:7700
+```
+
+Worker 启动参数：
+```bash
+java -jar powerjob-worker.jar --spring.config.location=application.yml
+```
+
+Maven 依赖：
+```xml
+<dependency>
+    <groupId>com.github.kfcfans</groupId>
+    <artifactId>powerjob-worker-spring-boot-starter</artifactId>
+    <version>4.3.9</version>
+</dependency>
 ```
 
 ---

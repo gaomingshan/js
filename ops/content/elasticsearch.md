@@ -205,15 +205,21 @@ transport.port: 9300
 # 超过 31G → 压缩指针失效，实际可用内存反而减少
 # 剩余 50% 留给 OS 做 Lucene 文件系统缓存
 
+# === 内存锁定 ===
+bootstrap.memory_lock: true
+# 逻辑：锁定 JVM 堆防止被 swap 到磁盘，避免 GC 停顿和节点失联
+# 需 OS 配置：/etc/security/limits.conf: elasticsearch soft/hard memlock unlimited
+
 # === 索引缓冲 ===
 indices.memory.index_buffer_size: 10%
 # 逻辑：索引写入缓冲，占 JVM 堆的 10%
 # 写入密集型可增大到 20%
 
 # === Fielddata ===
-indices.fielddata.cache.size: 40%
+indices.fielddata.cache.size: 20%
 # 逻辑：Fielddata 用于排序/聚合，占 JVM 堆
 # 不设上限 → OOM；设太小 → 频繁 evict
+# 官方建议不超过 20%，40% 严重偏高易触发 OOM
 
 # === 线程池 ===
 # thread_pool.search.size: 13        # 搜索线程（CPU 核数 × 3/2 + 1）

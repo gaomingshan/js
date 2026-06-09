@@ -130,11 +130,13 @@ blocks_storage:
     index_cache:
       backend: memcached
       memcached:
+        # 生产配置引用 memcached 需先在 docker-compose 中定义 Memcached 服务
         addresses: dns+memcached:11211
     # 逻辑：索引缓存用 Memcached，加速查询
     chunks_cache:
       backend: memcached
       memcached:
+        # 生产配置引用 memcached 需先在 docker-compose 中定义 Memcached 服务
         addresses: dns+memcached:11211
   tsdb:
     dir: /data/tsdb

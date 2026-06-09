@@ -61,12 +61,15 @@ services:
       resources:
         limits:
           memory: 4g
+    ulimits:
+      nofile: 65536
 
 volumes:
   nexus-data:
 ```
 
 **初始密码**：`/nexus-data/admin.password`（首次登录后修改）
+> **注意**：Nexus 容器以 `uid=200` 运行，数据目录需 `chown 200:200 nexus-data`
 
 ---
 
@@ -84,6 +87,7 @@ volumes:
 | **Group 仓库** | 聚合 Proxy + Hosted |
 | **Docker 仓库** | HTTP Connector 端口 5000 |
 | **Cleanup Policy** | 自动清理旧版本 |
+| **HTTPS** | 生产环境必须配置 HTTPS（反向代理 Nginx/Caddy） |
 
 **nexus.properties**（高级配置）：
 
@@ -110,6 +114,8 @@ nexus.data.dir=/nexus-data
 ---
 
 ## 5. 运维
+
+> **安全警告**：settings.xml 中禁止硬编码密码，应使用 `settings-security.xml` 加密主密码
 
 ```bash
 # Maven 配置（settings.xml）

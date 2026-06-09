@@ -39,7 +39,7 @@ docker run -d \
   --name camunda \
   -p 8080:8080 \
   -e CAMUNDA_BPM_ADMIN_PASSWORD=Camunda!Pass \
-  -v camunda-data:/camunda \
+  -v camunda-data:/camunda/data \   # 注意：正确挂载路径为 /camunda/data，而非 /camunda（Camunda 的数据文件存储在 data 子目录下）
   --restart unless-stopped \
   camunda/camunda-bpm-platform:run-7.21
 ```

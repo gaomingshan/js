@@ -59,7 +59,7 @@ sudo apt update && sudo apt install -y postgresql-16 postgresql-contrib-16
 | 路径 | 用途 |
 |------|------|
 | `/var/lib/pgsql/16/data/` | 数据目录 |
-| `/var/lib/pgsql/data/postgresql.conf` | 主配置 |
+| `/var/lib/pgsql/16/data/postgresql.conf` | 主配置 |
 | `/var/lib/pgsql/data/pg_hba.conf` | 访问控制 |
 | `/var/log/postgresql/` | 日志目录 |
 

@@ -94,6 +94,8 @@ loki.write "default" {
 }
 
 // === 链路采集（OTLP）===
+// 注意：Tempo 只接受 traces，不接受 metrics 和 logs
+// metrics 应发往 Prometheus/Mimir，logs 应发往 Loki
 otelcol.receiver.otlp "default" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -102,15 +104,22 @@ otelcol.receiver.otlp "default" {
     endpoint = "0.0.0.0:4318"
   }
   output {
-    metrics = [otelcol.exporter.otlp.default.input]
+    // metrics → Prometheus（Tempo 不接受 metrics）
+    metrics = [prometheus.remote_write.default.input]
+    // logs → Loki
     logs    = [loki.write.default.receiver]
-    traces  = [otelcol.exporter.otlp.default.input]
+    // traces → Tempo
+    traces  = [otelcol.exporter.otlp.tempo.input]
   }
 }
 
-otelcol.exporter.otlp "default" {
+// OTLP exporter 用于 traces → Tempo
+otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
   }
 }
 ```
@@ -158,7 +167,7 @@ loki.process "logs" {
     expressions = {level = "level", msg = "msg"}
   }
   stage.labels {
-    values = {level = "", app = "k8s_app"}
+    values = {level = null, app = "k8s_app"}
   }
 }
 

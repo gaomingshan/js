@@ -40,8 +40,8 @@ wget https://github.com/alibaba/Sentinel/releases/download/1.8.7/sentinel-dashbo
 # 启动
 java -jar sentinel-dashboard-1.8.7.jar \
   --server.port=8080 \
-  --auth.username=sentinel \
-  --auth.password=Sentinel!Pass
+  --sentinel.dashboard.auth.username=sentinel \
+  --sentinel.dashboard.auth.password=Sentinel!Pass
 ```
 
 ### 2.2 Docker 部署
@@ -50,8 +50,8 @@ java -jar sentinel-dashboard-1.8.7.jar \
 docker run -d \
   --name sentinel-dashboard \
   -p 8080:8080 \
-  -e AUTH_USERNAME=sentinel \
-  -e AUTH_PASSWORD=Sentinel!Pass \
+  -e SENTINEL_DASHBOARD_AUTH_USERNAME=sentinel \
+  -e SENTINEL_DASHBOARD_AUTH_PASSWORD=Sentinel!Pass \
   --restart unless-stopped \
   bladex/sentinel-dashboard:1.8.7
 ```
@@ -123,11 +123,12 @@ docker run -d \
 server.port=8080
 
 # 认证
-auth.username=sentinel
-auth.password=Sentinel!Pass
+sentinel.dashboard.auth.username=sentinel
+sentinel.dashboard.auth.password=Sentinel!Pass
 
 # 规则持久化（Nacos）
-nacos.serverAddr=nacos:8848
+# 注意：规则持久化是通过客户端 sentinel-datasource-nacos 扩展实现的，非 Dashboard 直接推送
+nacos.server-addr=nacos:8848
 nacos.namespace=prod
 nacos.groupId=SENTINEL_GROUP
 ```

@@ -245,7 +245,10 @@ quorum_queues.default_enabled = true
 
 # === 连接 ===
 heartbeat = 60                     # 心跳间隔 60 秒
-connection_max = 1000               # 单连接最大 Channel 数
+# 注意：RabbitMQ 没有 connection_max 参数
+# 连接数受 OS 文件描述符限制，通过以下方式配置：
+# 1. OS 层：ulimit -n 65536（文件描述符）
+# 2. 连接层：channel_max = 2047（单连接最大 Channel 数）
 
 # === 日志 ===
 log.console = false

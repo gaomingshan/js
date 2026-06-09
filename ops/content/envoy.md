@@ -187,7 +187,8 @@ static_resources:
 admin:
   address:
     socket_address:
-      address: 0.0.0.0
+      # 安全：Admin endpoint 绑定回环地址，禁止远程访问
+      address: 127.0.0.1
       port_value: 9901
 
 # === 关键调优参数（在 Cluster 配置中）===
@@ -263,8 +264,8 @@ curl http://envoy:9901/listeners      # Listener 状态
 curl http://envoy:9901/config_dump    # 完整配置导出
 curl http://envoy:9901/runtime        # 运行时配置
 
-# 热重启（零丢连接）
-envoy --hot-restart-version $$(cat /var/log/envoy.hot_restart_version)
+# 热重启（零丢连接）— 使用 SIGUSR1 信号触发热重启
+kill -SIGUSR1 $(pidof envoy)
 ```
 
 ### 5.2 监控指标

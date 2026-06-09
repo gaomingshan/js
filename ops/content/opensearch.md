@@ -85,6 +85,7 @@ services:
       discovery.seed_hosts: os-1,os-2,os-3
       cluster.initial_cluster_manager_nodes: os-1,os-2,os-3
       OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
+      DISABLE_SECURITY_PLUGIN: "false"
     volumes:
       - os-2-data:/usr/share/opensearch/data
     networks:
@@ -101,6 +102,7 @@ services:
       discovery.seed_hosts: os-1,os-2,os-3
       cluster.initial_cluster_manager_nodes: os-1,os-2,os-3
       OPENSEARCH_JAVA_OPTS: "-Xms2g -Xmx2g"
+      DISABLE_SECURITY_PLUGIN: "false"
     volumes:
       - os-3-data:/usr/share/opensearch/data
     networks:
@@ -171,7 +173,12 @@ plugins.security.ssl.transport.enabled: true
 plugins.security.ssl.http.pemcert_filepath: certs/node.pem
 plugins.security.ssl.http.pemkey_filepath: certs/node-key.pem
 plugins.security.ssl.http.pemtrusted_filepath: certs/ca.pem
-plugins.security.allow_default_init_securityindex: true
+# 安全：仅首次初始化时用 true；初始化后必须改为 false，防止安全配置被篡改
+plugins.security.allow_default_init_securityindex: false
+
+# === 快照仓库 ===
+path.repo: /data/opensearch/snapshots
+# 逻辑：不配置 path.repo 则无法使用快照备份
 
 # === 内存 ===
 # OPENSEARCH_JAVA_OPTS: "-Xms16g -Xmx16g"

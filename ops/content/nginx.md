@@ -219,6 +219,7 @@ http {
     # nodelay → 突发请求不延迟处理，超过直接拒绝
     limit_req_zone $binary_remote_addr zone=api:10m rate=100r/s;
     limit_conn_zone $binary_remote_addr zone=conn:10m;
+    limit_req_status 429;            # 限流状态码（默认 503，429 更语义化）
 
     # === Upstream ===
     upstream app_backend {
@@ -281,8 +282,7 @@ http {
             proxy_connect_timeout 5s;   # 连接后端超时
             proxy_send_timeout 30s;     # 发送请求超时
             proxy_read_timeout 60s;     # 读取响应超时
-
-            # 缓冲
+            proxy_next_upstream error timeout;  # 后端失败时重试下一台
             proxy_buffering on;
             proxy_buffer_size 8k;
             proxy_buffers 8 16k;

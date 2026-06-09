@@ -140,6 +140,7 @@ package:
     - main
     - tags
   # 逻辑：only 限制只在 main 和 tag 分支执行
+  # 注意：GitLab 13+ 推荐使用 `rules` 替代 `only/except`，更灵活且支持复杂条件
 
 # === 部署阶段 ===
 deploy-prod:
@@ -154,6 +155,7 @@ deploy-prod:
     - tags
   when: manual
   # 逻辑：when: manual → 手动触发部署，防止自动上生产
+  # 注意：GitLab 13+ 推荐使用 `rules` 替代 `only/except`，更灵活且支持复杂条件
 ```
 
 ### 3.3 Runner 配置

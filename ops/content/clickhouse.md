@@ -176,7 +176,9 @@ networks:
     <!-- === 内存 === -->
     <!-- 逻辑：ClickHouse 可用内存 = 物理内存 - OS 保留 -->
     <!-- max_memory_usage 限制单查询内存，防止单查询 OOM -->
-    <max_server_memory_usage>0.9</max_server_memory_usage>
+    <!-- 注意：max_server_memory_usage 单位是字节，不能填百分比 -->
+    <!-- 正确方式：使用 max_server_memory_usage_to_ram_ratio 设置比例 -->
+    <max_server_memory_usage_to_ram_ratio>0.9</max_server_memory_usage_to_ram_ratio>
     <!-- 服务器最大使用 90% 物理内存 -->
 
     <!-- === 并发 === -->
@@ -198,6 +200,12 @@ networks:
             <port>2181</port>
         </node>
     </zookeeper>
+
+    <!-- === Macros（每个节点需不同配置，用于 ReplicatedMergeTree 标识） === -->
+    <macros>
+        <shard>01</shard>
+        <replica>ch-01</replica>
+    </macros>
 
     <!-- === 集群定义 === -->
     <remote_servers>
@@ -224,6 +232,17 @@ networks:
             </shard>
         </prod_cluster>
     </remote_servers>
+
+    <!-- === Macros（每个节点配置不同）=== -->
+    <!-- 逻辑：macros 用于分布式表区分分片/副本，每个节点必须唯一 -->
+    <!-- ch-01: <macros><shard>01</shard><replica>ch-01</replica></macros> -->
+    <!-- ch-02: <macros><shard>01</shard><replica>ch-02</replica></macros> -->
+    <!-- ch-03: <macros><shard>02</shard><replica>ch-03</replica></macros> -->
+    <!-- ch-04: <macros><shard>02</shard><replica>ch-04</replica></macros> -->
+    <macros>
+        <shard>01</shard>
+        <replica>ch-01</replica>
+    </macros>
 
     <!-- === MergeTree 设置 === -->
     <merge_tree>
@@ -252,7 +271,9 @@ networks:
             <max_execution_time>60</max_execution_time>
             <!-- 单查询最大 60 秒 -->
             <max_insert_block_size>1048576</max_insert_block_size>
-            <insert_quorum>2</insert_quorum>
+            <!-- 此参数应放在 merge_tree 配置块中 -->
+            <!-- 注意：insert_quorum 属于 MergeTree 设置，应放在 <merge_tree> 配置块中 -->
+            <!-- <insert_quorum>2</insert_quorum> -->
             <!-- 写入仲裁：2 副本确认 -->
         </default>
         <readonly>

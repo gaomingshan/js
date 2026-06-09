@@ -39,7 +39,8 @@ docker run -d \
   jenkins/jenkins:lts
 ```
 
-> **挂载 Docker Socket**：允许 Jenkins 在容器内构建 Docker 镜像
+> **⚠️ 挂载 Docker Socket 安全风险**：等于赋予容器宿主 root 权限，可执行任意 Docker 命令。
+> **替代方案**：使用 Kaniko（无需 Docker daemon）或 DinD（Docker in Docker）侧车容器。
 
 ### 2.2 Docker Compose 部署
 
@@ -126,7 +127,8 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'kubectl set image deployment/myapp myapp=harbor.example.com/project/myapp:${BUILD_NUMBER}'
+                // 推荐使用 Helm/Kustomize + GitOps 方式部署，而非直接 kubectl set image
+                sh 'helm upgrade myapp ./charts/myapp --set image.tag=${BUILD_NUMBER}'
             }
         }
     }

@@ -141,8 +141,7 @@ server:
 
 common:
   path_prefix: /loki
-  replication_factor: 3
-  # 逻辑：3 副本保证 1 节点故障不丢数据
+  replication_factor: 1  # 单实例模式应设为 1，分布式模式才设为 3
 
 schema_config:
   configs:

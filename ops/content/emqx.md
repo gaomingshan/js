@@ -80,7 +80,7 @@ services:
       EMQX_NAME: emqx-1
       EMQX_HOST: 10.0.0.1
       EMQX_CLUSTER__DISCOVERY_STRATEGY: static
-      EMQX_CLUSTER__STATIC__SEEDS: "[emqx-1,emqx-2,emqx-3]"
+      EMQX_CLUSTER__STATIC__SEEDS: "emqx-1,emqx-2,emqx-3"
     ports:
       - "1883:1883"
       - "18083:18083"
@@ -98,7 +98,7 @@ services:
       EMQX_NAME: emqx-2
       EMQX_HOST: 10.0.0.2
       EMQX_CLUSTER__DISCOVERY_STRATEGY: static
-      EMQX_CLUSTER__STATIC__SEEDS: "[emqx-1,emqx-2,emqx-3]"
+      EMQX_CLUSTER__STATIC__SEEDS: "emqx-1,emqx-2,emqx-3"
     volumes:
       - emqx-2-data:/opt/emqx/data
     networks:
@@ -113,7 +113,7 @@ services:
       EMQX_NAME: emqx-3
       EMQX_HOST: 10.0.0.3
       EMQX_CLUSTER__DISCOVERY_STRATEGY: static
-      EMQX_CLUSTER__STATIC__SEEDS: "[emqx-1,emqx-2,emqx-3]"
+      EMQX_CLUSTER__STATIC__SEEDS: "emqx-1,emqx-2,emqx-3"
     volumes:
       - emqx-3-data:/opt/emqx/data
     networks:
@@ -140,7 +140,8 @@ sudo sysctl -w fs.nr_open=2097152
 sudo sysctl -w net.core.somaxconn=65536
 sudo sysctl -w net.ipv4.tcp_max_syn_backlog=65536
 sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+# tcp_tw_reuse 在新内核中已不推荐，新版本 Linux 自动优化 TIME_WAIT
+# sudo sysctl -w net.ipv4.tcp_tw_reuse=1
 
 # 文件描述符限制
 ulimit -n 1048576
@@ -219,7 +220,7 @@ listeners.ws.default {
 # === 集群 ===
 cluster {
   discovery_strategy = static
-  static.seeds = ["emqx-1","emqx-2","emqx-3"]
+  static.seeds = ["emqx-1", "emqx-2", "emqx-3"]
 }
 
 # === 认证 ===
@@ -246,10 +247,13 @@ flapping_detect {
   ban_time = 5m                # 封禁 5 分钟
 }
 
-# === 持久会话 ===
-# 5.x 支持持久会话，消息在会话断开后保留
-persistent_session {
-  backend = built_in_database
+# === 会话 ===
+# 5.x 会话管理 — MQTT 持久会话在 session 命名空间下配置
+session {
+  persistence {
+    enable = true
+    backend = built_in_database
+  }
 }
 
 # === 日志 ===

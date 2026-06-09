@@ -40,6 +40,7 @@ docker run -d \
   --name kong \
   -p 8000:8000 \
   -p 8443:8443 \
+  # 安全：生产环境 Admin API 应绑定内网 IP，避免将 8001 暴露到公网
   -p 8001:8001 \
   -v ./kong.yml:/kong/declarative/kong.yml \
   -e KONG_DATABASE=off \
@@ -88,6 +89,7 @@ services:
     ports:
       - "8000:8000"
       - "8443:8443"
+      # 安全：生产环境 Admin API 应绑定内网 IP，避免将 8001 暴露到公网
       - "8001:8001"
     environment:
       KONG_DATABASE: postgres
@@ -97,6 +99,7 @@ services:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
+      # 安全：生产环境应绑定内网 IP（如 192.168.x.x），禁止暴露 Admin API
       KONG_ADMIN_LISTEN: "0.0.0.0:8001"
     depends_on:
       - kong-db

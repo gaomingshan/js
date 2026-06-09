@@ -162,7 +162,8 @@ bootstrap_expect = 3
 # 集群启动时等待所有 Server 加入后再选举 Leader
 
 # === 网络 ===
-bind_addr = "0.0.0.0"
+# 注意：bind_addr 不能设置为 0.0.0.0，必须指定具体 IP 或使用网卡接口
+bind_addr = "10.0.0.1"
 client_addr = "0.0.0.0"
 
 addresses {

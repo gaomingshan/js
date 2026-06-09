@@ -65,7 +65,7 @@ docker run -d \
   --name kafka \
   -p 9092:9092 \
   -v kafka-data:/var/lib/kafka/data \
-  -v ./conf/server.properties:/etc/kafka/server.properties \
+  -v ./conf/server.properties:/opt/kafka/config/server.properties \
   --restart unless-stopped \
   apache/kafka:3.7.0
 ```

@@ -74,6 +74,8 @@ services:
     volumes:
       - ./conf/config.yaml:/usr/local/apisix/conf/config.yaml
       - ./conf/apisix.yaml:/usr/local/apisix/conf/apisix.yaml
+    # 注意：如果使用 etcd 模式配置路由（通过 Admin API / Dashboard），则不应挂载 apisix.yaml（Standalone 模式），两者互斥需二选一。
+    # etcd 模式：配置存 etcd，动态推送。Standalone 模式：配置存 apisix.yaml，静态加载。
     depends_on:
       - etcd
     networks:

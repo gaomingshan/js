@@ -74,11 +74,12 @@ services:
       - "8091:8091"
       - "7091:7091"
     environment:
-      SEATA_IP: seata-1
+      # 如果微服务在同一个 middleware-net，可以用别名；否则请填宿主机真实 IP
+      - SEATA_IP=seata-1
     volumes:
       - ./conf/application.yml:/seata-server/resources/application.yml
     networks:
-      - seata-net
+      - middleware-net
 
   seata-2:
     image: seataio/seata-server:2.2.0
@@ -88,16 +89,18 @@ services:
       - "8092:8091"
       - "7092:7091"
     environment:
-      SEATA_IP: seata-2
+      - SEATA_IP=seata-2
     volumes:
       - ./conf/application.yml:/seata-server/resources/application.yml
     networks:
-      - seata-net
+      - middleware-net
 
 networks:
-  seata-net:
-    driver: bridge
+  middleware-net:
+    external: true # 确保这个网络存在，且你的微服务也在这个网络里
 ```
+
+> **数据库初始化**：使用 DB 模式前，需先在数据库中创建 Seata 所需的四张表：`global_table`、`branch_table`、`lock_table`、`distributed_lock`。SQL 脚本位于 Seata 官方仓库 `script/server/db/` 目录下，根据数据库类型选择对应的 SQL 文件执行。
 
 ---
 

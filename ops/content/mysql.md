@@ -131,7 +131,8 @@ GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
 
 -- 创建应用用户
 CREATE USER 'appuser'@'%' IDENTIFIED BY 'AppUser!Pass';
-GRANT ALL PRIVILEGES ON appdb.* TO 'appuser'@'%';
+-- 安全：仅授予应用所需的最小权限，避免 ALL PRIVILEGES 带来的安全风险
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER ON appdb.* TO 'appuser'@'%';
 FLUSH PRIVILEGES;
 ```
 

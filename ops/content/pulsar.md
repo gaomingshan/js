@@ -177,6 +177,8 @@ networks:
   pulsar-net:
     driver: bridge
 ```
+# 注意：首次部署时，ZooKeeper 启动后需先执行 `pulsar initialize-cluster-metadata` 初始化集群元数据，然后 BookKeeper 和 Broker 才能正常工作。
+# 示例：bin/pulsar initialize-cluster-metadata --cluster prod-cluster --zookeeper zookeeper:2181 --configuration-store zookeeper:2181 --web-service-url http://broker:8080 --broker-service-url pulsar://broker:6650
 
 ### 2.4 生产环境部署要点
 

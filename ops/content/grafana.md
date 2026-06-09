@@ -57,7 +57,7 @@ root_url = https://grafana.example.com
 [security]
 admin_user = admin
 admin_password = Grafana!Pass
-secret_key = SW2YcwTIb9zpO1WY3jPQn2T4
+secret_key = SW2YcwTIb9zpO1WY3jPQn2T4  # 生产环境必须替换为随机生成的密钥
 
 [auth]
 disable_login_form = false

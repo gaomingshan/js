@@ -214,7 +214,7 @@ ALTER SYSTEM SET sessions = 1000 SCOPE=SPFILE;
 ALTER SYSTEM SET open_cursors = 1000 SCOPE=SPFILE;
 
 -- === 优化器 ===
-ALTER SYSTEM SET optimizer_mode = ALL_ROWS SCOPE=SPFILE;  -- OLTP 场景用 ALL_ROWS
+ALTER SYSTEM SET optimizer_mode = ALL_ROWS SCOPE=SPFILE;  -- OLTP 场景用 ALL_ROWS（该参数从 12c 起已弃用）
 ALTER SYSTEM SET cursor_sharing = EXACT SCOPE=SPFILE;     -- 不自动替换字面量，保证执行计划稳定
 
 -- === 安全 ===
@@ -223,7 +223,7 @@ ALTER SYSTEM SET sec_max_failed_login_attempts = 5 SCOPE=SPFILE;
 ALTER SYSTEM SET sec_password_grace_time = 1 SCOPE=SPFILE;
 
 -- === 诊断 ===
-ALTER SYSTEM SET statistics_level = ALL SCOPE=SPFILE;      -- 收集详细统计
+ALTER SYSTEM SET statistics_level = TYPICAL SCOPE=SPFILE;  -- 仅排障时临时改 ALL，生产用 TYPICAL
 ALTER SYSTEM SET timed_statistics = TRUE SCOPE=SPFILE;
 ```
 

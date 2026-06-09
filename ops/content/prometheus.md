@@ -228,7 +228,7 @@ groups:
           description: "CPU usage is {{ $value }}%"
 
       - alert: DiskSpaceLow
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes * 100) < 15
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"} * 100) < 15
         for: 5m
         labels:
           severity: critical
@@ -246,7 +246,7 @@ groups:
   - name: redis
     rules:
       - alert: RedisMemoryHigh
-        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80) and (redis_memory_max_bytes > 0)
         for: 5m
         labels:
           severity: warning

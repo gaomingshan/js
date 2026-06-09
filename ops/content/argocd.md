@@ -50,7 +50,8 @@ helm install argocd argo/argo-cd \
   --namespace argocd \
   --create-namespace \
   --set server.service.type=NodePort \
-  --set server.extraArgs[0]=--insecure
+  # 生产不建议使用 --insecure，应配置正确 TLS 证书
+  # --set server.extraArgs[0]=--insecure
 
 # 获取 admin 密码
 kubectl -n argocd get secret argocd-initial-admin-secret \
@@ -109,7 +110,7 @@ spec:
       allowEmpty: false
     syncOptions:
       - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
+      - PrunePropagationPolicy=background  # background 比 foreground 更安全，避免删除卡住
   # 逻辑：
   #   prune=true → Git 删除的资源自动从集群删除
   #   selfHeal=true → 集群状态被手动修改后自动恢复
@@ -223,11 +224,12 @@ argocd proj add team-a
 ### 5.3 备份与恢复
 
 ```bash
-# 导出所有 Application
-kubectl get applications -n argocd -o yaml > argocd-apps-backup.yaml
+# ⚠️ 注意：kubectl get applications 包含运行时状态，不能直接用于恢复
+# 推荐使用 argocd admin export 命令（更干净）
+argocd admin export -n argocd > argocd-backup.yaml
 
-# 导出 AppProject
-kubectl get appprojects -n argocd -o yaml > argocd-projects-backup.yaml
+# 或备份 Git 仓库（Application 的 Source 在 Git 中）
+# 这才是 ArgoCD 的"唯一事实来源"
 ```
 
 ---

@@ -109,6 +109,7 @@ networks:
 
 flowable:
   # === 数据库 ===
+  # 注意：生产环境禁止启用自动 Schema 更新（database-schema-update: false），必须配合 Flyway 或 Liquibase 等工具管理数据库 Schema 版本变更，确保生产数据库的 Schema 变更可控、可回滚。
   database-schema-update: false    # 生产禁止自动更新 Schema
   # 逻辑：自动更新可能导致 Schema 不一致
   # 生产应使用 Flyway/Liquibase 管理 Schema

@@ -173,7 +173,9 @@ docker run -d \
   --name minio-dev \
   -p 9000:9000 \
   -p 9001:9001 \
+  # 安全：生产环境应使用 --env-file 加载敏感变量，避免密码在进程列表中泄露
   -e MINIO_ROOT_USER=admin \
+  # 安全：生产环境应使用 --env-file 加载敏感变量，避免密码在进程列表中泄露
   -e MINIO_ROOT_PASSWORD=admin123 \
   -v minio-dev-data:/data \
   minio/minio server /data --console-address ":9001"
@@ -249,9 +251,10 @@ minio server https://minio{1...4}.example.com:9000/mnt/disk{1...4} \
 
 # 纠删码逻辑：
 # 4 节点 × 4 磁盘 = 16 块
-# 默认 EC:8+8 → 8 数据片 + 8 校验片
-# 允许 8 块故障，存储效率 50%
-# --storage-class standard=EC:4+2 → 自定义：4 数据 + 2 校验，效率 67%
+# EC:8+8 在 16 块场景下纠删码集大小为 16，已触及单纠删码集上限
+# 建议预留余量：推荐 --storage-class standard=EC:4+2（效率 67%）或 EC:8+4（效率 67%）
+# 存储效率越高，磁盘利用率越好，但容错能力越弱
+# 生产中：EC:4+2 = 允许 2 块故障，效率 67%
 ```
 
 ### 3.5 多站点复制配置

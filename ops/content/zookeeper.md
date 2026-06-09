@@ -237,9 +237,9 @@ bin/zkServer.sh status
 bin/zkCli.sh -server localhost:2181
 
 # 常用四字命令
-echo mntr | nc localhost 2185     # 监控指标
-echo ruok | nc localhost 2185    # 是否正常
-echo cons | nc localhost 2185    # 连接信息
+echo mntr | nc localhost 2181     # 监控指标
+echo ruok | nc localhost 2181    # 是否正常
+echo cons | nc localhost 2181    # 连接信息
 ```
 
 ### 5.2 监控指标

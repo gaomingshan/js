@@ -169,6 +169,7 @@ metrics_generator:
 
 querier:
   frontend_worker:
+    # 单二进制模式下此项可注释掉/不需要
     frontend_address: tempo:9095
 ```
 
