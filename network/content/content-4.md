@@ -1,43 +1,10 @@
-# 第 4 章：TCP 协议
+# TCP 传输控制协议
 
-> **学习目标**：深入理解 TCP 的可靠传输机制，掌握三次握手、四次挥手、滑动窗口、拥塞控制等核心能力  
-> **预计时长**：6 小时  
-> **难度级别**：⭐⭐⭐⭐ 高级
+> 传输层 | 面向连接 | 可靠字节流 | 全双工 | 端口 16bit
 
 ---
 
-## 1. 核心概念
-
-### 1.1 TCP 概述
-
-TCP（Transmission Control Protocol）是面向连接的、可靠的字节流传输协议。它在不可靠的 IP 网络之上构建了可靠传输服务，是互联网应用最广泛的传输层协议。
-
-**TCP 的核心特性**：
-- **面向连接**：通信前必须建立连接（三次握手）
-- **可靠传输**：确认、重传、排序、去重
-- **字节流**：无消息边界，应用层需自行界定
-- **全双工**：双方可同时发送和接收
-- **流量控制**：滑动窗口防止接收方被淹没
-- **拥塞控制**：防止网络过载
-
-```
-TCP 在协议栈中的位置：
-┌───────────────────────────┐
-│       应用层（HTTP等）     │
-├───────────────────────────┤
-│  ──→ TCP 协议（传输层） ←── │  ← 本章
-├───────────────────────────┤
-│       IP 协议（网络层）    │
-├───────────────────────────┤
-│       链路层               │
-└───────────────────────────┘
-```
-
----
-
-## 2. 报文结构
-
-### 2.1 TCP 头部格式
+## 报文结构
 
 ```
  0                   1                   2                   3
@@ -59,382 +26,267 @@ TCP 在协议栈中的位置：
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.2 字段详解
-
 | 字段 | 长度 | 含义 |
 |------|------|------|
-| **Source Port** | 16 bit | 源端口号 |
-| **Destination Port** | 16 bit | 目的端口号 |
-| **Sequence Number** | 32 bit | 序列号，标识发送数据字节流位置 |
-| **Acknowledgment Number** | 32 bit | 确认号，期望收到的下一个序列号 |
-| **Data Offset** | 4 bit | 头部长度，单位 4 字节，最小 5（20字节） |
-| **Reserved** | 6 bit | 保留（部分已重定义） |
-| **Flags** | 6 bit | 控制标志位 |
-| **Window** | 16 bit | 接收窗口大小（流量控制） |
-| **Checksum** | 16 bit | 校验和（覆盖头部+数据+伪头部） |
-| **Urgent Pointer** | 16 bit | 紧急数据偏移（URG=1 时有效） |
-| **Options** | 可变 | 可选参数 |
+| Source / Dest Port | 16bit | 标识应用 |
+| Sequence Number | 32bit | 本报文首个字节的流位置 |
+| Acknowledgment Number | 32bit | 期望的下一个序号（ACK=1 时有效） |
+| Data Offset | 4bit | 头部长度，单位 4B。最小 5（20B），最大 15（60B） |
+| Flags | 6bit | URG ACK PSH RST SYN FIN |
+| Window | 16bit | 接收方剩余缓冲区，流控用 |
+| Checksum | 16bit | 覆盖头部+数据+伪头部 |
+| Options | 可变 | 见下表 |
 
-### 2.3 标志位详解
+### 常用选项
 
-| 标志 | 含义 | 说明 |
-|------|------|------|
-| **URG** | 紧急指针有效 | 紧急数据，带外传输 |
-| **ACK** | 确认号有效 | 建立连接后始终为 1 |
-| **PSH** | 推送 | 接收端应尽快交付给应用 |
-| **RST** | 重置连接 | 异常断开连接 |
-| **SYN** | 同步序列号 | 建立连接时使用 |
-| **FIN** | 结束连接 | 释放连接时使用 |
-
-### 2.4 常用 TCP 选项
-
-| 选项 | 类型 | 长度 | 用途 |
-|------|------|------|------|
-| **MSS** | 2 | 4 | 最大段大小，协商时可接收的最大数据量 |
-| **Window Scale** | 3 | 3 | 窗口扩大因子，扩展 Window 到 32 bit |
-| **SACK Permitted** | 4 | 2 | 允许选择性确认 |
-| **SACK** | 5 | 可变 | 选择性确认的具体块信息 |
-| **Timestamps** | 8 | 10 | 时间戳（RTT 测量 + PAWS） |
+| 选项 | 作用 | 为什么 |
+|------|------|--------|
+| MSS | 协商最大段大小（通常 1460） | 避免 IP 分片 |
+| Window Scale | 窗口左移 N bit（最大 14），从 64KB 扩到 1GB | 16bit 窗口在高速网不够用 |
+| SACK | 精确告知哪些段丢了、哪些收到了 | 无 SACK 一个丢包要 Go-Back-N 全部重传 |
+| Timestamps | 精确 RTT 测量 + 防序号绕回 | 高速连接序号很快绕回，需区分新旧 |
 
 ---
 
-## 3. 具体能力
+## 核心能力
 
-### 3.1 三次握手（连接建立）
+### 1. 可靠传输 —— 确认 + 重传
 
-```
-客户端                              服务器
-  |                                   |
-  |  ──── SYN, Seq=x ────→           |  (1) 客户端发送 SYN
-  |                                   |
-  |  ←── SYN+ACK, Seq=y, Ack=x+1 ──  |  (2) 服务器回复 SYN+ACK
-  |                                   |
-  |  ──── ACK, Seq=x+1, Ack=y+1 ──→  |  (3) 客户端确认
-  |                                   |
-  |        连接建立，开始传输数据       |
-```
-
-**为什么需要三次**：
-- 防止历史连接（已失效的 SYN）导致服务器误建连接
-- 第三次 ACK 让服务器确认客户端的接收能力正常
-- 双方都确认了对方的初始序列号（ISN）
-
-**ISN（初始序列号）**：
-- 不是从 0 或 1 开始，而是基于时钟的伪随机数
-- 防止历史报文干扰新连接
-- ISN 生成算法：`ISN = M + H(源IP, 源端口, 目的IP, 目的端口, 密钥)`
-
-### 3.2 四次挥手（连接释放）
+IP 不可靠（丢包/乱序/重复），TCP 在上层用序号+ACK+重传构建可靠字节流。
 
 ```
-主动关闭方                          被动关闭方
-  |                                   |
-  |  ──── FIN, Seq=u ────→           |  (1) 主动方发送 FIN
-  |                                   |  被动方进入 CLOSE_WAIT
-  |  ←── ACK, Seq=v, Ack=u+1 ────    |  (2) 被动方确认
-  |                                   |
-  |       （被动方可能还有数据发送）    |
-  |                                   |
-  |  ←── FIN, Seq=w, Ack=u+1 ────    |  (3) 被动方发送 FIN
-  |                                   |  被动方进入 LAST_ACK
-  |  ──── ACK, Seq=u+1, Ack=w+1 ──→  |  (4) 主动方确认
-  |                                   |
-  |  主动方进入 TIME_WAIT (2MSL)      |  被动方进入 CLOSED
-  |                                   |
-  |  主动方进入 CLOSED                |
+正常：
+发 →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→ 收
+    Seq=1, Len=1460
+    Seq=1461, Len=1460
+    Seq=2921, Len=1460
+←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+     ACK=4381 (确认收到 1~4380)
+
+丢包 + 快重传：
+发 →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→ 收
+    Seq=1, Len=1460              → 收到
+    Seq=1461, Len=1460           → 丢失 ×
+    Seq=2921, Len=1460           → 收到
+    Seq=4381, Len=1460           → 收到
+←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+     ACK=1461 (重复)
+     ACK=1461 (重复)
+     ACK=1461 (重复)  ← 第3次重复 → 触发快重传
+发 →→→→→→→→→→→→→→→→→→→→→→ 重传 Seq=1461
+←←←←←←←←←←←←←←←←←
+     ACK=5841 (累积确认追上)
 ```
 
-**TIME_WAIT 状态（2MSL）**：
-- MSL（Maximum Segment Lifetime）= 报文最大生存时间，通常 30s-2min
-- 等待 2MSL 的原因：
-  1. 确保最后的 ACK 能到达被动方（若丢失，被动方会重发 FIN）
-  2. 等待本连接的所有报文在网络中消失，避免影响新连接
-
-**为什么需要四次**：
-- TCP 全双工，每个方向需要单独关闭
-- 被动方收到 FIN 后可能还有数据要发，不能立即关闭
-
-### 3.3 TCP 状态机
-
-```
-                              LISTEN
-                                |
-                          SYN rcvd /
-                                v
-    CLOSED ── SYN sent ── SYN_SENT
-                                |
-                          SYN+ACK rcvd /
-                                v
-                           ESTABLISHED
-                              /     \
-                    FIN sent /       \ FIN rcvd
-                            v         v
-                     FIN_WAIT_1    CLOSE_WAIT
-                            |          |
-                     ACK rcvd/    FIN sent/
-                            v          v
-                     FIN_WAIT_2    LAST_ACK
-                            |          |
-                     FIN rcvd/    ACK rcvd/
-                            v          v
-                     TIME_WAIT ──2MSL──→ CLOSED
-                            |
-                       timeout/
-                            v
-                          CLOSED
-```
-
-### 3.4 滑动窗口协议（流量控制）
-
-滑动窗口实现流量控制，防止发送方淹没接收方：
-
-```
-发送方窗口：
-┌──────────────────────────────────────────────────┐
-│  1  2  3  4  5  │  6  7  8  9  10  │ 11 12 13 14│
-│  已确认          │  已发送未确认     │ 可发送      │
-└──────────────────────────────────────────────────┘
-                   ←──── 窗口大小 = 5 ────→
-
-接收方通告窗口：
-接收方通过 ACK 中的 Window 字段告知发送方自己的可用缓冲区大小
-```
-
-**窗口调整机制**：
-- **窗口扩大**：接收方处理完数据后，通告更大的 Window
-- **窗口缩小**：接收方缓冲区紧张时，通告更小的 Window
-- **零窗口**：Window=0 时，发送方停止发送，启动持续计时器（Persist Timer）
-- **零窗口探测**：发送方定期发送 1 字节探测报文，检测窗口是否恢复
-
-### 3.5 拥塞控制
-
-拥塞控制防止过多数据注入网络，是 TCP 最重要的算法之一。
-
-**四个核心算法**：
-
-#### 3.5.1 慢启动（Slow Start）
-
-```
-cwnd 初始值 = 1 MSS (约 1460 字节)
-每收到一个 ACK，cwnd += 1 MSS
-→ 每个 RTT，cwnd 翻倍（指数增长）
-
-cwnd: 1 → 2 → 4 → 8 → 16 → ... → ssthresh
-```
-
-#### 3.5.2 拥塞避免（Congestion Avoidance）
-
-```
-当 cwnd >= ssthresh 时，进入拥塞避免
-每个 RTT，cwnd += 1 MSS（线性增长）
-
-cwnd: ssthresh → ssthresh+1 → ssthresh+2 → ...
-```
-
-#### 3.5.3 快重传（Fast Retransmit）
-
-```
-收到 3 个重复 ACK → 立即重传丢失的报文段
-无需等待超时定时器
-
-发送: 1  2  3  4  5  6  7  8
-接收: 1  2  3  (4丢失) 5→ACK3  6→ACK3  7→ACK3
-                              ↑3个重复ACK → 重传4
-```
-
-#### 3.5.4 快恢复（Fast Recovery）
-
-```
-快重传后不执行慢启动（cwnd 不降到 1），而是：
-1. ssthresh = cwnd / 2
-2. cwnd = ssthresh + 3 MSS（3 个重复 ACK 已离开网络）
-3. 每收到一个重复 ACK，cwnd += 1 MSS
-4. 收到新 ACK，cwnd = ssthresh，进入拥塞避免
-```
-
-**拥塞控制状态转换**：
-
-```
-                    超时
-          ┌─────────────────────┐
-          v                     │
-     慢启动 ──cwnd≥ssthresh──→ 拥塞避免
-          ^                     │
-          │                     │ 3个重复ACK
-          │                     v
-          │              快重传 + 快恢复
-          │                     │
-          └───── 超时 ─────────┘
-          
-超时: ssthresh=cwnd/2, cwnd=1, 进入慢启动
-3重复ACK: ssthresh=cwnd/2, cwnd=ssthresh+3, 进入快恢复
-```
-
-### 3.6 超时重传与 RTT 估算
-
-TCP 为每个报文段设置重传定时器（RTO），超时未确认则重传。
-
-**RTT 估算（Jacobson/Karels 算法）**：
-
-```
-SRTT = (1 - α) × SRTT + α × RTT_sample    (α = 1/8)
-RTTVAR = (1 - β) × RTTVAR + β × |SRTT - RTT_sample|  (β = 1/4)
-RTO = SRTT + 4 × RTTVAR
-```
-
-**Karn 算法**：不使用重传报文的 RTT 样本，避免歧义。使用 Timestamps 选项可解决此问题。
-
-### 3.7 Nagle 算法与延迟 ACK
-
-**Nagle 算法**：减少小报文数量
-```
-规则：只有收到前一个数据的 ACK 后，才能发送新的小报文
-例外：可以攒够一个 MSS 再发
-```
-
-**延迟 ACK**：减少 ACK 数量
-```
-规则：
-1. 收到数据后不立即 ACK，等待最多 200-500ms
-2. 如果在此期间有数据要发，捎带 ACK
-3. 如果收到两个连续报文段，立即发送 ACK
-```
-
-**交互问题**：Nagle + 延迟 ACK 可能导致 40ms 延迟（Nagle 等待 ACK，ACK 延迟发送）。解决方案：设置 `TCP_NODELAY` 禁用 Nagle。
+- 每个字节一个序号，ACK = 期望的下一个
+- 超时未确认 → 重传，RTO 动态估算
+- **3 个重复 ACK → 快重传**，不等超时
 
 ---
 
-## 4. 报文样例
+### 2. 流量控制 —— 滑动窗口
 
-### 4.1 三次握手报文
-
-**第一次握手（SYN）**：
+接收方缓冲区有限，通过 `Window` 字段告诉对端"还能收多少"。
 
 ```
-00 50 56 c0 00 01 00 0c 29 1e 8e 7a 08 00
-45 00 00 3c  00 00 40 00  40 06 3c 9a  c0 a8 01 0a  c0 a8 01 01
-d0 58 00 50  a6 2c 00 00  00 00 00 00  a0 02 ff ff  fe 34 00 00
-02 04 05 b4  04 02 08 0a  02 1c 9b 3c  00 00 00 00  01 03 03 05
+发 →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→ 收
+    Seq=1~4096, Len=4096                         发 4KB
+    Seq=4097~8192, Len=4096                      发 4KB
+←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+     ACK=8193, Window=2048          → 只剩 2KB 空间了
+发 →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→
+    Seq=8193~10240, Len=2048        → 按窗口限制发 2KB
+←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+     ACK=10241, Window=0            → 装不下了！暂停
+──── 发送方启动持续计时器，定期探测 ────
+发 →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→
+     Probe: Seq=10241 (1字节)
+←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+     ACK=10241, Window=4096         → 恢复，继续
 ```
 
-**TCP 头部解析**：
+- Nagle：小报文等 ACK 或攒够 MSS 再发，减少小包数量
+- 延迟 ACK：收到数据等 200ms 再 ACK，期望捎带
+- **Nagle + 延迟 ACK 冲突**：Nagle 等 ACK，ACK 被延迟 200ms → 最高 200ms 延迟。解法：`TCP_NODELAY`
+
+---
+
+### 3. 拥塞控制 —— 慢启动 + 拥塞避免 + 快重传 + 快恢复
+
+发送方不知道网络负载，发了可能打崩，不发又浪费带宽。通过 cwnd 自适应调节。
 
 ```
-d0 58       → Source Port=53336
-00 50       → Destination Port=80 (HTTP)
-a6 2c 00 00 → Sequence Number=0 (相对值)
-00 00 00 00 → Acknowledgment Number=0 (SYN 不含 ACK)
-a0          → Data Offset=10 (40 字节头部), Reserved=0
-02          → Flags=000010 (SYN=1)
-ff ff       → Window=65535
-fe 34       → Checksum
-00 00       → Urgent Pointer=0
---- 选项 ---
-02 04 05 b4 → MSS=1460
-04 02       → SACK Permitted
-08 0a ...   → Timestamps
-01 03 03 05 → Window Scale=5 (窗口扩大 2^5=32 倍)
+慢启动（指数增长）：
+cwnd=1   → 发 1 个段 →← ACK → cwnd=2
+cwnd=2   → 发 2 个 →← ACK → cwnd=4
+cwnd=4   → 发 4 个 →← ACK → cwnd=8
+... 直到 cwnd ≥ ssthresh
+
+拥塞避免（线性增长）：
+cwnd=ssthresh   → 每 RTT cwnd+=1    （10→11→12...）
+cwnd=ssthresh+N → 每 RTT cwnd+=1
+
+丢包 → 3 重复 ACK：
+ssthresh = cwnd / 2
+cwnd = ssthresh + 3  ← 不归零（快恢复），网络还能工作
+继续拥塞避免
+
+超时 → 网络疑似全堵：
+ssthresh = cwnd / 2
+cwnd = 1             ← 归零（慢启动），网络可能不通了
 ```
 
-**第二次握手（SYN+ACK）**：
+**小结**：
+
+| 算法 | 触发条件 | cwnd 变化 | 为什么 |
+|------|---------|-----------|--------|
+| 慢启动 | 连接建立/超时后 | 每 RTT ×2 | 不知容量，指数探测最快 |
+| 拥塞避免 | cwnd ≥ ssthresh | 每 RTT +1 | 接近极限，线性避震荡 |
+| 快重传 | 3 重复 ACK | 立即重传丢失段 | 不等超时，减少等待 |
+| 快恢复 | 快重传后 | cwnd /= 2（不归零） | 3 重 ACK 说明链路还能通 |
+
+---
+
+### 4. 连接建立 —— 三次握手
+
+为什么两次不够：服务器无法确认客户端收到了自己的 SYN+ACK，历史 SYN 会让服务器空等。
 
 ```
-d0 58 00 50  00 00 00 00  a6 2c 00 01  a0 12 ff ff  ...
+Client                                    Server
+  |                                          |
+  |─── SYN ────────────────────────────────→|   Seq=x, 无数据
+  |   Flags=SYN(0x02)                       |   进入 SYN_RCVD
+  |   Options: MSS=1460, WS=5, SACK, TS     |   分配资源
+  |                                          |
+  |←── SYN+ACK ────────────────────────────|   Seq=y, Ack=x+1
+  |   Flags=SYN+ACK(0x12)                   |   也带上自己的选项
+  |                                          |
+  |─── ACK ────────────────────────────────→|   Seq=x+1, Ack=y+1
+  |   Flags=ACK(0x10)                       |   可以捎带数据了
+  |                                          |
+                   连接建立
 ```
 
-```
-d0 58       → Source Port=80
-00 50       → Destination Port=53336
-00 00 00 00 → Sequence Number=0
-a6 2c 00 01 → Acknowledgment Number=1 (确认客户端 SYN)
-a0          → Data Offset=10
-12          → Flags=010010 (SYN=1, ACK=1)
-ff ff       → Window=65535
-```
+- ISN 随机（基于时钟+四元组+密钥的哈希），防旧报文干扰新连接
+- 第三次 ACK 可携带数据（减少一个 RTT）
 
-**第三次握手（ACK）**：
+---
+
+### 5. 连接释放 —— 四次挥手
+
+全双工，每个方向独立关闭。一方说"我不发了"不代表对方也没数据。
 
 ```
-d0 58 00 50  a6 2c 00 01  00 00 00 01  50 10 ff ff  ...
+主动关闭方                               被动关闭方
+  |                                          |
+  |─── FIN ────────────────────────────────→|  (1) 我不发了
+  |   Flags=FIN+ACK(0x11)                   |  进入 CLOSE_WAIT
+  |   Seq=u, Ack=v                          |
+  |                                          |
+  |←── ACK ────────────────────────────────|  (2) 知道了
+  |   Flags=ACK(0x10)                       |  主动方进入 FIN_WAIT_2
+  |   Ack=u+1                               |
+  |                                          |
+  |   （被动方继续发剩余数据...）             |
+  |                                          |
+  |←── FIN ────────────────────────────────|  (3) 我也发完了
+  |   Flags=FIN+ACK(0x11)                   |  进入 LAST_ACK
+  |   Seq=w, Ack=u+1                        |
+  |                                          |
+  |─── ACK ────────────────────────────────→|  (4) 确认
+  |   Flags=ACK(0x10)                       |  主动方进入 TIME_WAIT
+  |   Ack=w+1                               |
+  |                                          |
+  2MSL 后 CLOSED                             收到 ACK 后 CLOSED
 ```
 
-```
-a6 2c 00 01 → Sequence Number=1
-00 00 00 01 → Acknowledgment Number=1 (确认服务器 SYN)
-50          → Data Offset=5 (20 字节头部)
-10          → Flags=010000 (ACK=1)
-ff ff       → Window=65535
-```
+**TIME_WAIT 等 2MSL**：
+- 最后 ACK 丢了 → 被动方重发 FIN → 主动方要留着状态重发 ACK
+- 等 2MSL（通常 1~4 分钟），确保本连接所有报文消失，不污染下个连接
 
-### 4.2 数据传输报文
+---
+
+### 6. 状态机
 
 ```
-d0 58 00 50  a6 2c 00 01  00 00 00 01  50 18 ff ff  fd 23 00 00
-47 45 54 20  2f 20 48 54  54 50 2f 31  2e 31 0d 0a  ...
+CLOSED
+  │── 被动打开 ──→ LISTEN
+  │── 主动发 SYN → SYN_SENT
+                    │
+LISTEN ──收 SYN──→ SYN_RCVD ──收 ACK──→ ESTABLISHED
+                    │                       │
+                    │                 主动 FIN → FIN_WAIT_1 ──收 ACK──→ FIN_WAIT_2 ──收 FIN──→ TIME_WAIT ──2MSL──→ CLOSED
+                    │                       │
+                    │                 收 FIN → CLOSE_WAIT ──发 FIN──→ LAST_ACK ──收 ACK──→ CLOSED
 ```
 
-```
-a6 2c 00 01 → Seq=1
-00 00 00 01 → Ack=1
-50          → Data Offset=5
-18          → Flags=011000 (PSH=1, ACK=1)
-ff ff       → Window=65535
---- 数据 ---
-47 45 54 20 → "GET "
-2f 20 48 54 → "/ HT"
-54 50 2f 31 → "TP/1"
-2e 31 0d 0a → ".1\r\n"
-```
+| 状态堆积 | 意味着 | 排查 |
+|----------|--------|------|
+| `SYN_RECV` 暴增 | 服务器等第三次握手 | 可能 SYN Flood，`sysctl tcp_syncookies` |
+| `TIME_WAIT` 数万 | 主动关闭方等 2MSL | 高并发短连接，考虑长连接或 `tcp_tw_reuse` |
+| `CLOSE_WAIT` 成百上千 | 应用收到 FIN 但没调 close() | `lsof -i :port \| grep CLOSE_WAIT` 找进程 |
+| `FIN_WAIT_2` 长期挂住 | 对端不发 FIN | 对端不关连接，等超时 |
 
-### 4.3 四次挥手报文
+---
 
-**第一次 FIN**：
+## 关键设计决策
 
-```
-d0 58 00 50  a6 2c 01 0a  00 00 02 00  50 11 ff ff  ...
-```
+| 问题 | 为什么 |
+|------|--------|
+| 为什么三次不是两次 | 两次服务器不能确认客户端收到了 SYN+ACK |
+| 为什么四次不是三次 | 一方 FIN 后另一方可能还有数据，不能强制关 |
+| 为什么 ISN 不固定 | 防旧报文混入新连接 |
+| 为什么需要 Window Scale | 16bit 窗口最大 64KB，10Gbps 一个 RTT 就爆了 |
+| 为什么需要 SACK | 无 SACK 一个丢包后面全重传（Go-Back-N） |
+| 为什么超时后 cwnd=1 | 超时说明网络可能完全堵了，归零最安全 |
+| 为什么快重传后不归零 | 3 重复 ACK 说明数据还在流，只是某个段丢了 |
 
-```
-a6 2c 01 0a → Seq=266
-00 00 02 00 → Ack=512
-50          → Data Offset=5
-11          → Flags=000001 (FIN=1, ACK=1)
+---
+
+## 排障速查
+
+| 问题 | 现象 | 排查 | 常见原因 |
+|------|------|------|---------|
+| SYN Flood | `ss -tan state syn-recv` 数万 | `sysctl -w net.ipv4.tcp_syncookies=1` | 攻击/扫描 |
+| TIME_WAIT 过多 | 端口占着不放 | `ss -tan state time-wait \| wc -l` | 短连接太多 |
+| CLOSE_WAIT 堆积 | 连接不释放 | `lsof -i :port \| grep CLOSE_WAIT` | 应用没 close() |
+| 高重传率 | `nstat -az \| grep RetransSegs` 持续涨 | `tcpdump` 抓包看丢包 | 拥塞/带宽满 |
+| 连接超时 | 应用报 timeout | `ss -tan state syn-sent` 看 SYN 是否出去 | 防火墙/路由 |
+| RST | 连接突然断开 | `tcpdump 'tcp[tcpflags] & tcp-rst != 0'` | 端口未监听 / 对端拒绝 |
+| 零窗口 | 传输卡住 | `tcpdump 'tcp[14:2]=0'` 抓 Window=0 | 接收方处理慢 |
+
+```bash
+# 一键检查
+echo "=== 连接状态 ==="
+ss -tan | awk '{print $1}' | sort | uniq -c | sort -rn
+echo "=== 重传 ==="
+nstat -az | grep -E 'Retrans|Loss'
+echo "=== RTT ==="
+ss -ti | grep -o 'rtt:[^ ]*' | awk -F'[/]' '{print $2}' | sort -n | uniq -c | sort -rn | head -5
 ```
 
 ---
 
-## 5. 深入一点
+## 常用工具
 
-### TCP 连接的标识
+```bash
+# tcpdump —— 抓报文看交互
+tcpdump -i eth0 -nn 'tcp port 80'                                    # HTTP 所有 TCP
+tcpdump -i eth0 -nn 'tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0'  # 只抓 SYN
+tcpdump -i eth0 -X 'tcp port 443'                                    # 十六进制看 HTTPS
 
-TCP 连接由四元组唯一标识：`{源IP, 源端口, 目的IP, 目的端口}`。一个 IP 地址 + 端口可以同时维持多个连接，只要四元组不同。
+# ss —— 连接状态
+ss -tan                                           # 所有连接
+ss -tan state time-wait                           # 只看 TIME_WAIT
+ss -ti 'dport = :3306'                            # 看 MySQL TCB（cwnd/rtt/wscale）
+ss -tan '( sport = :443 )' | awk '{print $1}' | sort | uniq -c -r  # HTTPS 分布
 
-### SYN Flood 攻击
+# nstat —— 协议栈统计
+nstat -az | grep -E 'Retrans|Sack|Loss|Cwnd'
 
-攻击者发送大量伪造源地址的 SYN，服务器为每个 SYN 分配资源（SYN_RECV 状态），导致资源耗尽：
-
-**防御措施**：
-- **SYN Cookie**：不分配资源，将 ISN 编码连接信息，收到 ACK 时再验证重建
-- **SYN Proxy**：防火墙代为完成三次握手
-- **限制半连接数**
-
-### TIME_WAIT 过多
-
-高并发短连接场景下，主动关闭方积累大量 TIME_WAIT 状态：
-
-**解决方案**：
-- 使用长连接（Keep-Alive）
-- 设置 `SO_REUSEADDR` / `SO_REUSEPORT`
-- 由客户端主动关闭改为服务端主动关闭
-- 调整 `tcp_tw_reuse`（Linux）
-
----
-
-## 参考资料
-
-- [RFC 793 - Transmission Control Protocol](https://datatracker.ietf.org/doc/html/rfc793)
-- [RFC 1122 - Requirements for Internet Hosts](https://datatracker.ietf.org/doc/html/rfc1122)
-- [RFC 2581 - TCP Congestion Control](https://datatracker.ietf.org/doc/html/rfc2581)
-- [RFC 6298 - TCP Retransmission Timer](https://datatracker.ietf.org/doc/html/rfc6298)
-- [RFC 7323 - TCP Extensions (Window Scale/Timestamps)](https://datatracker.ietf.org/doc/html/rfc7323)
-- [RFC 2018 - TCP Selective Acknowledgment Options](https://datatracker.ietf.org/doc/html/rfc2018)
+# 内核参数
+sysctl net.ipv4.tcp_syncookies                    # SYN Cookie（默认 1）
+sysctl net.ipv4.tcp_tw_reuse                      # TIME_WAIT 复用（默认 0）
+sysctl net.ipv4.tcp_rmem                          # 接收缓冲：min default max
+sysctl net.ipv4.tcp_congestion_control            # 拥塞算法：bbr / cubic
+```

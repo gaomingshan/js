@@ -1,281 +1,244 @@
-# 第 7 章：DNS 协议
+# DNS 域名系统
 
-> **学习目标**：理解 DNS 域名解析的完整流程，掌握 DNS 报文格式与记录类型
-> **预计时长**：3 小时
-> **难度级别**：⭐⭐⭐ 进阶
+> 应用层 | 域名 → IP 映射 | 分布式数据库 | 端口 53（UDP/TCP）
 
 ---
 
-## 1. 核心概念
-
-### 1.1 DNS 概述
-
-DNS（Domain Name System）是互联网的"电话簿"，将人类可读的域名转换为 IP 地址。它是一个分布式、层次化的命名系统。
-
-**DNS 的核心功能**：
-- **域名解析**：域名 → IP 地址
-- **反向解析**：IP 地址 → 域名
-- **邮件路由**：MX 记录指定邮件服务器
-- **服务发现**：SRV 记录指定服务端口
+## 报文结构
 
 ```
-DNS 层次结构：
-            根域 (.)
-           /    \
-        com      org      net
-       /   \      |        \
-    example  google  example   cloudflare
-   /    \
- www    api
-```
-
-### 1.2 DNS 解析流程
-
-```
-浏览器 → 本地缓存 → 操作系统缓存 → 本地 DNS 服务器 → 递归/迭代查询
-
-完整解析 www.example.com：
-1. 本地 DNS → 根域名服务器："com 顶级域在哪？"
-2. 根服务器 → 本地 DNS："去 .com 服务器"
-3. 本地 DNS → .com 服务器："example.com 在哪？"
-4. .com 服务器 → 本地 DNS："去 example.com 权威服务器"
-5. 本地 DNS → 权威服务器："www.example.com 的 IP？"
-6. 权威服务器 → 本地 DNS："93.184.216.34"
-7. 本地 DNS → 客户端：93.184.216.34
-```
-
-**递归查询 vs 迭代查询**：
-- **递归**：客户端问本地 DNS，本地 DNS 负责追到底（客户端→本地DNS）
-- **迭代**：本地 DNS 逐级问各级服务器，每级返回下一级地址（本地DNS→根→.com→权威）
-
----
-
-## 2. 报文结构
-
-### 2.1 DNS 报文格式
-
-DNS 查询和响应使用相同的报文格式：
-
-```
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|          Transaction ID       |            Flags            |
+|                      Header (12B)                             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|        Questions Count        |       Answer RRs Count       |
+|                      Question (可变)                           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|      Authority RRs Count      |     Additional RRs Count     |
+|                      Answer   (可变)                           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                      Questions Section                        +
-|                                                               |
+|                      Authority (可变)                          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                       Answers Section                         +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                    Authority Section                          +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                   Additional Section                          +
-|                                                               |
+|                      Additional (可变)                         |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.2 Flags 字段详解
+### Header（12B 固定）
 
 ```
- 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-|QR|   Opcode  |AA|TC|RD|RA|  |  |AD|CD|   RCODE  |
-+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-```
-
-| 位 | 字段 | 含义 |
-|----|------|------|
-| 0 | QR | 0=查询, 1=响应 |
-| 1-4 | Opcode | 0=标准查询, 1=反向查询, 4=通知 |
-| 5 | AA | 权威应答 |
-| 6 | TC | 截断（UDP 超过 512 字节） |
-| 7 | RD | 期望递归 |
-| 8 | RA | 支持递归 |
-| 9-10 | 保留 | - |
-| 11 | AD | 已认证数据 |
-| 12 | CD | 禁用安全检查 |
-| 13-15 | RCODE | 响应码：0=无错误, 3=域名不存在(NXDOMAIN) |
-
-### 2.3 Question 格式
-
-```
-域名编码（标签序列）：
-"www.example.com" → 03 77 77 77 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
-                     ↑长度3  w w w  ↑长度7  e x a m p l e  ↑长度3 c o m ↑结束
-
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            QTYPE              |            QCLASS            |
+|                           ID                                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|QR| Opcode |AA|TC|RD|RA|   Z    |   RCODE                     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          QDCOUNT                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          ANCOUNT                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          NSCOUNT                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          ARCOUNT                              |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.4 Resource Record 格式
-
-```
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                           NAME                                |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            TYPE               |            CLASS              |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                          TTL                                  |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|          RDLENGTH             |          RDATA                |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-```
-
----
-
-## 3. 具体能力
-
-### 3.1 记录类型
-
-| 类型 | 值 | 说明 | 示例 |
-|------|-----|------|------|
-| A | 1 | IPv4 地址 | 93.184.216.34 |
-| AAAA | 28 | IPv6 地址 | 2606:2800:220::1 |
-| CNAME | 5 | 别名 | www.example.com → example.com |
-| MX | 15 | 邮件服务器 | 10 mail.example.com |
-| NS | 2 | 域名服务器 | ns1.example.com |
-| TXT | 16 | 文本记录 | SPF/DKIM/验证 |
-| SOA | 6 | 起始授权 | 主DNS/管理员/序列号/刷新时间 |
-| SRV | 33 | 服务定位 | _http._tcp.example.com 10 60 80 server |
-| PTR | 12 | 反向解析 | 34.216.184.93.in-addr.arpa → www |
-| CAA | 257 | 证书授权 | 0 issue "letsencrypt.org" |
-
-### 3.2 DNS 缓存
-
-DNS 使用 TTL（Time To Live）控制缓存有效期：
-
-```
-SOA 记录中的缓存参数：
-- MNAME     : 主 DNS 服务器
-- RNAME     : 管理员邮箱 (hostmaster.example.com)
-- SERIAL    : 区域版本号（从服务器据此判断是否需要更新）
-- REFRESH   : 从服务器检查间隔（如 3600s）
-- RETRY     : 检查失败重试间隔（如 900s）
-- EXPIRE    : 从服务器数据过期时间（如 604800s）
-- MINIMUM   : 否定缓存 TTL（如 86400s）
-```
-
-### 3.3 DNS 负载均衡
-
-**轮询（Round Robin）**：同一域名返回多个 A 记录，每次查询顺序不同：
-
-```
-$ dig example.com
-;; ANSWER SECTION:
-example.com.  300  IN  A  93.184.216.34
-example.com.  300  IN  A  93.184.216.35
-example.com.  300  IN  A  93.184.216.36
-```
-
-**GeoDNS**：根据客户端地理位置返回最近的 IP。
-
-**Anycast**：多个 DNS 服务器使用相同 IP，BGP 路由到最近节点。
-
----
-
-## 4. 报文样例
-
-### 4.1 DNS 查询报文
-
-查询 www.example.com 的 A 记录：
-
-```
-12 34 01 00  00 01 00 00  00 00 00 00
-03 77 77 77  07 65 78 61  6d 70 6c 65  03 63 6f 6d  00
-00 01 00 01
-```
-
-**逐字段解析**：
-
-```
-12 34       → Transaction ID=0x1234
-01 00       → Flags=0x0100 (RD=1, 标准查询)
-00 01       → Questions=1
-00 00       → Answer RRs=0
-00 00       → Authority RRs=0
-00 00       → Additional RRs=0
---- Question ---
-03 77 77 77 → 标签 "www" (长度3)
-07 65 78 61 6d 70 6c 65 → 标签 "example" (长度7)
-03 63 6f 6d → 标签 "com" (长度3)
-00          → 域名结束
-00 01       → QTYPE=A (1)
-00 01       → QCLASS=IN (1)
-```
-
-### 4.2 DNS 响应报文
-
-```
-12 34 81 80  00 01 00 01  00 00 00 00
-03 77 77 77  07 65 78 61  6d 70 6c 65  03 63 6f 6d  00
-00 01 00 01
-c0 0c        → NAME (指针压缩, 指向偏移12)
-00 01        → TYPE=A
-00 01        → CLASS=IN
-00 00 01 2c  → TTL=300 秒
-00 04        → RDLENGTH=4
-5d b8 d8 22  → RDATA=93.184.216.34
-```
-
-**逐字段解析**：
-
-```
-12 34       → Transaction ID=0x1234 (与查询匹配)
-81 80       → Flags=0x8180 (QR=1 响应, RD=1, RA=1)
-00 01       → Questions=1
-00 01       → Answer RRs=1
-00 00       → Authority RRs=0
-00 00       → Additional RRs=0
---- Question (同查询) ---
---- Answer ---
-c0 0c       → NAME=指针压缩 (0xC0=指针标记, 0x0C=偏移12)
-00 01       → TYPE=A
-00 01       → CLASS=IN
-00 00 01 2c → TTL=300
-00 04       → RDLENGTH=4
-5d b8 d8 22 → 93.184.216.34
-```
-
-**指针压缩**：`0xC0 0x0C` 表示域名在报文偏移 12 处（即 Question 中的域名），避免重复编码。
-
----
-
-## 5. 深入一点
-
-### DNS over HTTPS / TLS
-
-传统 DNS 明文传输，存在窃听和篡改风险：
-
-| 协议 | 端口 | 说明 |
+| 字段 | 长度 | 含义 |
 |------|------|------|
-| Do53 | 53/UDP,TCP | 传统 DNS |
-| DoT | 853/TCP | DNS over TLS |
-| DoH | 443/HTTPS | DNS over HTTPS |
-| DoQ | 853/QUIC | DNS over QUIC |
+| ID | 16bit | 请求与响应匹配标识 |
+| QR | 1bit | 0=查询，1=响应 |
+| Opcode | 4bit | 0=标准查询，1=反向查询，2=状态查询 |
+| AA | 1bit | 权威应答（Authoritative Answer） |
+| TC | 1bit | 截断标志（TrunCation），UDP 包太大时设 1 |
+| RD | 1bit | 期望递归（Recursion Desired） |
+| RA | 1bit | 支持递归（Recursion Available） |
+| RCODE | 4bit | 0=无错，3=NXDOMAIN（域名不存在） |
+| QDCOUNT | 16bit | Question 记录数 |
+| ANCOUNT | 16bit | Answer 记录数 |
+| NSCOUNT | 16bit | Authority 记录数 |
+| ARCOUNT | 16bit | Additional 记录数 |
 
-### DNSSEC
+### Question 格式
 
-DNSSEC 为 DNS 响应添加数字签名，防止篡改：
+| 字段 | 长度 | 含义 |
+|------|------|------|
+| QNAME | 可变 | 域名（长度+标签，0 结尾），如 `3www4baidu3com0` |
+| QTYPE | 16bit | A(1)/AAAA(28)/CNAME(5)/MX(15)/NS(2) |
+| QCLASS | 16bit | IN(1)=Internet |
 
-- **RRSIG**：资源记录签名
-- **DNSKEY**：公钥
-- **DS**：委托签名者（父域验证子域密钥）
-- 验证链：根 DNSKEY → .com DS → example.com DNSKEY → RRSIG
+### 资源记录（Answer / Authority / Additional）
+
+| 字段 | 长度 | 含义 |
+|------|------|------|
+| NAME | 可变 | 域名（可压缩指针） |
+| TYPE | 16bit | 同 QTYPE |
+| CLASS | 16bit | IN(1) |
+| TTL | 32bit | 存活秒数 |
+| RDLENGTH | 16bit | RDATA 长度 |
+| RDATA | 可变 | A=4B IP，AAAA=16B IP，CNAME=域名，MX=优先级+域名 |
 
 ---
 
-## 参考资料
+## 核心能力
 
-- [RFC 1035 - Domain Names - Implementation](https://datatracker.ietf.org/doc/html/rfc1035)
-- [RFC 8484 - DNS over HTTPS](https://datatracker.ietf.org/doc/html/rfc8484)
-- [RFC 7858 - DNS over TLS](https://datatracker.ietf.org/doc/html/rfc7858)
-- [RFC 4033-4035 - DNSSEC](https://datatracker.ietf.org/doc/html/rfc4033)
+### 1. 递归 vs 迭代查询
+
+为什么需要：客户端不懂 DNS 树形结构，递归 DNS 代劳遍历全局。
+
+```
+客户端                   递归DNS                 根                   TLD(.com)            权威(ns.baidu.com)
+  |                       |                     |                     |                    |
+  |-- baidu.com -------->|                     |                     |                    |
+  |                       |-- .com 在哪 ------->|                     |                    |
+  |                       |<-- ns.com IP ------|                     |                    |
+  |                       |                     |                     |                    |
+  |                       |-- baidu.com 在哪 ----------------------->|                    |
+  |                       |<-- ns.baidu.com IP ----------------------|                    |
+  |                       |                     |                     |                    |
+  |                       |-- baidu.com -------------------------------------------------->|
+  |                       |<-- 1.1.1.1 ----------------------------------------------------|
+  |                       |                     |                     |                    |
+  |<--- 1.1.1.1 ---------|                     |                     |                    |
+```
+
+- **递归查询**：客户端只问一次递归 DNS，后续递归 DNS 代劳
+- **迭代查询**：递归 DNS 依次问根→TLD→权威，各服务器只回"找谁问"
+- 递归 DNS 通常由 ISP 或公共 DNS（8.8.8.8/1.1.1.1）提供
+
+---
+
+### 2. DNS 缓存
+
+为什么需要：避免每次查询都走完整递归链路，减少延迟、降低根服务器压力。
+
+```
+递归DNS缓存：
+ +------------------+     TTL=300    +------------------+
+ | baidu.com = 1.1.1.1 |   ←━━━━━━   | 权威服务器        |
+ +------------------+               +------------------+
+   ↑ 秒级响应
+   |
+ 客户端
+
+ 缓存命中：~1ms，无缓存：~100ms+
+```
+
+- TTL 由权威服务器控制，递归 DNS 在 TTL 内直接回复
+- 缓存过大 → IP 切换不及时；缓存过小 → 递归查询频繁
+- 负缓存（NXDOMAIN）：域名不存在的回复也缓存，防重复查询
+
+---
+
+### 3. 记录类型
+
+| 类型 | 作用 | 使用场景 |
+|------|------|----------|
+| A | 域名 → IPv4 | `baidu.com → 110.42.76.20` |
+| AAAA | 域名 → IPv6 | `baidu.com → 2400:da00::666` |
+| CNAME | 别名 → 真名 | `www.baidu.com → www.a.shifen.com` |
+| MX | 邮件交换器 | `@baidu.com → mx.baidu.com, priority 10` |
+| NS | 权威 DNS 服务器 | `baidu.com → ns.baidu.com` |
+| SOA | 区域权威元数据 | 主 DNS、邮箱、序列号、刷新间隔 |
+| TXT | 任意文本 | SPF/DKIM/DMARC 验证 |
+
+---
+
+### 4. 负载均衡
+
+| 方式 | 原理 | 优点 | 缺点 |
+|------|------|------|------|
+| DNS 轮询 | 一个域名返回多个 A 记录，顺序轮换 | 简单，零开销 | 不感知后端健康，客户端随机选 |
+| GeoDNS | 根据客户端 IP 返回最近的服务器 | CDN 核心，延迟低 | 需要 GeoIP 数据库 |
+| SRV 记录 | 指定目标+端口+优先级+权重 | 精细控制，支持权重 | 需应用层支持解析 |
+
+```
+DNS 轮询：
+  api.example.com  →  1.1.1.1    (权重 50)
+                   →  2.2.2.2    (权重 50)
+  ← 每次查询顺序打乱，客户端随机取第一个
+
+GeoDNS：
+  北京客户端 → 返回 北京CDN IP
+  纽约客户端 → 返回 纽约CDN IP
+```
+
+---
+
+## 关键设计决策
+
+| 问题 | 为什么 |
+|------|--------|
+| 为什么查询用 UDP | 一个 DNS 包通常 ≤ 512B（EDNS 可到 4096），UDP 无连接、一次往返搞定，延迟最低 |
+| 什么时候切换到 TCP | TC=1 表示响应被截断，客户端需用 TCP 重发以确保完整接收 |
+| 为什么区域传输（XFR）用 TCP | 传输整个域名区数据量大（数万条记录），需可靠传输、分段、流量控制 |
+| 为什么根服务器只有 13 个 IP | 一个 UDP 包 512B（EDNS0 前），13 个 NS 地址刚好塞进 |
+| 为什么需要 EDNS | 原 512B 限制不够放 DNSSEC、IPv6、大响应 |
+| 为什么有 TTL | 缓存需要过期策略，不然 IP 变了全世界都不知道 |
+
+---
+
+## 排障速查
+
+| 问题 | 命令 | 原因 |
+|------|------|------|
+| 解析慢 | `dig +trace baidu.com` 看哪步延迟高 | 递归 DNS 远 / DNS 服务器无响应 |
+| 域名不通 | `nslookup baidu.com` | 域名存在？ |
+| 但 curl 不通 | `dig baidu.com` + `curl -v http://ip` | 返回 IP 错了 / DNS 被劫持 |
+| MX 收不到邮件 | `dig baidu.com MX` | MX 优先级不对 / 没有 MX |
+| SPF 失败 | `dig baidu.com TXT` | TXT 记录不包含发信 IP |
+| 解析到旧 IP | `dig baidu.com` 看 TTL | DNS 缓存未刷新，`ipconfig /flushdns` |
+
+```bash
+# dig —— DNS 诊断王牌
+dig baidu.com any                         # 查询所有记录
+dig +short baidu.com                      # 只取 IP
+dig +trace baidu.com                      # 递归跟踪全程
+dig @8.8.8.8 baidu.com                    # 指定 DNS 服务器
+dig -x 1.1.1.1                            # 反向查询（IP → 域名）
+dig baidu.com MX                          # 查 MX
+
+# nslookup —— Windows 友好
+nslookup baidu.com
+nslookup baidu.com 8.8.8.8
+
+# 清缓存（Windows）
+ipconfig /flushdns
+
+# 清缓存（macOS）
+sudo killall -HUP mDNSResponder
+
+# DNS 响应时间
+dig +stats baidu.com | grep "Query time"
+```
+
+---
+
+## 常用工具
+
+```bash
+# dig
+dig +short baidu.com                                   # A 记录
+dig AAAA google.com +short                             # AAAA
+dig baidu.com MX +short                                # MX
+dig baidu.com NS +short                                # NS
+dig baidu.com SOA +short                               # SOA
+dig +trace example.com                                 # 全链路
+
+# nslookup — 交互模式
+nslookup
+> server 8.8.8.8
+> set type=mx
+> baidu.com
+
+# host — 简版
+host baidu.com
+host -t MX baidu.com
+
+# whois — 查域名注册
+whois baidu.com
+
+# /etc/resolv.conf — 本地递归 DNS 配置
+cat /etc/resolv.conf
+
+# Windows：ipconfig /all → DNS Servers
+ipconfig /all | findstr "DNS"
+```

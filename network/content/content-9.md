@@ -1,293 +1,245 @@
-# 第 9 章：HTTP/2 协议
+# HTTP/2
 
-> **学习目标**：理解 HTTP/2 的二进制分帧、多路复用、头部压缩等核心改进
-> **预计时长**：3 小时
-> **难度级别**：⭐⭐⭐⭐ 高级
+> 应用层 | 二进制分帧 | 多路复用 | 端口 80（HTTP）/ 443（HTTPS，主流）
 
 ---
 
-## 1. 核心概念
+## 报文结构
 
-### 1.1 HTTP/2 概述
-
-HTTP/2 是 HTTP/1.1 的性能优化升级，保持语义不变（方法、状态码、头部含义相同），但改变了数据格式化和传输方式。
-
-**HTTP/2 vs HTTP/1.1 核心差异**：
-
-| 特性 | HTTP/1.1 | HTTP/2 |
-|------|----------|--------|
-| 数据格式 | 文本 | 二进制 |
-| 传输单位 | 报文（Message） | 帧（Frame） |
-| 多路复用 | ❌（队头阻塞） | ✅（流并行） |
-| 头部压缩 | ❌ | ✅（HPACK） |
-| 服务端推送 | ❌ | ✅（Push） |
-| 流优先级 | ❌ | ✅ |
-| 连接复用 | 6 个并行连接 | 1 个连接多路复用 |
-
----
-
-## 2. 报文结构
-
-### 2.1 帧格式（Frame）
-
-HTTP/2 最小通信单位是帧，所有帧共享 9 字节头部：
+### 帧 —— 最小通信单元
 
 ```
-+-+-+-+-+-+-+-+-+                                               +
-|   Length (24)  |   Type (8)    |   Flags (8)  |
-+-+-+-+-+-+-+-+-++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|R|                 Stream Identifier (31)       |
-+=+================================================+
-|                   Frame Payload (0...)           |
-+================================================+
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Length (24bit)                |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Type (8bit)  |   Flags (8bit)  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|R|                 Stream Identifier (31bit)                   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                   Payload (可变)                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
 | 字段 | 长度 | 含义 |
 |------|------|------|
-| **Length** | 24 bit | 载荷长度（最大 2^24-1 = 16MB） |
-| **Type** | 8 bit | 帧类型 |
-| **Flags** | 8 bit | 帧标志（各类型不同） |
-| **R** | 1 bit | 保留位 |
-| **Stream Identifier** | 31 bit | 流标识（0 为连接级） |
+| Length | 24bit | Payload 长度（不含头部 9B），最大 2^24-1（≈16MB） |
+| Type | 8bit | 帧类型：DATA / HEADERS / PRIORITY / RST_STREAM / SETTINGS / PUSH_PROMISE / PING / GOAWAY / WINDOW_UPDATE / CONTINUATION |
+| Flags | 8bit | 帧类型相关，如 END_STREAM(0x1) / END_HEADERS(0x4) / ACK(0x1) |
+| R | 1bit | 保留位 |
+| Stream Identifier | 31bit | 流 ID，客户端发奇数，服务端发偶数，0 为连接帧 |
 
-### 2.2 帧类型
+### 帧类型
 
-| Type | 值 | 说明 |
-|------|-----|------|
-| DATA | 0 | 传输数据 |
-| HEADERS | 1 | 请求/响应头部 |
-| PRIORITY | 2 | 流优先级 |
-| RST_STREAM | 3 | 终止流 |
-| SETTINGS | 4 | 连接配置 |
-| PUSH_PROMISE | 5 | 服务端推送 |
-| PING | 6 | 保活/RTT 测量 |
-| GOAWAY | 7 | 关闭连接 |
-| WINDOW_UPDATE | 8 | 流量控制 |
-| CONTINUATION | 9 | 头部续帧 |
-
-### 2.3 流（Stream）、消息（Message）、帧（Frame）
-
-```
-一个 TCP 连接
-├── Stream 1 (请求/响应)
-│   ├── HEADERS 帧
-│   ├── DATA 帧
-│   └── DATA 帧
-├── Stream 3 (请求/响应，并行)
-│   ├── HEADERS 帧
-│   └── DATA 帧
-├── Stream 5 (服务端推送)
-│   ├── PUSH_PROMISE 帧
-│   ├── HEADERS 帧
-│   └── DATA 帧
-└── Stream 0 (连接控制)
-    ├── SETTINGS 帧
-    ├── PING 帧
-    └── GOAWAY 帧
-```
-
-- **流**：双向传输的虚拟通道，用 Stream ID 标识
-- **消息**：一个完整的请求或响应（由多个帧组成）
-- **帧**：最小通信单位
-
-**流 ID 规则**：
-- 客户端发起的流：奇数 (1, 3, 5, ...)
-- 服务端发起的流：偶数 (2, 4, 6, ...)
-- 流 0：连接级控制帧
+| Type | 作用 | Flags 示例 |
+|------|------|-----------|
+| DATA | 传输消息体 | END_STREAM |
+| HEADERS | 传输头部 (含伪头 :method/:path/:status) | END_HEADERS, END_STREAM |
+| PRIORITY | 设置流优先级 | 无 |
+| RST_STREAM | 终止单个流 | 无 |
+| SETTINGS | 连接级参数协商 | ACK |
+| PUSH_PROMISE | 服务端推送声明 | END_HEADERS |
+| PING | 心跳/RTT 测量 | ACK |
+| GOAWAY | 连接关闭通知 | 无 |
+| WINDOW_UPDATE | 流量控制窗口更新 | 无 |
+| CONTINUATION | HEADERS 续帧 | END_HEADERS |
 
 ---
 
-## 3. 具体能力
+## 核心能力
 
-### 3.1 二进制分帧
+### 1. 二进制分帧
 
-HTTP/2 将请求/响应拆分为二进制帧，在同一个 TCP 连接上交错传输：
-
-```
-HTTP/1.1 (串行):
-Stream1: [Request1][Response1]  Stream2: [Request2][Response2]
-
-HTTP/2 (交错):
-[Frame1-S1][Frame1-S2][Frame2-S1][Frame2-S2]...
- 同一TCP连接，不同流的帧交错传输
-```
-
-### 3.2 多路复用
-
-消除 HTTP/1.1 的队头阻塞：
+为什么需要：HTTP/1.1 文本协议解析慢（逐行读 `\r\n`、空格拆分），二进制直接按长度切。
 
 ```
-HTTP/1.1:
-请求1 → 等响应1 → 请求2 → 等响应2 → 请求3 → 等响应3
-
-HTTP/2:
-请求1 ──→ 响应1(帧1,帧2,帧3)
-请求2 ──→ 响应2(帧1,帧2)
-请求3 ──→ 响应3(帧1)
-  ↑ 所有请求同时发送，响应交错返回
+HTTP/1.1（文本）：                  HTTP/2（二进制）：
+  GET /index.html HTTP/1.1\r\n       帧1: HEADERS (stream=1)
+  Host: example.com\r\n                :method: GET
+  \r\n                                 :path: /index.html
+                                       :authority: example.com
+                                     帧2: DATA (stream=1, END_STREAM)
+                                       <html>...
 ```
 
-**注意**：HTTP/2 解决了应用层队头阻塞，但 TCP 层队头阻塞仍然存在（一个 TCP 包丢失阻塞所有流）。HTTP/3 解决了这个问题。
-
-### 3.3 头部压缩（HPACK）
-
-HTTP/1.1 每次请求携带完整头部，重复内容多。HPACK 使用两种机制压缩：
-
-**静态表**：预定义 61 个常用头部字段：
-
-```
-索引 1: :authority ""       索引 2: :method GET
-索引 3: :method POST        索引 4: :path /
-索引 5: :path /index.html   索引 6: :scheme http
-索引 7: :scheme https       索引 8: :status 200
-...
-```
-
-**动态表**：会话中增量更新的头部字段表：
-
-```
-首次: :method GET → 编码为索引 2 (1字节)
-首次: custom-header: abc → 添加到动态表索引 62
-后续: custom-header: abc → 编码为索引 62 (1字节)
-```
-
-**Huffman 编码**：对字符串值进一步压缩。
-
-### 3.4 服务端推送
-
-服务器可以主动推送客户端可能需要的资源：
-
-```
-客户端请求 /index.html
-服务器返回 index.html + 推送 /style.css + 推送 /script.js
-
-流程：
-1. 客户端发送 HEADERS (Stream 1)
-2. 服务器发送 HEADERS (Stream 1, 响应)
-3. 服务器发送 PUSH_PROMISE (Stream 1, 承诺推送 Stream 2)
-4. 服务器发送 HEADERS (Stream 2, 推送 style.css)
-5. 服务器发送 DATA (Stream 2, CSS 内容)
-6. 服务器发送 DATA (Stream 1, HTML 内容)
-```
-
-**注意**：Chrome 已移除 HTTP/2 Push 支持（替代方案：`<link rel="preload">`）。
-
-### 3.5 流优先级
-
-客户端通过 PRIORITY 帧指定流的依赖关系和权重：
-
-```
-        Stream 0 (根)
-       /          \
-  Stream 1 (HTML)   Stream 3 (CSS)
-       |
-  Stream 5 (JS, 依赖 HTML)
-```
-
-- **依赖**：子流优先级低于父流
-- **权重**：1-256，同依赖的兄弟流按权重分配资源
-
-### 3.6 流量控制
-
-HTTP/2 在流级别实现了流量控制（类似 TCP 滑动窗口）：
-
-- 通过 WINDOW_UPDATE 帧通告接收窗口
-- 初始窗口大小：65535 字节
-- 可通过 SETTINGS 帧调整
-- 仅影响 DATA 帧，HEADERS 等控制帧不受限
+- 解析器更简单：读 Length → 读 Payload → 循环
+- 错误更少：不需要处理空格/换行/编码歧义
+- 帧级处理：可以中断、优先级、复用
 
 ---
 
-## 4. 报文样例
+### 2. 多路复用
 
-### 4.1 SETTINGS 帧
-
-```
-00 00 0c 04 00 00 00 00 00
-00 03 00 00 00 64
-00 04 00 00 ff ff
-00 05 00 00 40 00
-```
-
-**逐字段解析**：
+为什么需要：HTTP/1.1 一个 TCP 同时只能处理一个请求（HOL），或开多个连接加重服务器负担。
 
 ```
-00 00 0c    → Length=12
-04          → Type=4 (SETTINGS)
-00          → Flags=0
-00 00 00 00 → Stream ID=0 (连接级)
-
---- Settings 参数 ---
-00 03 00 00 00 64 → SETTINGS_MAX_CONCURRENT_STREAMS=100
-00 04 00 00 ff ff → SETTINGS_INITIAL_WINDOW_SIZE=65535
-00 05 00 00 40 00 → SETTINGS_MAX_FRAME_SIZE=16384
+HTTP/1.1（6 个 TCP 连接）：          HTTP/2（1 个 TCP，多个 Stream）：
+  TCP连接1: 请求1 → 响应1             一个 TCP 连接：
+  TCP连接2: 请求2 → 响应2               stream1: 请求1 → ═══ → 响应1
+  TCP连接3: 请求3 → 响应3               stream3: ───请求2─ → ──响应2─
+  TCP连接4: 请求4 → 响应4               stream5: ───请求3─ → ──响应3─
+  TCP连接5: 请求5 → 响应5               stream7: ───请求4─ → ──响应4─
+  TCP连接6: 请求6 → 响应6               stream9: ───请求5─ → ──响应5─
+                                       stream11: ──请求6─ → ──响应6─
+  每个连接独立建 TCP，3 握手×6         一次握手，全部复用
+  连接之间争带宽                       Stream 间可交错，无头阻塞
 ```
 
-### 4.2 HEADERS 帧
+- **一个 TCP 连接并发传输多个 Stream**，Stream 间完全独立
+- **请求 1 大文件不影响请求 2 小文件**：帧在链路层交错发送
+- **丢包影响**：TCP 层面丢包会阻塞所有 Stream（见设计决策）
+
+---
+
+### 3. 头部压缩（HPACK）
+
+为什么需要：HTTP/1.1 每次请求重复发相同的头部（Cookie/UA/Host），一个请求头部可占几百字节。
 
 ```
-00 00 11 01 04 00 00 00 01
-83 86 44 08 41 d1 6e 5d 4b 8d 9a d1 7a
+HTTP/1.1 每次重复发：
+  GET /1.js HTTP/1.1
+  Host: example.com
+  User-Agent: Mozilla/5.0...
+  Accept: */*
+  Cookie: session=abc; theme=dark; lang=zh
+  → 约 300 字节
+
+HTTP/2 HPACK 压缩：
+  第 1 次：发送完整头部（200B），建立动态表
+  第 2 次：引用索引号（如 索引 23 → ":host: example.com"），实际发 ≈ 10B
 ```
 
-**逐字段解析**：
+| 策略 | 原理 | 效果 |
+|------|------|------|
+| 静态表 | 预定义 61 个常见头部（`:method: GET` = 索引 2） | 静态头部 1 字节搞定 |
+| 动态表 | 连接间不断出现的头部加入动态表 | 后续请求用索引代替 |
+| Huffman 编码 | 对内容做 Huffman 压缩 | 减少非 ASCII/长值字节数 |
+
+---
+
+### 4. 服务端推送
+
+为什么需要：客户端请求 HTML 时，服务端已经知道它马上要 CSS/JS，提前推过去省一个 RTT。
 
 ```
-00 00 11    → Length=17
-01          → Type=1 (HEADERS)
-04          → Flags=0x04 (END_HEADERS)
-00 00 00 01 → Stream ID=1
-
---- HPACK 编码头部 ---
-83          → 索引 3 (:method POST)
-86          → 索引 6 (:scheme https)
-44 08 ...   → 索引 4 (:path /) + Huffman 编码值
-41 d1 ...   → 索引 1 (:authority) + Huffman 编码值
+客户端                             服务器（HTTP/2）
+  |                                     |
+  |── GET /index.html ────────────────→|
+  |                                     |
+  |← HEADERS :status 200 ─────────────|  ← 响应 index.html
+  |← PUSH_PROMISE: promise_id=1      |  ← 预告：我要推 style.css
+  |   :method GET, :path /style.css   |     流 ID 奇数归客户端，偶数归服务端
+  |← DATA (index.html 内容) ─────────|
+  |                                     |
+  |  （客户端不用再请求 style.css）    |
+  |                                     |
+  |← HEADERS :status 200              |  ← 推送/style.css
+  |← DATA (style.css 内容) ───────────|
 ```
 
-### 4.3 DATA 帧
+- 推送资源缓存在客户端，避免额外请求
+- 可被客户端拒绝（RST_STREAM）
+- **容易浪费带宽**：如果客户端已经缓存了 style.css，推送就是浪费
+- Chrome 默认不支持服务器推送（2022 年后废弃），CR 问题多
+
+---
+
+### 5. 流优先级与流量控制
+
+为什么需要：告诉服务器哪些资源更重要（先渲染 CSS 再加载图片），避免资源竞争。
 
 ```
-00 00 1a 00 01 00 00 00 01
-7b 22 6d 65 73 73 61 67 65 22 3a 22 68 65 6c 6c 6f 22 7d ...
+流优先级树：
+          根
+         /   \
+      stream1   stream2
+      /    \       \
+   stream3 stream4  stream5
+
+  stream1 = HTML（权重 32）
+    stream3 = CSS（权重 16）   ← CSS 先渲染
+    stream4 = JS（权重 12）    ← JS 其次
+  stream2 = 图片（权重 8）     ← 图片最低
 ```
 
-**逐字段解析**：
+**连接级流量控制**：
+- 每个 Stream 独立窗口，默认 64KB
+- `WINDOW_UPDATE` 帧动态调整
+- 防止慢接收方被快发送方淹没（类似 TCP 窗口）
 
-```
-00 00 1a    → Length=26
-00          → Type=0 (DATA)
-01          → Flags=0x01 (END_STREAM)
-00 00 00 01 → Stream ID=1
-7b 22 6d... → {"message":"hello"} (JSON 数据)
+**Stream 级优先级**：
+- 依赖（Dependency）：A → B（A 依赖 B，处理完 B 才处理 A）
+- 权重（Weight）：同层资源按比例分配带宽
+
+---
+
+## 关键设计决策
+
+| 问题 | 为什么 |
+|------|--------|
+| 为什么用二进制 | 文本解析慢、易出错；二进制定长头部+变长 Payload，解析器简单高效 |
+| 为什么能解决 HTTP/1.1 HOL | Stream 间帧可交错，大文件不堵小请求 |
+| 为什么仍有 TCP HOL | TCP 保证字节序，一个 Stream 丢包 → TCP 重传 → 该 TCP 所有 Stream 暂停（同连接的所有流都得等重传完成）。HTTP/2 无法感知底层 TCP 段边界 |
+| 为什么 HPACK 不用 gzip | gzip 有 CRIME 攻击（压缩比泄露明文），HPACK 结合 Huffman+动态表不可攻击 |
+| 为什么主流用 HTTPS | 浏览器和 HTTP/2 实现（h2）要求 TLS（ALPN），明文 h2c 几乎没被支持 |
+| 为什么推送被废弃 | 开销大（额外连接资源）、缓存命中率低、浏览器已有预加载 `<link rel=preload>` 替代 |
+| 为什么需要帧流控 | 多路复用下慢接收方可能被并发流冲垮 |
+
+---
+
+## 排障速查
+
+| 问题 | 原因 | 排查 |
+|------|------|------|
+| HTTP/2 连接失败退到 HTTP/1.1 | 中间代理不支持 h2 / TLS 协商失败 | `curl --http2 -v` 看 ALPN 协商 |
+| 多路复用无效果 | TCP 丢包率高（所有 Stream 一起卡） | `ss -ti` 看重传率 |
+| 服务端推送不生效 | 浏览器已废弃（Chrome 106+） | 改用 `<link rel=preload>` |
+| 某个 Stream 卡住 | 流窗口耗尽 | `WINDOW_UPDATE` 帧未返回 |
+| 连接莫名其妙断开 | 对端发了 GOAWAY（升级/重启） | `tcpdump` 抓 GOAWAY 帧 |
+| HPACK 动态表错误 | 连接中断后状态不一致 | GOAWAY 后重建连接 |
+
+```bash
+# curl —— 看 HTTP/2 是否生效
+curl --http2 -v https://example.com               # ALPN 协商
+curl --http2-prior-knowledge http://example.com    # 明文 h2c
+curl --http2 -s -w "HTTP/2: %{http_version}\n" -o /dev/null https://example.com
+
+# nghttp —— HTTP/2 专用
+nghttp -v https://example.com                      # 看帧交换
+nghttp -s https://example.com                      # 统计
+nghttp -u https://example.com                      # 看推送
+
+# Chrome DevTools Network
+# Protocol 列显示 h2 → 确认走 HTTP/2
+# 右键 → Header Options → Protocol
+# 看 waterfall 是否并行（多路复用体现在多条同时进行）
 ```
 
 ---
 
-## 5. 深入一点
+## 常用工具
 
-### HTTP/2 连接前言
+```bash
+# curl — 支持 HTTP/2
+curl --http2 -v https://example.com                # 强制 h2
+curl --http2 -I https://example.com                # 看响应头
+curl --http2 -w "http_version: %{http_version}\n" -o /dev/null -s https://example.com
 
-HTTP/2 连接建立时，双方发送固定前言：
+# nghttp2 工具族
+nghttp -v https://example.com                      # 帧级详情
+nghttp -s https://example.com                      # 连接统计
+nghttpd --http2-server                              # 本地 HTTP/2 服务器测试
+nghttp -u https://example.com                      # 测试推送
 
+# h2load — HTTP/2 压测
+h2load -n 1000 -c 10 https://example.com           # 并发 10 请求 1000 次
+
+# Wireshark
+# tcp.port == 443 && http2
+# 过滤 HTTP/2 帧，看 SETTINGS/HEADERS/DATA/WINDOW_UPDATE
+
+# Chrome DevTools
+# chrome://net-export → 抓网络日志 → netlog viewer
+# 查看 HTTP/2 会话协商、帧序列、流状态
 ```
-客户端前言:
-PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n
-+ SETTINGS 帧
-
-服务器前言:
-SETTINGS 帧
-```
-
-这个前言用于识别 HTTP/2 连接（兼容 HTTP/1.1 升级场景）。
-
-### HPACK 动态表溢出
-
-攻击者可发送大量不同头部填满动态表，导致内存耗尽（HPACK Bomb）。缓解措施：限制动态表大小、限制头部数量和大小。
-
----
-
-## 参考资料
-
-- [RFC 9113 - HTTP/2](https://datatracker.ietf.org/doc/html/rfc9113)
-- [RFC 7541 - HPACK](https://datatracker.ietf.org/doc/html/rfc7541)

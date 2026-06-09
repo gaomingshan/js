@@ -1,40 +1,12 @@
-# 第 18 章：AMQP 协议
+# AMQP 高级消息队列协议
 
-> **学习目标**：理解高级消息队列的可靠传递机制与 AMQP 帧格式
-> **预计时长**：3 小时
-> **难度级别**：⭐⭐⭐⭐ 高级
+> 应用层 | 消息队列 & 可靠路由 | 端口 5672（明文）/ 5671（TLS）
 
 ---
 
-## 1. 核心概念
+## 报文结构
 
-### 1.1 AMQP 概述
-
-AMQP（Advanced Message Queuing Protocol）是应用层消息队列协议，提供可靠的消息路由、排队和传递。最广泛实现的版本为 AMQP 0-9-1（RabbitMQ），AMQP 1.0 是 OASIS 标准（Azure Service Bus）。
-
-**AMQP 核心概念**：
-
-```
-Producer → Exchange → Binding → Queue → Consumer
-              │
-              ├── Direct Exchange (精确匹配 routing key)
-              ├── Fanout Exchange (广播到所有绑定队列)
-              ├── Topic Exchange (通配符匹配 routing key)
-              └── Headers Exchange (匹配消息头部)
-```
-
-**AMQP 核心特性**：
-- 消息确认（ACK/NACK）保证可靠传递
-- 消息持久化（队列和消息均可持久化）
-- 流量控制（基于信用的流控）
-- 事务支持
-- 默认端口 5672（明文）、5671（AMQPS）
-
----
-
-## 2. 报文结构
-
-### 2.1 AMQP 0-9-1 帧格式
+AMQP 帧格式（0-9-1）：
 
 ```
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -48,15 +20,15 @@ Producer → Exchange → Binding → Queue → Consumer
 
 | 字段 | 长度 | 含义 |
 |------|------|------|
-| **Type** | 8 bit | 帧类型：1=Method, 2=Content Header, 3=Body, 8=Heartbeat |
-| **Channel** | 16 bit | 通道号（0=连接级，1-65535=通道级） |
-| **Size** | 32 bit | 载荷长度 |
-| **Payload** | 可变 | 帧内容 |
-| **Frame End** | 8 bit | 固定 0xCE |
+| Type | 8bit | 帧类型：1=Method, 2=Content Header, 3=Body, 8=Heartbeat |
+| Channel | 16bit | 通道号（0=连接级，1-65535=通道级） |
+| Size | 32bit | 载荷长度 |
+| Payload | 可变 | Method / Header / Body |
+| Frame End | 8bit | 固定 0xCE |
 
-### 2.2 Method 帧
+### 三种帧体结构
 
-Method 帧携带 AMQP 操作指令：
+**Method 帧** —— 操作指令：
 
 ```
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -66,9 +38,11 @@ Method 帧携带 AMQP 操作指令：
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.3 Content Header 帧
+- Class=Connection, Method=Start → 连接开始
+- Class=Basic, Method=Publish → 发布消息
+- Class=Queue, Method=Declare → 声明队列
 
-消息的元数据（紧跟 Method 帧之后）：
+**Content Header 帧** —— 消息元数据：
 
 ```
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -80,9 +54,7 @@ Method 帧携带 AMQP 操作指令：
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.4 Body 帧
-
-消息的实际内容（可分多个 Body 帧）：
+**Body 帧** —— 消息体：
 
 ```
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -90,202 +62,201 @@ Method 帧携带 AMQP 操作指令：
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
+一条消息 = 1 Method 帧 + 1 Header 帧 + N Body 帧（多帧分片传输）
+
 ---
 
-## 3. 具体能力
+## 核心能力
 
-### 3.1 交换机类型
+### 1. 交换机类型 —— Direct / Fanout / Topic / Headers
 
-**Direct Exchange**：
-
-```
-routing key = "order.create" → Queue: order-create-queue
-routing key = "order.cancel" → Queue: order-cancel-queue
-精确匹配，一对一或一对多
-```
-
-**Fanout Exchange**：
+为什么需要：消息队列的核心是**路由**——Producer 不关心谁消费，只按规则投递；Consumer 按兴趣订阅。交换机是实现这种解耦的关键。
 
 ```
-广播到所有绑定的队列，忽略 routing key
-适合：日志广播、事件通知
+Producer → Exchange → Binding → Queue → Consumer
+
+Direct Exchange:
+  routing key = "order.create" → Queue: order-queue
+  routing key = "order.cancel" → Queue: order-queue
+  精确匹配 routing key，一个或对多个 Queue
+
+Fanout Exchange:
+  所有绑定的 Queue 都收到一份（忽略 routing key）
+  场景：日志广播、全局通知
+
+Topic Exchange:
+  routing key = "order.create.us" → Binding: "order.create.*"
+  routing key = "order.create.cn" → Binding: "order.create.*"
+  * = 一个词, # = 零或多个词
+  场景：按地理区域/类型过滤
+
+Headers Exchange:
+  匹配消息头部属性（x-match: all / any）
+  不依赖 routing key
 ```
 
-**Topic Exchange**：
+| 类型 | 匹配依据 | 路由规则 | 典型场景 |
+|------|---------|---------|---------|
+| Direct | routing key | 精确匹配 | 任务分发 |
+| Fanout | 无 | 广播所有 Queue | 日志/通知 |
+| Topic | routing key | 通配符 | 分类路由 |
+| Headers | headers | KV 匹配 | 复杂条件路由 |
+
+---
+
+### 2. 消息确认 —— ACK / NACK / Publisher Confirm
+
+为什么需要：消息一旦发布，就必须保证**不丢**。没有确认机制，Consumer 崩溃或网络抖动会导致消息丢失。
 
 ```
-routing key = "order.create.us" → Binding: "order.create.*"
-routing key = "order.create.cn" → Binding: "order.create.*"
-routing key = "order.#"         → 匹配所有 order 开头的 key
-
-通配符: * = 一个词, # = 零或多个词
-```
-
-**Headers Exchange**：
-
-```
-匹配消息头部属性而非 routing key
-x-match: all (全部匹配) / any (任一匹配)
-```
-
-### 3.2 消息确认
-
-**Consumer ACK**：
-
-```
+Consumer ACK：
 1. Broker 推送消息给 Consumer
-2. Consumer 处理消息
-3. Consumer 发送 ACK → Broker 删除消息
-   或 Consumer 发送 NACK → Broker 重新入队或丢弃
+2. Consumer 处理完成后发送 ACK
+3. Broker 收到 ACK 后删除消息
+4. 如果 Consumer 断开未 ACK → Broker 重新入队（交给另一个 Consumer）
+
+Consumer NACK：
+1. Consumer 发送 NACK + requeue=true / false
+2. requeue=true  → 重新入队（Consumer 处理失败但不想丢）
+3. requeue=false → 丢弃或投递死信队列（致命错误）
+
+Publisher Confirm（AMQP 事务的轻量替代）：
+1. Publisher 发送消息（basic.publish）
+2. Broker 收到 → 回复 basic.ack（消息已持久化 / 已路由到至少一个队列）
+3. Broker 无法路由 → 回复 basic.nack（返回错误原因）
 ```
 
-**Publisher Confirm**：
+三种 ACK 共同构成端到端可靠性：
 
 ```
-1. Publisher 发送消息
-2. Broker 确认消息已持久化/路由成功 → ACK
-   或 Broker 返回 → NACK (不可路由)
+Producer ──── Publish ────→ Broker ──── Deliver ────→ Consumer
+  │                           │                          │
+  └── basic.ack (已持久化)    └── Consumer ACK (已处理)  ┘
 ```
 
-### 3.3 消息持久化
+---
 
-```
-队列持久化: durable=true (队列声明时指定)
-消息持久化: delivery_mode=2 (消息属性)
-交换机持久化: durable=true
+### 3. 虚拟主机（vhost）
 
-注意: 持久化不保证消息不丢失，仅保证 Broker 重启后恢复
-      完整可靠需: 持久化 + Publisher Confirm + Consumer ACK
-```
-
-### 3.4 流量控制
-
-AMQP 0-9-1 使用两种流控机制：
-
-**Consumer 预取（Prefetch Count）**：
-
-```
-basic.qos prefetch_count=10
-→ Broker 最多推送 10 条未确认消息给 Consumer
-→ 防止 Consumer 被淹没
-```
-
-**Connection 流控（Backpressure）**：
-
-```
-Publisher 发送过快 → Broker 内存水位上升
-→ Broker 停止读取 Publisher 的 TCP 数据
-→ TCP 背压传导至 Publisher
-```
-
-### 3.5 虚拟主机
-
-AMQP 支持虚拟主机（vhost），实现多租户隔离：
+为什么需要：多租户隔离。一个 Broker 实例上运行多个逻辑独立的"消息空间"，租户之间不能互相访问。
 
 ```
 /connection: host:5672/vhost_name
-每个 vhost 有独立的 Exchange、Queue、Binding、权限
+
+每个 vhost 独立拥有：
+- Exchange 集合
+- Queue 集合
+- Binding 关系
+- 用户 + 权限
+
 默认 vhost: "/"
+
+配置：
+rabbitmqctl add_vhost /production
+rabbitmqctl set_permissions -p /production user ".*" ".*" ".*"
 ```
+
+隔离效果：vhost A 无法访问 vhost B 的 Queue，即使用户名相同。
 
 ---
 
-## 4. 报文样例
+### 4. 死信队列（DLX）
 
-### 4.1 AMQP 连接握手
-
-```
-4d 51 50 00 09 01           → "AMQP\0\0\9\1" (协议头)
-```
-
-**协议头解析**：
+为什么需要：消息消费失败不能永远在队列里重试，需要**兜底**——记录失败原因、延迟重试、或人工介入。
 
 ```
-4d 51 50    → "AMQP" (协议标识)
-00          → 协议类 (0)
-00          → 协议主版本 (0)
-09          → 协议次版本 (9)
-01          → 协议修订 (1)
-→ AMQP 0-9-1
-```
+触发条件：
+1. Consumer NACK + requeue=false
+2. 消息 TTL 过期（x-message-ttl）
+3. 队列达到最大长度（x-max-length）
 
-### 4.2 Connection.Start 帧
-
-```
-01 00 00 00 00 0a 00 0a 00 0a
-...
-ce
-```
-
-**结构化解析**：
-
-```
-01          → Type=1 (Method)
-00 00       → Channel=0 (连接级)
-00 00 00 0a → Size=10
---- Method ---
-00 0a       → Class=10 (Connection)
-00 0a       → Method=10 (Start)
-...         → 版本、服务器属性、机制列表
-ce          → Frame End
-```
-
-### 4.3 Basic.Publish 帧（发送消息）
-
-```
-01 00 01 00 00 00 1e 00 3c 00 28
-... (exchange + routing key + mandatory + immediate)
-ce
-02 00 01 00 00 00 0e 00 3c 00 00 00 00 00 00 00 64
-... (content header: class=60, body_size=100, properties)
-ce
-03 00 01 00 00 00 64
-... (body: 100 字节消息内容)
-ce
-```
-
-**结构化解析**：
-
-```
-帧1 (Method): Type=1, Channel=1, Class=60(Basic), Method=40(Publish)
-帧2 (Content Header): Type=2, Class=60, Body Size=100, Properties
-帧3 (Body): Type=3, 100 字节消息体
-```
-
----
-
-## 5. 深入一点
-
-### AMQP 1.0 vs AMQP 0-9-1
-
-| 特性 | AMQP 0-9-1 | AMQP 1.0 |
-|------|-----------|----------|
-| 架构 | Exchange/Binding/Queue | Link/Session/Node |
-| 路由 | Broker 端路由 | 可在 Sender 端路由 |
-| 流控 | TCP 背压 + Prefetch | 基于信用的精确流控 |
-| 事务 | AMQP 事务 | AMQP 事务 + 会话级确认 |
-| 实现 | RabbitMQ | Azure Service Bus, Qpid |
-
-### 死信队列（DLX）
-
-消息无法消费时的归宿：
-
-```
-触发条件:
-1. 消息被 NACK 且 requeue=false
-2. 消息 TTL 过期
-3. 队列达到最大长度
-
-配置:
-queue.declare arguments:
+DLX 配置：
   x-dead-letter-exchange: dlx.exchange
-  x-dead-letter-routing-key: dlx.key
+  x-dead-letter-routing-key: dlx.routing.key
+
+流程：
+Queue ──消息死信──→ DLX(Direct/Fanout) ──→ DLQ(死信队列) ──→ Consumer（告警 / 重试 / 入库）
+
+进阶：延迟队列
+  Queue TTL（消息过期）→ 投递到 DLX → 另一个 Queue（延迟消费）
+  = 用 DLX 实现定时/延迟消息，不需要额外组件
 ```
 
 ---
 
-## 参考资料
+### 5. 流量控制 —— Prefetch + 背压
 
-- [AMQP 0-9-1 Specification](https://www.rabbitmq.com/resources/specs/amqp0-9-1.pdf)
-- [OASIS AMQP 1.0 Specification](http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-overview-v1.0-os.html)
-- [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
+```
+Consumer Prefetch Count：
+  basic.qos prefetch_count=10
+  → Broker 最多同时推送 10 条未 ACK 消息给 Consumer
+  → Consumer 处理慢时不会被淹没
+
+TCP 背压（Connection 级流控）：
+  Publisher 发送过快 → Broker 内存水位上升
+  → Broker 停止读取 TCP socket
+  → TCP Window 填满 → 背压传导到 Publisher
+```
+
+---
+
+## 关键设计决策
+
+| 问题 | 为什么 |
+|------|--------|
+| 为什么分成 Method / Header / Body 三种帧 | 元数据和体分离：Header 和 Body 可独立路由/存储，Broker 只解析 Header 就可以决定转发，不用碰 Body |
+| 为什么需要 Channel | 一个 TCP 连接承载多个逻辑通道，减少连接数（类似 HTTP/2 多路复用） |
+| 为什么是 Broker 路由（而非 P2P） | Producer 不需要知道 Consumer 在哪，扩展性更好；Broker 做持久化保证可靠性 |
+| 为什么 Basic.Publish 需要确认 | 网络不可靠，没有确认 Producer 不知道消息是否到达 Broker |
+| 为什么需要 vhost | 多应用共享一个 Broker 集群时隔离数据，降低运维成本 |
+| 为什么 0-9-1 和 1.0 不兼容 | 0-9-1 是 Broker 路由模型；1.0 是 Peer-to-Peer Link 模型，底层设计哲学不同 |
+
+---
+
+## 排障速查
+
+```bash
+# RabbitMQ 常用诊断
+rabbitmqctl list_connections            # 连接状态
+rabbitmqctl list_channels               # 通道状态
+rabbitmqctl list_queues                 # 队列积压
+rabbitmqctl list_consumers              # 消费者状态
+```
+
+| 问题 | 现象 | 排查 | 常见原因 |
+|------|------|------|---------|
+| 消息堆积 | Queue 消息数持续增长 | `rabbitmqctl list_queues messages name` 看哪个 Queue | Consumer 处理慢 / Consumer 挂掉 |
+| 消息丢失 | Producer 确认消息已发，但 Consumer 收不到 | 检查 binding（`rabbitmqctl list_bindings`） / mandatory 标志 | binding 未配置 / Exchange 发到了错误的 Queue |
+| 连接被关闭 | `connection closed, unexpected EOF` | `rabbitmqctl list_connections` 看关闭原因 | 心跳超时 / 客户端或服务端内存满 |
+| Unroutable | `NO_ROUTE` | 检查 Exchange 类型和 routing key 是否匹配 binding | routing key 拼写错误 / 绑定不存在 |
+| Consumer 不消费 | Queue 有消息，Consumer 在线但不收 | `rabbitmqctl list_consumers` 看 prefetch 和 channel | prefetch=0（无限制，但在等 ACK）；Consumer channel 阻塞 |
+| ACK 超时 | 消息被重新投递 | `rabbitmqctl environment` 看 consumer_timeout | Consumer 处理太慢未 ACK |
+
+---
+
+## 常用工具
+
+```bash
+# RabbitMQ 管理
+rabbitmq-plugins enable rabbitmq_management     # 开启管理插件（端口 15672）
+rabbitmqctl status                               # 集群状态
+rabbitmqctl list_queues name messages consumers   # 队列概览
+
+# 客户端诊断
+telnet localhost 5672                             # 测试端口
+openssl s_client -connect localhost:5671          # TLS 连接测试
+
+# 发布/消费测试（amqp-utils / rabbitmqadmin）
+rabbitmqadmin declare exchange name=test type=direct   # 创建交换器
+rabbitmqadmin declare queue name=test-queue            # 创建队列
+rabbitmqadmin declare binding source=test destination=test-queue routing_key=test
+rabbitmqadmin publish exchange=test routing_key=test payload="hello"
+rabbitmqadmin get queue=test-queue                     # 消费消息
+
+# 排障脚本
+echo "=== 队列积压 Top 10 ==="
+rabbitmqctl list_queues messages name | sort -rn | head -10
+echo "=== 连接状态 ==="
+rabbitmqctl list_connections pid peer_host state
+echo "=== 消费者 ==="
+rabbitmqctl list_consumers queue channel_tag ack_required prefetch_count

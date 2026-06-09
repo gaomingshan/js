@@ -1,284 +1,266 @@
-# 第 11 章：WebSocket 协议
+# WebSocket
 
-> **学习目标**：掌握 WebSocket 全双工持久连接的实现机制与帧格式
-> **预计时长**：3 小时
-> **难度级别**：⭐⭐⭐ 进阶
+> 应用层 | 全双工 | 消息边界 | 基于 HTTP 升级 | 端口 80/443
 
 ---
 
-## 1. 核心概念
+## 报文结构
 
-### 1.1 WebSocket 概述
-
-WebSocket 提供全双工、持久化的双向通信通道，通过 HTTP Upgrade 机制建立连接，之后独立运行。
-
-**WebSocket vs HTTP 轮询**：
-
-| 方式 | 通信模式 | 延迟 | 开销 |
-|------|---------|------|------|
-| HTTP 轮询 | 客户端定时拉取 | 高 | 每次完整 HTTP 头部 |
-| HTTP 长轮询 | 服务器挂起请求 | 中 | 每次完整 HTTP 头部 |
-| SSE | 服务器→客户端单向 | 低 | HTTP 头部一次 |
-| WebSocket | 全双工双向 | 极低 | 握手后仅帧头部 2-14 字节 |
-
-**WebSocket 核心特性**：
-- **全双工**：客户端和服务器可同时发送数据
-- **持久连接**：一次握手，持续通信
-- **低开销**：数据帧头部仅 2-14 字节
-- **支持二进制**：文本帧和二进制帧
-- **协议扩展**：支持 permessage-deflate 压缩扩展
-
----
-
-## 2. 报文结构
-
-### 2.1 WebSocket 帧格式
+### 帧格式
 
 ```
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|FIN|RSV1|RSV2|RSV3|  Opcode  |M| Payload Len  |    Extended   |
-|               |  (4 bits)  |A|    (7 bits)   | Payload Length |
-|               |            |S|               |               |
+|F|R|R|R| opcode  |M| Payload Len |     Extended Payload Len    |
+|I|S|S|S| (4bit)  |A| (7bit)      |    (如果 Payload Len=126/127)
+|N|V|V|V|         |S|             |                              |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                  Extended Payload Length (续)                 |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                               |Masking-key (if MASK=1)       |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Masking-key (续)             |          Payload Data         |
+|    Extended Payload Len Cont'd  |    Masking Key (4B, M=1 时) |
++                                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                |         Payload Data          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
-
-### 2.2 字段详解
 
 | 字段 | 长度 | 含义 |
 |------|------|------|
-| **FIN** | 1 bit | 1=消息最后一个帧 |
-| **RSV1-3** | 3 bit | 保留（扩展使用，如 RSV1=permessage-deflate） |
-| **Opcode** | 4 bit | 帧类型 |
-| **MASK** | 1 bit | 1=载荷已掩码（客户端→服务器必须掩码） |
-| **Payload Len** | 7 bit | 载荷长度（≤125 直接编码，126=2字节扩展，127=8字节扩展） |
-| **Masking-key** | 0/32 bit | 掩码密钥（MASK=1 时存在） |
-| **Payload Data** | 可变 | 载荷数据（可能被掩码） |
+| FIN | 1bit | 1=最后一帧，0=还有后续帧 |
+| RSV | 3bit | 保留位，非0需要协商扩展 |
+| Opcode | 4bit | 帧类型（见下表） |
+| MASK | 1bit | 1=有掩码（客户端→服务器必须置1） |
+| Payload Len | 7bit | 载荷长度：0-125直接；126→后面+2B；127→后面+8B |
+| Extended Len | 0/2/8B | 如 Payload Len=126则2B，=127则8B |
+| Masking Key | 4B | MASK=1时存在，用于 XOR 脱敏 |
+| Payload Data | 可变 | 实际消息内容 |
 
-### 2.3 Opcode 类型
+### Opcode 定义
 
-| Opcode | 类型 | 说明 |
-|--------|------|------|
-| 0x0 | continuation | 分片续帧 |
-| 0x1 | text | 文本数据（UTF-8） |
-| 0x2 | binary | 二进制数据 |
-| 0x8 | close | 关闭连接 |
-| 0x9 | ping | 心跳检测 |
-| 0xA | pong | 心跳响应 |
-| 0x3-7 | 保留 | 非控制帧 |
-| 0xB-F | 保留 | 控制帧 |
+| Opcode | 含义 | FIN 行为 |
+|--------|------|----------|
+| 0x0 | 延续帧（分段消息的非首帧） | 可=0，最后一帧=1 |
+| 0x1 | 文本帧（UTF-8） | 通常=1 |
+| 0x2 | 二进制帧 | 通常=1 |
+| 0x8 | 连接关闭帧 | 必须有=1 |
+| 0x9 | Ping（心跳探测） | 必须有=1 |
+| 0xA | Pong（Ping 响应） | 必须有=1 |
 
-**关键规则**：
-- 控制帧（close/ping/pong）Payload Len ≤ 125，不可分片
-- 数据帧（text/binary）可分片传输
-- 客户端→服务器必须掩码，服务器→客户端不掩码
+### 关闭帧 Payload
+
+```
++----------+---------------------------+
+| Status   | Reason（UTF-8，可选）     |
+| Code(2B) | 最长 123B                 |
++----------+---------------------------+
+```
+
+| 状态码 | 含义 |
+|--------|------|
+| 1000 | 正常关闭 |
+| 1001 | 一端离开（关页/重启） |
+| 1002 | 协议错误 |
+| 1003 | 不支持的帧类型 |
+| 1009 | 消息太大 |
+| 1011 | 服务端异常 |
 
 ---
 
-## 3. 具体能力
+## 核心能力
 
-### 3.1 握手升级（HTTP Upgrade）
+### 1. 握手升级 —— 兼容 HTTP，复用 80/443 端口
 
-```
-客户端请求:
-GET /chat HTTP/1.1\r\n
-Host: server.example.com\r\n
-Upgrade: websocket\r\n
-Connection: Upgrade\r\n
-Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n
-Sec-WebSocket-Version: 13\r\n
-\r\n
-
-服务器响应:
-HTTP/1.1 101 Switching Protocols\r\n
-Upgrade: websocket\r\n
-Connection: Upgrade\r\n
-Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n
-\r\n
-```
-
-**Sec-WebSocket-Accept 计算规则**：
+为什么：HTTP 是请求-响应模式，不能服务端主动推送。但防火墙只放 80/443。利用 HTTP Upgrade 机制从 HTTP 升级到 WebSocket，中间代理/防火墙不需要特殊配置。
 
 ```
-Accept = Base64(SHA1(Key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+Client                                       Server（HTTP 服务）
+  |                                              |
+  |─── GET /chat HTTP/1.1 ─────────────────────→|  普通 HTTP 请求
+  |   Host: example.com                          |
+  |   Upgrade: websocket                        |  ← 告诉服务器要升级
+  |   Connection: Upgrade                       |
+  |   Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ== |  16B 随机 base64
+  |   Sec-WebSocket-Version: 13                 |
+  |                                              |
+  |←── 101 Switching Protocols ────────────────|  服务器同意
+  |   Upgrade: websocket                        |
+  |   Connection: Upgrade                       |
+  |   Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo= |
+  |                         ↑ SHA1(key + "258EAFA5...") base64
+  |                                              |
+  └──── 连接升级完成，全双工通信开始 ──────────┘
+              
+  双向帧收发（不再有 HTTP 头部）：
+  Client ← 0x1 "新消息" → Server
+  Client ← 0x1 "收到"   → Server
+  Client ← 0x9 Ping     → Server
+  Client → 0xA Pong     ← Server
 ```
 
-这个固定 GUID 确保响应来自理解 WebSocket 的服务器，而非普通 HTTP 服务器。
+- 服务端不支持 WebSocket → 返回 200（不走 Upgrade），客户端自行降级
+- 基于 HTTP 端口导致 WebSocket 没有自己的标准端口
 
-### 3.2 掩码机制
+---
 
-客户端发送的帧必须掩码，防止缓存污染攻击：
+### 2. 数据帧类型 —— 文本 / 二进制 / 控制帧
 
-```
-掩码算法:
-for i in range(len(payload)):
-    masked[i] = payload[i] XOR masking_key[i % 4]
-
-示例:
-Masking-key = 37 fa 21 3d
-原始数据:   48 65 6c 6c 6f ("Hello")
-掩码数据:   7f 9f 4d 51 58
-解码:       7f^37 9f^fa 4d^21 51^3d 58^37 = 48 65 6c 6c 6f
-```
-
-### 3.3 分片传输
-
-大消息可拆分为多个帧：
+不同应用需要不同消息格式：聊天要文本，文件传输要二进制，心跳需要控制帧。帧类型通过 Opcode 区分。
 
 ```
-帧1: FIN=0, Opcode=0x1 (text), Data="Hel"
-帧2: FIN=0, Opcode=0x0 (continuation), Data="lo "
-帧3: FIN=1, Opcode=0x0 (continuation), Data="World"
-→ 重组为完整消息: "Hello World"
-```
+文本帧（Opcode=0x1）：
+┌─────────────────────────────────────────┐
+│ FIN=1  Opcode=0x1  MASK=0  Payload="hi"│
+└─────────────────────────────────────────┘
+  payload 必须是有效 UTF-8（客户端应该校验）
 
-**分片规则**：
-- 仅数据帧可分片，控制帧不可
-- 分片帧之间不可插入其他消息的数据帧
-- 控制帧可在分片之间插入（如 ping/pong）
+二进制帧（Opcode=0x2）：
+┌─────────────────────────────────────────────┐
+│ FIN=1  Opcode=0x2  MASK=0  Payload=0x89AB..│
+└─────────────────────────────────────────────┘
+  不校验编码，字节对字节
 
-### 3.4 心跳保活
+分段帧（FIN=0 + 0x0）：
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ FIN=0 0x1    │  │ FIN=0 0x0    │  │ FIN=1 0x0    │
+│ "Hello Wor"  │→│ "ld, this "  │→│ "is a test"  │
+└──────────────┘  └──────────────┘  └──────────────┘
+  首帧   Opcode 指明类型
+  中间帧 Opcode=0x0
+  尾帧   FIN=1 + Opcode=0x0
 
-```
-客户端 → 服务器: Ping (Opcode=0x9, Payload="heartbeat")
-服务器 → 客户端: Pong (Opcode=0xA, Payload="heartbeat")
-```
-
-- Ping 可携带载荷，Pong 必须回显相同载荷
-- 用于检测连接存活、测量延迟
-- 若一段时间无 Pong 响应，可认为连接断开
-
-### 3.5 关闭连接
-
-```
-主动方 → 被动方: Close (Opcode=0x8, Payload=状态码+原因)
-被动方 → 主动方: Close (Opcode=0x8, Payload=状态码)
-
-状态码:
-1000 = 正常关闭
-1001 = 端点离开
-1002 = 协议错误
-1003 = 不支持的数据类型
-1008 = 策略违规
-1011 = 内部错误
-1015 = TLS 握手失败
+控制帧（Ping/Pong/Close）：
+┌──────────────┐  ┌──────────────────────┐
+│ FIN=1 0x9   │  │ FIN=1 0xA            │
+│ 可选应用数据  │→│ 回显相同数据          │
+└──────────────┘  └──────────────────────┘
+  Ping 必须在帧流中插入（不被分段）
+  Pong 应尽快回复（被动响应，不可主动发）
 ```
 
 ---
 
-## 4. 报文样例
+### 3. 掩码机制 —— 防止缓存中毒（Cache Poisoning）
 
-### 4.1 文本帧（客户端→服务器，带掩码）
-
-```
-81 85 37 fa 21 3d 7f 9f 4d 51 58
-```
-
-**逐字段解析**：
+为什么需要：WebSocket 数据在客户端加密后经过代理缓存。攻击者可以构造恶意 WebSocket 帧，使其 XOR 后看起来像一个 HTTP 响应，中毒代理缓存，让其他用户收到恶意响应。
 
 ```
-81          → FIN=1, RSV=000, Opcode=0x1 (text)
-85          → MASK=1, Payload Len=5
-37 fa 21 3d → Masking-key=0x37fa213d
-7f 9f 4d 51 58 → 掩码数据
-解码: 7f^37=48(H), 9f^fa=65(e), 4d^21=6c(l), 51^3d=6c(l), 58^37=6f(o)
-→ 原始数据: "Hello"
+客户端 → 服务器：MASK=1，需要掩码
+                                                    
+  Masking Key = 0xABCDEF01
+  Payload     = "Hello"
+  XOR 后       = 0x29 0xEF 0x2D 0x2D 0x6F
+                               ↑ wire 上被混淆了
+
+代理试图把 WebSocket 数据解释为 HTTP 响应：
+  HTTP/1.1 200 OK\r\n...
+  但数据被 XOR → 看起来是乱码 → 不匹配 → 不缓存
+
+服务器收到 XOR 数据，用 Masking Key 还原：
+  0x29 ^ 0xAB = 'H'
+  0xEF ^ 0xCD = 'e'
+  0x2D ^ 0xEF = 'l'
+  0x2D ^ 0x01 = 'l'
+  0x6F ^ 0xAB = 'o'
+
+服务器 → 客户端：MASK=0，不需要掩码
+  （服务器可以视为可信任的，不会攻击自己）
 ```
 
-### 4.2 二进制帧（服务器→客户端，无掩码）
+- 客户端→服务器必须掩码，服务器→客户端禁止掩码
+- Masking Key 每帧随机，不可预测
+- 掩码不提供机密性（要加密走 WSS），只是防缓存投毒
+
+---
+
+### 4. 心跳保活 —— 检测断连
+
+TCP 长连接没有通知机制，一端崩溃/断网另一端不知道（除非发数据）。WebSocket 通过 Ping/Pong 帧主动探测连接健康。
 
 ```
-82 05 48 65 6c 6c 6f
+正常心跳：
+Client                                      Server
+  |                                            |
+  |─── Ping (Opcode=0x9, "ping") ───────────→|  等待 Pong
+  |←── Pong (Opcode=0xA, "ping") ────────────|  回显相同数据
+  |                                            |  确认连接正常
+  |   （通常服务端不可见，操作系统/库处理）      |
+
+断连检测：
+Client                                      Server
+  |                                            |
+  |─── Ping ──────────────────────────────→×××|  对端挂了
+  |   （等待超时，比如 10s）                    |
+  |─── Ping ──────────────────────────────→×××|
+  |   （超时）                                  |
+  |─── Close ───────────────────────────────→  |  宣布关闭
+  |   或者直接丢 socket                        |
 ```
 
-**逐字段解析**：
+- Ping 超时策略：3 次 Ping 无响应 → 关闭连接
+- 心跳间隔可在协议外协商（不是标准帧内容），客户端/服务端各自实现
+- 省电：WebSocket 心跳比 HTTP 短轮询省电得多
 
-```
-82          → FIN=1, RSV=000, Opcode=0x2 (binary)
-05          → MASK=0, Payload Len=5
-48 65 6c 6c 6f → "Hello" (原始数据，无掩码)
-```
+---
 
-### 4.3 Ping 帧
+## 关键设计决策
 
-```
-89 04 74 65 73 74
-```
+| 问题 | 为什么 |
+|------|--------|
+| 为什么客户端→服务器的帧需要掩码 | 防缓存中毒毒（Cache Poisoning Attack）：代理不能区分 HTTP 响应和 WebSocket 数据；XOR 混淆后代理无法伪造 HTTP 响应缓存 |
+| 为什么服务器→客户端不需要掩码 | 服务器输出是自己的资源，无法直接攻击其它用户；且掩码有计算开销 |
+| 为什么基于 HTTP 升级 | 复用 80/443 端口过防火墙，兼容 HTTP 基础设施（代理/负载均衡），降级方案简单（返回 200 即可） |
+| 为什么消息有长度分段 | 节省头部：小消息（≤125B）只占 2B 头部；同时支持超大消息（≤2^63-1） |
+| 为什么 Opcode 区分文本和二进制 | 应用需要知道编码方式：文本要校验 UTF-8，二进制直接透传 |
+| 为什么没有标准心跳间隔 | 各应用负载不同：游戏每秒发多次不需要额外心跳；消息推送可能需要 30s 探测一次 |
 
-**逐字段解析**：
+---
 
-```
-89          → FIN=1, Opcode=0x9 (ping)
-04          → MASK=0, Payload Len=4
-74 65 73 74 → "test"
-```
+## 排障速查
 
-### 4.4 Close 帧
+| 问题 | 现象 | 排查 | 常见原因 |
+|------|------|------|---------|
+| 握手失败 | `101` 没返回，客户端报 `Error during WebSocket handshake` | 看响应头：`Sec-WebSocket-Accept` 是否匹配计算 | 反代不支持 WebSocket / Upgrade 头被丢弃 |
+| 连接断开无通知 | 客户端认为连接活着，但收不到消息 | 抓包看是否有 TCP RST 或 FIN | 中间防火墙超时断开 / 对端崩溃 |
+| 连接一直断连重连 | 连续连接→断线→重连 | 看 Ping/Pong 间隔，服务端可能心跳超时比客户端短 | 负载均衡超时设置 < 应用心跳间隔 |
+| 浏览器报 `400 Bad Request` | 握手请求被拒绝 | 检查 `Sec-WebSocket-Version` 是否 13 | 反代不支持 HTTP Upgrade / 版本不兼容 |
+| WSS 失败 | 安全 WebSocket 连不上 | `openssl s_client -connect host:443` 看 TLS 握手 | 证书/SNI/双向认证配置 |
 
-```
-88 82 37 fa 21 3d bf da 3e 31
-```
+```bash
+# 抓包看 WebSocket 握手
+tcpdump -i any -nn 'port 80 or port 443' -A | grep -E 'Upgrade|Sec-WebSocket'
 
-**逐字段解析**：
+# Wireshark 过滤 WebSocket
+websocket or websocket.fin or websocket.opcode
 
-```
-88          → FIN=1, Opcode=0x8 (close)
-82          → MASK=1, Payload Len=2
-37 fa 21 3d → Masking-key
-bf da       → 掩码数据 → 解码: bf^37=88, da^fa=20 → 状态码=0x8820
-```
+# 检查 Nginx 是否代理 WebSocket
+grep -r "proxy_set_header Upgrade" /etc/nginx/
 
-### 4.5 大载荷帧（扩展长度）
+# 用 wscat 测试连接
+wscat -c ws://example.com/ws
 
-```
-82 7E 01 00 [256 字节数据]
-```
-
-```
-82          → FIN=1, Opcode=0x2 (binary)
-7E          → MASK=0, Payload Len=126 (使用 2 字节扩展)
-01 00       → 实际载荷长度=256
-[256 bytes] → 载荷数据
+# 查看浏览器 WebSocket 状态
+# Chrome DevTools → Network → WS → Frames
 ```
 
 ---
 
-## 5. 深入一点
+## 常用工具
 
-### permessage-deflate 扩展
+```bash
+# wscat —— WebSocket CLI 客户端
+wscat -c ws://localhost:8080/ws                         # 连接
+wscat -c wss://example.com/ws -n                        # WSS + 不验证证书
 
-WebSocket 支持消息级压缩：
+# websocat —— 更强大的 WebSocket CLI
+websocat ws://localhost:8080/ws                          # 交互式
+websocat -t ws://localhost:8080/ws tcp:localhost:9000    # 转发 TCP
 
+# curl —— WebSocket 握手验证
+curl -v -H "Upgrade: websocket" -H "Connection: Upgrade" \
+     -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+     -H "Sec-WebSocket-Version: 13" http://example.com/ws
+
+# Wireshark
+# ws 或 wss 过滤帧
+
+# autobahn —— WebSocket 兼容测试
+wstest -m fuzzingclient -s fuzzclient.json
 ```
-握手协商:
-Sec-WebSocket-Extensions: permessage-deflate; server_no_context_takeover
-
-压缩帧:
-RSV1=1 表示该帧使用 deflate 压缩
-Payload = deflate(原始数据) + 0x00 0x00 0xFF 0xFF (flush 标记)
-```
-
-### WebSocket 子协议
-
-握手时可协商子协议：
-
-```
-客户端: Sec-WebSocket-Protocol: chat, superchat
-服务器: Sec-WebSocket-Protocol: chat  (选定一个)
-```
-
-常见子协议：`graphql-ws`、`mqtt`、`stomp`。
-
----
-
-## 参考资料
-
-- [RFC 6455 - The WebSocket Protocol](https://datatracker.ietf.org/doc/html/rfc6455)
-- [RFC 7692 - Compression Extensions for WebSocket](https://datatracker.ietf.org/doc/html/rfc7692)

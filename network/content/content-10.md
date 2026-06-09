@@ -1,255 +1,258 @@
-# 第 10 章：HTTP/3 与 QUIC 协议
+# HTTP/3 + QUIC
 
-> **学习目标**：理解基于 UDP 的 QUIC 传输协议与 HTTP/3 的设计改进
-> **预计时长**：3 小时
-> **难度级别**：⭐⭐⭐⭐ 高级
+> 应用层 + 传输层 | 基于 UDP | 0-RTT | 连接迁移 | 无队头阻塞 | 端口 UDP 443
 
 ---
 
-## 1. 核心概念
+## 报文结构
 
-### 1.1 HTTP/3 概述
-
-HTTP/3 是 HTTP 的第三个主要版本，底层传输协议从 TCP 换为 QUIC（基于 UDP）。核心目标是解决 HTTP/2 遗留的 TCP 层队头阻塞问题。
-
-**HTTP/3 解决的核心问题**：
-
-| 问题 | HTTP/2 (TCP) | HTTP/3 (QUIC) |
-|------|-------------|---------------|
-| TCP 队头阻塞 | 一个包丢失阻塞所有流 | 各流独立，仅阻塞受影响的流 |
-| 握手延迟 | TCP 1-RTT + TLS 1-RTT = 2-RTT | QUIC 合并握手，1-RTT（0-RTT 恢复） |
-| 连接迁移 | IP/端口变化需重建 TCP | Connection ID 标识连接，无缝迁移 |
-| TLS 集成 | TLS 在 TCP 之上独立层 | TLS 1.3 内置于 QUIC |
-
----
-
-## 2. 报文结构
-
-### 2.1 QUIC 包格式
-
-QUIC 包分为长头部包和短头部包：
-
-**长头部包（握手阶段）**：
+### QUIC 包格式
 
 ```
  0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|1|   Type (7)  |            Version             |             |
+|  1-RTT Flag(0)  |                                               |
++-+-+-+-+          +                                               +
+|                   Connection ID (0/4/8/…/20B)                    |
++                   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                   |            Packet Number (1-4B)              |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                    DCID Len (8)   |      Destination CID      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                    SCID Len (8)   |       Source CID           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                         Token Length          |   Token       |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                           Length              |   Packet Number|
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                          Payload                              |
+|                        Payload (CRYPTO/STREAM/…)                |
++                                                               +
+|                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
-
-**短头部包（数据传输阶段）**：
 
 ```
  0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|0|1|   Type (6)  |          Destination CID (variable)        |
+|1|  Type(7)   |    Version(32)   |   DCID Len   |   DCID...    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    Packet Number (variable)   |                              |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
-|                          Payload                              |
+|   SCID Len   |   SCID...       |  Packet Number (1-4B)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         Payload                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                  Long Header (Initial/Handshake/Retry)
+```
+
+| 字段 | 含义 |
+|------|------|
+| Flag / Type | 0=1-RTT, 1=Long Header（Initial/Handshake/Retry/0-RTT） |
+| Connection ID | 连接标识，可变长度，用于连接迁移 |
+| Version | Long Header 才有，协商 QUIC 版本 |
+| Packet Number | 单调递增，不绕回，用于 AEAD 加密 |
+| Payload | 帧打包：STREAM/ACK/CRYPTO/PING/CONNECTION_CLOSE |
+
+### QUIC 帧类型位于 Payload 内
+
+```
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Frame Type  |   Frame-Specific Fields ...                   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-### 2.2 字段详解
-
-| 字段 | 长度 | 含义 |
-|------|------|------|
-| **First bit** | 1 bit | 1=长头部, 0=短头部 |
-| **Form bit** | 1 bit | 固定为 1（短头部中） |
-| **Type** | 6-7 bit | 包类型 |
-| **Version** | 32 bit | QUIC 版本 |
-| **DCID** | 可变 | 目的连接 ID |
-| **SCID** | 可变 | 源连接 ID |
-| **Token** | 可变 | 重试令牌（防重放攻击） |
-| **Packet Number** | 可变 | 包序号（1-4 字节） |
-
-### 2.3 QUIC 帧类型
-
-| 帧类型 | 值 | 说明 |
+| 帧类型 | 值 | 作用 |
 |--------|-----|------|
-| PADDING | 0x00 | 填充 |
-| PING | 0x01 | 保活 |
-| ACK | 0x02-0x03 | 确认 |
-| RESET_STREAM | 0x04 | 终止流 |
-| STOP_SENDING | 0x05 | 停止发送 |
-| CRYPTO | 0x06 | 加密握手数据 |
-| NEW_TOKEN | 0x07 | 新令牌 |
-| STREAM | 0x08-0x0f | 流数据（含 FIN/LEN 等标志位） |
-| MAX_DATA | 0x10 | 连接级流量控制 |
-| MAX_STREAM_DATA | 0x11 | 流级流量控制 |
-| PATH_CHALLENGE | 0x1a | 路径验证 |
-| PATH_RESPONSE | 0x1b | 路径验证响应 |
-| CONNECTION_CLOSE | 0x1c-0x1d | 关闭连接 |
+| STREAM | 0x08-0x0F | 应用数据流 |
+| ACK | 0x02-0x03 | 确认收到哪些包 |
+| CRYPTO | 0x06 | TLS 1.3 握手数据 |
+| PING | 0x01 | 保活 / RTT 测量 |
+| CONNECTION_CLOSE | 0x1C/0x1D | 关闭连接 |
+| MAX_DATA | 0x10 | 连接级流控 |
+| MAX_STREAM_DATA | 0x11 | 流级流控 |
+| RESET_STREAM | 0x04 | 重置单条流 |
+| HANDSHAKE_DONE | 0x1E | 服务端告知握手完成 |
 
 ---
 
-## 3. 具体能力
+## 核心能力
 
-### 3.1 0-RTT 连接建立
+### 1. 0-RTT 连接建立 —— 首次握手 1-RTT，恢复连接 0-RTT
 
-QUIC 将传输握手和加密握手合并：
-
-**首次连接（1-RTT）**：
+TCP+TLS 1.3 最少 2-RTT（纯 TCP 1-RTT + TLS 1-RTT），TLS 1.2 更是 3-RTT。移动场景频繁断连重新握手，延时累积严重。QUIC 携带 TLS 1.3 握手+传输参数在同一个 RTT 里完成，恢复连接时直接发数据。
 
 ```
-客户端                                    服务器
+首次连接：
+Client                                      Server
+  |                                            |
+  |─── Initial (CRYPTO: ClientHello) ───────→|  RTT 1
+  |   + STREAM (最多提前发 1*MTU 数据)        |  验证 CH
+  |←── Initial (CRYPTO: ServerHello + ...) ──|  
+  |   + Handshake (CRYPTO: Finish)           |  服务端发完证书
+  |   + STREAM (可以带响应数据)               |  
+  |─── Handshake (CRYPTO: Finish) ──────────→|  RTT 2
+  |   + 1-RTT (STREAM: 正式数据)              |  握手完成
+  |                                            |
+  1-RTT 后双向可发数据
 
-  ──── ClientHello (QUIC CRYPTO帧) ────→     RTT 1
-  ←─── ServerHello + Certificate + Finished ─────
-  ──── Finished ────→
-        应用数据加密传输
+恢复连接（0-RTT）：
+Client                                      Server
+  |                                            |
+  |─── 0-RTT (STREAM: 直接发 Post/Get) ─────→|  有缓存的凭据
+  |   + Initial (CRYPTO: ClientHello)         |  验证后直接处理
+  |←── 1-RTT (STREAM: 响应) ────────────────|  
+  |                                            |
+  数据在 0-RTT 就出去了，相当于提前 1-RTT
 ```
 
-**恢复连接（0-RTT）**：
-
-```
-客户端                                    服务器
-
-  ──── ClientHello + 0-RTT 应用数据 ────→   0-RTT!
-  ←─── ServerHello + 应用数据 ─────
-```
-
-0-RTT 使用之前协商的 PSK（Pre-Shared Key），在第一个包就携带应用数据。
-
-### 3.2 无队头阻塞的多路复用
-
-```
-HTTP/2 over TCP:
-Stream1: [帧1] [帧2] [丢包!] [等待...] [帧3]
-Stream2: [帧1] [等待TCP重传...] [帧2]  ← 被Stream1阻塞!
-Stream3: [帧1] [等待...] [帧2]         ← 也被阻塞!
-
-HTTP/3 over QUIC:
-Stream1: [帧1] [帧2] [丢包!] [等待重传] [帧3]
-Stream2: [帧1] [帧2] [帧3]              ← 不受影响!
-Stream3: [帧1] [帧2] [帧3]              ← 不受影响!
-```
-
-QUIC 中每个流独立确认和重传，一个流的丢包不影响其他流。
-
-### 3.3 连接迁移
-
-TCP 连接由四元组标识（源IP+源端口+目的IP+目的端口），网络切换时连接断开。
-
-QUIC 使用 Connection ID 标识连接：
-
-```
-WiFi: 客户端 IP=10.0.0.1, CID=0x1234 → 服务器
-  ↓ 切换到 4G
-4G:   客户端 IP=100.64.0.1, CID=0x1234 → 服务器 (同一连接!)
-```
-
-**PATH_CHALLENGE/RESPONSE** 机制验证新路径的可达性和 MTU。
-
-### 3.4 内置 TLS 1.3
-
-QUIC 将 TLS 1.3 深度集成：
-- 握手消息通过 CRYPTO 帧传输
-- 所有应用数据始终加密（无明文传输）
-- 0-RTT 基于 TLS 1.3 PSK
-- QUIC 负责可靠传输，TLS 仅负责密钥协商
-
-### 3.5 QUIC 流量控制
-
-两级流量控制：
-- **连接级**：MAX_DATA 帧限制总接收数据量
-- **流级**：MAX_STREAM_DATA 帧限制每个流的接收量
-
-自动调节窗口大小（类似 TCP BBR 算法思路）。
+- 0-RTT 有重放攻击风险（场景：幂等请求安全，非幂等危险）
+- 服务端用 `max_early_data_size` 限制 0-RTT 数据量
 
 ---
 
-## 4. 报文样例
+### 2. 连接迁移 —— IP 变了，ConnectionID 不变
 
-### 4.1 QUIC Initial 包（ClientHello）
-
-```
-c0 00 00 00 01  08 01 23 45 67 89 ab cd
-04 12 34 56 78
-00 41 00 00
-06 00 41 00
-01 00 00 47 0b  03 03 ...
-```
-
-**逐字段解析**：
+移动设备在 WiFi←→4G 切换时 IP 变化，TCP 四元组（SrcIP:SrcPort→DstIP:DstPort）改变 → 连接断开重建。QUIC 通过 ConnectionID 解耦连接与 IP:Port，IP 变了只需发个包通知新地址。
 
 ```
-c0          → 首位=1(长头部), Form=1, Type=0 (Initial)
-00 00 00 01 → Version=1 (QUIC v1)
-08          → DCID Len=8
-01 23 45 67 89 ab cd → Destination CID
-04          → SCID Len=4
-12 34 56 78 → Source CID
-00          → Token Length=0
-41 00 00    → Length=1024
---- CRYPTO 帧 ---
-06          → Frame Type=6 (CRYPTO)
-00 41 00    → Offset=0, Length=...
-01 00 00 47 → TLS ClientHello 开始
-0b 03 03    → TLS Version=TLS 1.2 (兼容性)
+WiFi 环境：
+Client(192.168.1.5:5201)  ⇆  Server(10.0.0.1:443)
+   CID_A→CID_B (不变)
+
+   ┌─── 正常收发 ───┐
+
+切换到 4G：
+Client(10.0.0.2:38452)  ⇆  Server(10.0.0.1:443)
+   CID_A→CID_B (不变)
+
+Client ──── PATH_CHALLENGE ────────→ Server (从新 IP 发出)
+        ←─── PATH_RESPONSE ─────────
+        ←─── 继续发数据 ────────────  (连接未中断)
+
+验证新路径后服务端切到新 IP 通信，应用层无感知
 ```
 
-### 4.2 QUIC Short Header 包（数据传输）
+要点：
+- 两端各自生成 ConnectionID，互不依赖
+- 新路径验证通过前数据仍走旧路径
+- 服务端可以发 `NEW_CONNECTION_ID` 帧替换 CID，防追踪
+
+---
+
+### 3. 无队头阻塞（HOL Blocking）的多路复用
+
+HTTP/2 多个 Stream 在一条 TCP 连接上传输。TCP 丢一个包 → 所有 Stream 等重传（因为 TCP 保证有序递交）。QUIC 在 UDP 上自己管理多路复用，一个 Stream 丢包只阻塞自己。
 
 ```
-40 01 23 45 67 89 ab cd
-01
-08 00 01  68 65 6c 6c 6f
+HTTP/2 (Over TCP)：
+
+连接逻辑视图：
+Stream 1 (HTML)     ████████████░░×××░░████████   ← 丢包阻塞全部
+Stream 2 (CSS)      ████████░░░░░░×××░░░░░░░░
+Stream 3 (JS)       █████████░░░░░×××░░░░░░░░
+                        ↑ 丢了一个 TCP 段 → 3 个 Stream 全卡住
+
+TCP 层视角：有序字节流，一个空洞全部等重传
+
+QUIC (Over UDP)：
+
+连接逻辑视图：
+Stream 1 (HTML)     ████████████████████████████   ← 独立推进
+Stream 2 (CSS)      ████████████░░░░░░░░░░░░░░░░   ← 丢包只停自己
+Stream 3 (JS)       ████████████████████████████
+                        ↑ 丢了一个帧 → 只阻塞 Stream 2
+
+UDP 层视角：无顺序要求，各自独立 ACK 重传
 ```
 
-**逐字段解析**：
+| 特性 | HTTP/2 | HTTP/3 |
+|------|--------|--------|
+| 传输 | TCP | QUIC (UDP) |
+| Multiplexing | 字节流共享 | 独立流 |
+| HOL Blocking | 有（TCP 丢包） | 无（流独立） |
+| 头部压缩 | HPACK（依赖有序） | QPACK（解耦流顺序） |
+
+---
+
+### 4. 内置 TLS 1.3 —— 加密是默认项
+
+TCP 时代加密是"可选"的（HTTPS vs HTTP），即使 HTTPS 也是先 TCP 再 TLS。QUIC 把加密做进传输层，所有包（除了初始探测包部分字段）全部 AEAD 加密，无明文 QUIC。
 
 ```
-40          → 首位=0(短头部), Form=1, Type=0
-01 23 45 67 89 ab cd → Destination CID (8字节)
-01          → Packet Number=1
---- STREAM 帧 ---
-08          → Frame Type=0x08 (STREAM, StreamID=0)
-00 01       → Stream ID=1
-68 65 6c 6c 6f → "hello"
+TCP 栈：               QUIC 栈：
+┌─────────────┐       ┌─────────────┐
+│   HTTP/2    │       │   HTTP/3    │
+├─────────────┤       ├─────────────┤
+│   TLS       │       │   QUIC+TLS  │ ← 加密内建
+├─────────────┤       ├─────────────┤
+│   TCP       │       │   UDP       │
+├─────────────┤       ├─────────────┤
+│   IP        │       │   IP        │
+└─────────────┘       └─────────────┘
+```
+
+| 字段 | TCP+TLS | QUIC |
+|------|---------|------|
+| 握手 | 先 TCP 再 TLS，至少 2-RTT | 握手第一包就带 ClientHello |
+| 加密范围 | 应用数据 | 几乎所有包（含传输参数） |
+| 降级风险 | 明文 TCP 可以干扰 | Key 不对直接丢包 |
+| 0-RTT 数据 | 不支持 | 通过会话票证恢复 |
+
+---
+
+## 关键设计决策
+
+| 问题 | 为什么 |
+|------|--------|
+| 为什么基于 UDP 不是 TCP | TCP 在中介（NAT/代理）中已有广泛支持，UDP 在操作系统/中间盒的"侵入"更少，允许用户空间协议栈自由迭代。QUIC 在用户空间实现（不像 TCP 在内核），部署升级不用等内核 |
+| 为什么需要 ConnectionID | 解耦连接与 IP:Port，实现连接迁移。TCP 的连接标识是四元组（IP:Port × 2），QUIC 用 CID 标识，WiFi→4G 切换 IP 变但 CID 不变 |
+| 为什么 Packet Number 单调递增不绕回 | 单调递增使 AEAD 的 Nonce 唯一，防重放。且每个包号唯一，ACK 不会歧义 |
+| 为什么 0-RTT 有风险 | 0-RTT 数据可能被重放（服务端不能区分是否第一次），要求应用层对非幂等操作做防护 |
+| 为什么不用 HTTP/2 的 HPACK | HPACK 依赖有序递交（引用前一个头部），QUIC 的流独立无顺序保障 → 改成 QPACK，编码器和解码器状态分开同步 |
+| 为什么没有 TCP 的慢启动概念 | QUIC 也有拥塞控制（NewReno/CUBIC/BBR），只是把控制从内核移到用户空间，算法本身类似 |
+
+---
+
+## 排障速查
+
+| 问题 | 现象 | 排查 | 常见原因 |
+|------|------|------|---------|
+| QUIC 回退 TCP | 明明客户端支持 HTTP/3，却走 HTTP/2 或 1.1 | 抓 UDP 443 看一眼有没有 QUIC Initial 包 | 中间防火墙/代理拦截 UDP 443 |
+| 0-RTT 被服务端拒绝 | 浏览器开发工具看到 HTTP 响应带 `Early-Data` 相关 Header | 看服务端日志 `quic_early_data_rejected` 计数 | 服务端重启/凭据过期/anti-replay |
+| 连接迁移失败 | WiFi 切 4G 后应用卡死 | 抓包看是否有 PATH_CHALLENGE/PATH_RESPONSE | NAT 绑定超时/服务端不支持迁移 |
+| 单向流阻塞 | 部分请求正常，部分卡住 | `tcpdump port 443` 查看是否有 RST_STREAM 帧 | 对等体流控 `MAX_STREAM_DATA` 耗尽 |
+| Certificate 错误 | 连接一直 Initial 不会进 Handshake | 看 CRYPTO 帧数据长度异常 | 自签证书/中间代理篡改 |
+| 丢包导致的尖峰延时 | RTT 偶尔从 20ms 跳到 200ms | `ss -in` 看 QUIC 连接 RTT | UDP 在中间路径被限速/丢包率高 |
+
+```bash
+# 检查 QUIC 是否需要回退到 TCP（抓初始包）
+tcpdump -i any -nn 'udp port 443' -c 10 -X
+
+# 看 QUIC 连接详情（Linux）
+ss -in --family=inet | grep -A 5 quic
+
+# Wireshark 过滤 QUIC
+# quic or quic.initial || quic.handshake || quic.1rtt
+
+# Nginx 检查 QUIC 是否启用
+nginx -V 2>&1 | grep quic
+
+# cURL 强制 HTTP/3
+curl --http3 -I https://example.com
 ```
 
 ---
 
-## 5. 深入一点
+## 常用工具
 
-### QUIC 与内核
+```bash
+# curl —— HTTP/3 测试
+curl --http3 -o /dev/null -w "HTTP: %{http_version}\n" https://example.com
 
-QUIC 运行在用户态（基于 UDP socket），而 TCP 在内核态。这意味着：
-- **优势**：快速迭代，无需操作系统更新
-- **劣势**：用户态收发有额外上下文切换开销
-- **优化**：GSO/GRO（Generic Segmentation/Receive Offload）减少系统调用
+# qlog —— QUIC 日志分析（Chrome）
+chrome://net-export/   # 导出 .json → qvis.quictools.info 可视化
 
-### QUIC 丢包检测
+# tcpdump —— 抓 QUIC 包
+tcpdump -i eth0 -nn 'udp port 443'                      # 抓 QUIC 包
+tcpdump -i eth0 -nn 'udp[0:2] = 0xc000'                 # 过滤 Long Header
 
-QUIC 使用基于包序号的 ACK，比 TCP 的 ACK 更精确：
-- 所有包序号单调递增（不像 TCP 序列号是字节偏移）
-- ACK 包含已收到的包序号范围
-- 支持更精确的 RTT 测量
+# ss —— QUIC 连接状态
+ss -in --family=inet | grep -A 10 quic
 
-### HTTP/3 QPACK
+# 浏览器内置
+chrome://webrtc-internals/                                # WebRTC + QUIC 调试
+edge://net-internals/#quic                                # Edge QUIC 内部
+```
 
-HTTP/3 使用 QPACK 替代 HPACK 进行头部压缩：
-- 解决 HPACK 在 QUIC 上的队头阻塞问题
-- 使用独立的编码/解码流传输动态表更新
-- 静态表扩展到 99 个条目
-
----
-
-## 参考资料
-
-- [RFC 9000 - QUIC: A UDP-Based Multiplexed and Secure Transport](https://datatracker.ietf.org/doc/html/rfc9000)
-- [RFC 9114 - HTTP/3](https://datatracker.ietf.org/doc/html/rfc9114)
-- [RFC 9001 - Using TLS to Secure QUIC](https://datatracker.ietf.org/doc/html/rfc9001)
-- [RFC 9204 - QPACK: Field Compression for HTTP/3](https://datatracker.ietf.org/doc/html/rfc9204)
