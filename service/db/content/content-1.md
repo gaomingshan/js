@@ -1,446 +1,267 @@
-# DDL 数据定义语言
+# 数据库架构全貌 — 先在心里画一张地图
 
-## 概述
+大部分开发者接触数据库是从写 SQL 开始的。SELECT、INSERT、UPDATE、DELETE 都会写，但你有没有想过：**当你敲下回车的那一瞬间，数据库内部到底发生了什么？**
 
-DDL（Data Definition Language，数据定义语言）是 SQL 的核心组成部分，用于定义和管理数据库的结构。DDL 操作包括创建、修改、删除数据库对象，如数据库、表、索引、视图等。理解 DDL 是掌握数据库管理的第一步。
-
-**核心命令**：
-- **CREATE**：创建数据库对象
-- **ALTER**：修改已存在的对象结构
-- **DROP**：删除数据库对象
-- **TRUNCATE**：清空表数据但保留结构
+这一节我们不谈具体语法，先在你脑子里建一张完整的**数据库请求路径图**。
 
 ---
 
-## 核心概念
+## 一条 SQL 的一生
 
-### 1. CREATE - 创建对象
+无论 MySQL、PostgreSQL 还是 Oracle，一条 SQL 从输入到返回结果，大致经过这么几个阶段：
 
-#### 创建数据库
-
-**MySQL**：
-```sql
-CREATE DATABASE mydb 
-CHARACTER SET utf8mb4 
-COLLATE utf8mb4_unicode_ci;
+```
+客户端 → 连接器 → 解析器 → 优化器 → 执行器 → 存储引擎 → 磁盘
 ```
 
-**Oracle**：
-```sql
--- Oracle 中数据库概念不同，通常创建用户和表空间
-CREATE TABLESPACE mydata
-DATAFILE '/u01/app/oracle/oradata/mydata01.dbf' SIZE 100M
-AUTOEXTEND ON NEXT 10M MAXSIZE 1G;
-```
+### 1. 连接器
 
-**PostgreSQL**：
-```sql
-CREATE DATABASE mydb
-ENCODING 'UTF8'
-LC_COLLATE 'zh_CN.UTF-8'
-LC_CTYPE 'zh_CN.UTF-8'
-TEMPLATE template0;
-```
+你 `mysql -h 127.0.0.1 -u root -p` 敲完密码，数据库先做的事情是：
+- 校验身份（用户名 + 密码）
+- 检查权限（你有权访问这张表吗？）
+- 分配一个数据库连接（对应一个线程/进程）
 
-#### 创建表
+这就是为什么 `max_connections` 不能设太大——每个连接都要消耗资源。你遇到过 `Too many connections` 报错吗？多半是应用层连接池泄漏了，不是真的需要几万个连接。
 
-**通用语法**：
-```sql
-CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,  -- MySQL
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_email UNIQUE (email)
-);
-```
+### 2. 解析器
 
-**Oracle 版本**：
-```sql
-CREATE TABLE users (
-    id NUMBER PRIMARY KEY,
-    username VARCHAR2(50) NOT NULL UNIQUE,
-    email VARCHAR2(100),
-    created_at TIMESTAMP DEFAULT SYSTIMESTAMP
-);
+SQL 到了解析器，它要回答第一个问题：**"这串字符是什么意思？"**
 
--- Oracle 需要手动创建序列
-CREATE SEQUENCE user_id_seq START WITH 1 INCREMENT BY 1;
-```
+解析器做的事：
+- 词法分析：把 `SELECT * FROM users WHERE id = 1` 拆成一个个 token（SELECT、*、FROM、users、WHERE、id、=、1）
+- 语法分析：检查 token 组合是否符合 SQL 语法，生成**解析树**
+- 语义分析：检查表和字段存不存在、你有没有权限
 
-**PostgreSQL 版本**：
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,  -- SERIAL 自动创建序列
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+如果这一步报错，你看到的就是 `Unknown column` 或 `Table not found`。**SQL 还没真正执行就已经死了**。
 
-#### 创建索引
+### 3. 优化器
 
-```sql
--- 普通索引
-CREATE INDEX idx_username ON users(username);
+这是最关键的一步。解析器只是"懂了你的 SQL"，优化器要回答第二个问题：**"怎么执行最快？"**
 
--- 唯一索引
-CREATE UNIQUE INDEX idx_email ON users(email);
+同样一条 `SELECT * FROM users WHERE id = 1;`
+- 是直接全表扫描，还是走主键索引？
+- 如果 JOIN 三张表，先查哪一张做驱动表？
+- 子查询是先执行还是先改写成 JOIN？
 
--- 联合索引
-CREATE INDEX idx_name_email ON users(username, email);
+优化器根据**统计信息**（表的行数、索引选择度、数据分布）计算各种执行计划的**成本**，选成本最低的那个。
 
--- 函数索引（Oracle 和 PostgreSQL）
-CREATE INDEX idx_upper_username ON users(UPPER(username));
-```
+这里有个现实问题：**优化器不是全能的**。统计信息过期了、索引选择度不准、复杂查询的搜索空间太大——优化器都可能选错。后文第六部分会展开讲。
 
-### 2. ALTER - 修改结构
+### 4. 执行器
 
-#### 添加列
+优化器选好了路径（执行计划），执行器按这个路径走：
+- 调用存储引擎的接口读数据
+- 把过滤条件应用上
+- 返回结果行
 
-**MySQL**：
-```sql
-ALTER TABLE users ADD COLUMN age INT;
-ALTER TABLE users ADD COLUMN phone VARCHAR(20) AFTER email;
-```
+执行器的输出格式由客户端决定。你要 JSON 格式？MySQL 8.0 有 `SELECT JSON_OBJECT(...)`。你要一次拿 1000 条？执行器控制 LIMIT 语义。
 
-**Oracle/PostgreSQL**：
-```sql
-ALTER TABLE users ADD age INT;
--- Oracle/PostgreSQL 不支持 AFTER 关键字
-```
+### 5. 存储引擎
 
-#### 修改列
+MySQL 管这层叫"存储引擎"，PostgreSQL 和 Oracle 叫"数据存取层"。**这里才是数据真正被读写的层面。**
 
-**MySQL**：
-```sql
-ALTER TABLE users MODIFY COLUMN age BIGINT;
-ALTER TABLE users CHANGE COLUMN age user_age INT;
-```
+对于一条读取请求：
+1. 在 Buffer Pool 里找——找到了直接返回（内存命中）
+2. 没找到——从磁盘读页到 Buffer Pool
+3. 返回结果
 
-**Oracle**：
-```sql
-ALTER TABLE users MODIFY (age NUMBER(10));
-```
+对于一条写入请求：
+1. 先写 Redo Log（顺序写，很快）
+2. 再修改 Buffer Pool 里的内存页（这页变成"脏页"）
+3. 脏页在后台刷回磁盘
 
-**PostgreSQL**：
-```sql
-ALTER TABLE users ALTER COLUMN age TYPE BIGINT;
-ALTER TABLE users RENAME COLUMN age TO user_age;
-```
-
-#### 删除列
-
-```sql
-ALTER TABLE users DROP COLUMN age;
-```
-
-#### 添加约束
-
-```sql
--- 添加主键
-ALTER TABLE users ADD PRIMARY KEY (id);
-
--- 添加外键
-ALTER TABLE orders 
-ADD CONSTRAINT fk_user_id 
-FOREIGN KEY (user_id) REFERENCES users(id);
-
--- 添加唯一约束
-ALTER TABLE users ADD CONSTRAINT uk_username UNIQUE (username);
-
--- 添加检查约束
-ALTER TABLE users ADD CONSTRAINT chk_age CHECK (age >= 0 AND age <= 150);
-```
-
-#### 删除约束
-
-```sql
--- MySQL
-ALTER TABLE users DROP INDEX uk_username;
-ALTER TABLE orders DROP FOREIGN KEY fk_user_id;
-
--- Oracle/PostgreSQL
-ALTER TABLE users DROP CONSTRAINT uk_username;
-ALTER TABLE orders DROP CONSTRAINT fk_user_id;
-```
-
-### 3. DROP - 删除对象
-
-```sql
--- 删除表
-DROP TABLE users;
-
--- 删除表（如果存在）
-DROP TABLE IF EXISTS users;
-
--- 级联删除（删除依赖对象）
-DROP TABLE users CASCADE;
-
--- 删除数据库
-DROP DATABASE mydb;
-
--- 删除索引
-DROP INDEX idx_username;  -- MySQL 需要指定表名
-DROP INDEX idx_username ON users;  -- MySQL
-```
-
-### 4. TRUNCATE vs DELETE
-
-**TRUNCATE**：
-```sql
-TRUNCATE TABLE users;
-```
-
-**特点**：
-- 删除所有行，但保留表结构
-- 不记录单行删除日志，性能更高
-- 重置自增计数器
-- 不能回滚（在某些数据库中）
-- 不触发 DELETE 触发器
-
-**DELETE**：
-```sql
-DELETE FROM users;
-```
-
-**特点**：
-- 逐行删除，记录日志
-- 可以回滚
-- 可以使用 WHERE 条件
-- 触发 DELETE 触发器
-- 不重置自增计数器
+等等，这里有个重要的概念——**WAL（Write-Ahead Logging）**。所有主流数据库都遵循 WAL 原则：**先写日志，再写数据**。为什么？下一节讲。
 
 ---
 
-## 三大数据库的 DDL 差异
+## 理解这个流程有什么用？
 
-### 1. 自增列
+你现在看到一条慢查询，脑子里应该会沿着这个路径排查：
 
-| 数据库 | 语法 | 说明 |
-|--------|------|------|
-| MySQL | `AUTO_INCREMENT` | 内置支持 |
-| Oracle | `SEQUENCE` + 触发器 或 `IDENTITY`（12c+） | 需要手动创建序列 |
-| PostgreSQL | `SERIAL` 或 `IDENTITY` | SERIAL 是简写 |
+- 连接阶段卡？→ 检查连接池、网络延迟
+- 解析阶段慢？→ SQL 太复杂、没有绑定变量
+- 优化器选错？→ 统计信息过旧、需要加 Hint
+- 执行阶段慢？→ 索引缺失、Buffer Pool 太小、磁盘 IO 瓶颈
 
-### 2. 数据类型
-
-| 类型 | MySQL | Oracle | PostgreSQL |
-|------|-------|--------|------------|
-| 整数 | INT | NUMBER | INTEGER |
-| 字符串 | VARCHAR | VARCHAR2 | VARCHAR |
-| 文本 | TEXT | CLOB | TEXT |
-| 日期时间 | DATETIME | DATE/TIMESTAMP | TIMESTAMP |
-
-### 3. 字符串长度
-
-- **MySQL**：VARCHAR(50) 表示 50 个字符
-- **Oracle**：VARCHAR2(50) 表示 50 字节或字符（取决于配置）
-- **PostgreSQL**：VARCHAR(50) 表示 50 个字符
-
-### 4. IF EXISTS/IF NOT EXISTS
-
-- **MySQL**：支持 `IF EXISTS` 和 `IF NOT EXISTS`
-- **Oracle**：不直接支持，需要 PL/SQL 块
-- **PostgreSQL**：支持 `IF EXISTS` 和 `IF NOT EXISTS`
+**遇到问题能定位是哪一层的问题**，这就是第一张地图的价值。
 
 ---
 
-## DDL 事务性
+## InnoDB 架构速写
 
-### MySQL（InnoDB）
-- DDL 操作会隐式提交当前事务
-- DDL 本身不能回滚
-- MySQL 8.0+ 支持原子 DDL（Atomic DDL）
+如果你主要用 MySQL，InnoDB 是你打交道最多的存储引擎。它的核心组件不多，但每个都对应着一个优化点：
 
-```sql
-START TRANSACTION;
-INSERT INTO users (username) VALUES ('alice');
-ALTER TABLE users ADD COLUMN age INT;  -- 隐式提交
-ROLLBACK;  -- 无法回滚 INSERT
+### Buffer Pool
+
+InnoDB 读写数据，有一个前提：**所有操作都在内存里完成**。
+
+Buffer Pool 就是 InnoDB 的内存区域，它缓存了你访问过的数据页。当你查一条记录时，InnoDB 把整页数据（16KB）加载到 Buffer Pool 里，然后从内存返回。
+
+看几个相关的 MySQL 变量：
+
+```
+innodb_buffer_pool_size       # Buffer Pool 大小（通常是物理内存的 60-80%）
+innodb_buffer_pool_instances  # Buffer Pool 分多少实例（减少锁争用）
 ```
 
-### Oracle
-- DDL 操作自动提交
-- DDL 前后的事务都会被提交
-- 无法在事务中回滚 DDL
+性能调优里最划算的操作：**把 Buffer Pool 设大**。少了这块内存，数据就要频繁读磁盘——磁盘 IO 比内存慢几个数量级。
 
-### PostgreSQL
-- DDL 操作是事务性的
-- 可以在事务中回滚 DDL
-- 这是 PostgreSQL 的重要特性
+### Redo Log Buffer
 
-```sql
-BEGIN;
-CREATE TABLE test (id INT);
-INSERT INTO test VALUES (1);
-ROLLBACK;  -- 表创建和数据插入都会回滚
+InnoDB 的持久性保证来自 Redo Log。事务提交时，InnoDB 不急着把数据页写入磁盘（太慢了），而是先写 Redo Log（顺序写，快得多）。
+
+理解这个顺序很重要：
+
 ```
+事务提交
+  ↓
+写入 Redo Log（顺序写磁盘）  ← 这一步完成后返回"提交成功"
+  ↓
+后台刷新脏页到磁盘（随机写，耗时）  ← 这一步是异步的
+```
+
+相关变量：
+
+```
+innodb_log_file_size           # Redo Log 文件大小
+innodb_log_files_in_group      # Redo Log 文件组数量
+innodb_flush_log_at_trx_commit # 刷盘策略（0/1/2）
+```
+
+`innodb_flush_log_at_trx_commit=1` 的意思是：每次提交都刷盘。这是最安全的设置，也是 MySQL 默认值。如果你能接受丢失 1 秒的数据（比如日志表），设成 2 能提高不少性能。
+
+### Change Buffer
+
+这是一个容易被人忽视的优化。当你 INSERT/UPDATE 一行时，不仅要改聚簇索引（主键），还要改二级索引（如果有）。
+
+但问题来了：**如果二级索引对应的数据页在 Buffer Pool 里找不到呢？** 按常规流程，你要立刻把磁盘上的那页读到内存里再改——这很慢。
+
+Change Buffer 的思路：先记录下来"这个二级索引的修改暂缓"，等下次查询真的读到这页时，再把这些修改合并进去。省了一次磁盘读。
+
+对写密集的场景（尤其是 INSERT 很多、二级索引很多），Change Buffer 能带来可观的性能提升。
+
+相关变量：
+
+```
+innodb_change_buffer_max_size   # Change Buffer 占 Buffer Pool 的百分比（默认 25%）
+```
+
+### Adaptive Hash Index
+
+InnoDB 会自动监控索引查询的模式，如果发现某个索引的等值查询非常频繁，它会自动在 B+Tree 索引上建立一层**内存中的 Hash 索引**，让等值查询从 B+Tree 的 O(log n) 降为 Hash 的 O(1)。
+
+你不需要配置它，知道它在就行。而且它也不总是好事——在高并发写入时，AHI 的维护本身也有成本。MySQL 8.0 提供了 `innodb_adaptive_hash_index` 参数，可以在极端场景下关闭它。
 
 ---
 
-## 易错点与边界
+## 三大数据库的思维模型
 
-### 1. 级联删除的风险
+很多教程喜欢放三种数据库的架构图让你对比。但那样只是增加了记忆负担。
 
-```sql
--- 危险操作：级联删除会删除所有依赖对象
-DROP TABLE users CASCADE;
-```
+更有效的做法是：**每种数据库用一句话抓住它的思维模型。**
 
-**最佳实践**：
-- 删除前检查依赖关系
-- 使用 `RESTRICT` 选项防止意外删除
-- 在生产环境谨慎使用 CASCADE
+### MySQL：插件式引擎，简单就是生产力
 
-### 2. ALTER TABLE 锁表问题
+MySQL 的设计哲学是"把存储这件事留给引擎决定"。InnoDB、MyISAM、Memory 可以替换，甚至能在同一张数据库里混合使用不同引擎。
 
-**MySQL**：
-- 传统 ALTER TABLE 会锁表
-- Online DDL（5.6+）减少锁表时间
-- 使用 `ALGORITHM=INPLACE` 和 `LOCK=NONE`
+MySQL 的强项：
+- 部署简单，运维轻量
+- 主从复制生态成熟
+- 互联网场景经验丰富（读写分离、分库分表）
 
-```sql
-ALTER TABLE users 
-ADD COLUMN age INT,
-ALGORITHM=INPLACE, 
-LOCK=NONE;
-```
+弱项也很明显：
+- 优化器比较"天真"（Oracle 和 PG 在很多场景下优化得更好）
+- 存储过程能力弱（别在 MySQL 里写复杂的存储过程）
+- 并行查询能力有限（8.0 才开始有这个功能，不如 PG 和 Oracle）
 
-**PostgreSQL**：
-- 某些 ALTER 操作会长时间锁表
-- 使用并发索引创建：`CREATE INDEX CONCURRENTLY`
+**一句话**：如果你的场景是互联网常见应用（CRUD + 读写分离），MySQL 是最省心的选择。
 
-```sql
-CREATE INDEX CONCURRENTLY idx_username ON users(username);
-```
+### PostgreSQL：扩展驱动，标准化先行者
 
-### 3. TRUNCATE 的限制
+PostgreSQL 的设计哲学是"我们要做最符合 SQL 标准的数据库，而且你可以扩展任何东西"。
 
-**不能使用 WHERE 条件**：
-```sql
--- 错误
-TRUNCATE TABLE users WHERE age > 30;
+PostgreSQL 的强项：
+- SQL 标准覆盖率最高（窗口函数、CTE、递归查询都是原生支持）
+- 扩展性极强（插件机制，PostGIS、TimescaleDB、Citus 都是插件）
+- 数据类型最丰富（JSONB 比 MySQL 的 JSON 强、数组、hstore、自定义类型）
+- 优化器能力优秀
+- DDL 是事务型的（能回滚！MySQL 做不到）
 
--- 应该使用
-DELETE FROM users WHERE age > 30;
-```
+弱项：
+- 复制生态不如 MySQL 成熟（逻辑复制是后来才完善的）
+- 社区中文资源偏少
+- 运维复杂度比 MySQL 高一点点
 
-**外键约束的影响**：
-```sql
--- 如果 orders 表有外键引用 users，则 TRUNCATE 会失败
-TRUNCATE TABLE users;  -- ERROR
+**一句话**：你的场景涉及复杂查询、数据分析、GIS、超大表（分区），或者你希望一个数据库解决很多问题，PostgreSQL 是更好的选择。
 
--- 需要级联或先删除外键
-TRUNCATE TABLE users CASCADE;  -- PostgreSQL
-```
+### Oracle：企业堆料，只负责稳定
 
-### 4. 字符集不匹配
+Oracle 不是开源数据库，这里只简单提一下。它的设计哲学是"用硬件和内核线程堆出稳定性"。
 
-```sql
--- 创建表时未指定字符集，使用数据库默认
-CREATE TABLE users (name VARCHAR(50));
+Oracle 的强项：
+- RAC（Real Application Cluster）：多台服务器共享一个数据库
+- Data Guard：物理/逻辑同步，灾备能力极强
+- AWR/ASH/ADDM：性能诊断工具链最完善
+- Flashback：误操作恢复到过去某个时间点
 
--- 插入中文可能乱码
-INSERT INTO users VALUES ('张三');
-```
-
-**最佳实践**：
-```sql
--- 明确指定字符集
-CREATE TABLE users (
-    name VARCHAR(50) CHARACTER SET utf8mb4
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+**一句话**：如果你在金融、电信这类"不能出一点错"的行业，Oracle 的贵是有道理的。
 
 ---
 
-## 生产实践示例
+## WAL + Checkpoint + 崩溃恢复 —— 所有数据库的共同语言
 
-### 1. 数据库初始化脚本
+不管哪个数据库，写入数据的核心逻辑是一样的。
 
-```sql
--- MySQL 完整初始化脚本
-CREATE DATABASE IF NOT EXISTS myapp
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
+### WAL：先写日志，再写数据
 
-USE myapp;
+想象一个场景：你要更新一行数据。数据库怎么做才安全？
 
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    status TINYINT DEFAULT 1 COMMENT '1:active, 0:inactive',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
-```
+最简单的办法是直接改磁盘数据——但太慢，磁盘随机写入是灾难。数据库的做法：
 
-### 2. 安全的表结构变更
+1. 把"要把 id=1 的 balance 改成 900"这条记录追加到日志文件（顺序写，很快）
+2. 确认日志落盘后，告诉客户端"提交成功"
+3. 在后台慢慢把数据页刷新到磁盘
 
-```sql
--- 第一步：备份
-CREATE TABLE users_backup AS SELECT * FROM users;
+这就是 WAL。**写入的实时性能来自顺序写日志，持久性来自日志落盘，吞吐量来自异步刷脏页。**
 
--- 第二步：在测试环境验证
-ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+### Checkpoint：定期做一次"总结"
 
--- 第三步：生产环境执行（非高峰期）
-ALTER TABLE users 
-ADD COLUMN phone VARCHAR(20),
-ALGORITHM=INPLACE,
-LOCK=NONE;
+日志可以无限追加，但不能无限增长。Checkpoint 就是那个"清理节点"。
 
--- 第四步：验证
-SELECT COUNT(*) FROM users;
-```
+- 在 Checkpoint 之前：日志里的修改，有些已经写到磁盘了，有些还没写
+- 执行 Checkpoint：把当前所有脏页强制刷到磁盘
+- Checkpoint 之后：对应的日志就可以被覆盖或删除了
 
-### 3. 分批删除大表数据
+Checkpoint 触发条件：日志文件满了 70-80%、或者距离上次 Checkpoint 太久。
 
-```sql
--- 不要直接 TRUNCATE 大表
--- TRUNCATE TABLE large_table;
+如果 Checkpoint 太频繁，影响正常写入性能。如果不频繁，日志膨胀恢复慢。这是一个需要权衡的参数。
 
--- 分批删除
-WHILE (SELECT COUNT(*) FROM large_table) > 0 DO
-    DELETE FROM large_table LIMIT 10000;
-    -- 暂停，避免锁表时间过长
-    SELECT SLEEP(1);
-END WHILE;
-```
+### 崩溃恢复
 
-### 4. 使用临时表测试
+如果数据库在你提交后、脏页刷盘前突然崩了：
 
-```sql
--- 创建临时表测试 DDL 变更
-CREATE TEMPORARY TABLE users_test LIKE users;
+1. 重启时扫描 Redo Log 最后一个 Checkpoint 之后的所有日志
+2. 对已经提交的写入，重放（Redo）——这就是 WAL 保证的持久性
+3. 对未提交的事务，用 Undo Log 回滚
 
-ALTER TABLE users_test ADD COLUMN phone VARCHAR(20);
-
--- 验证无误后再在正式表执行
-```
+恢复时间取决于需要重放的日志量。所以我说前面 Checkpoint 的原理你理解了，你就知道为什么恢复时间会变长。
 
 ---
 
-## 参考资料
+## 这一节的核心思维
 
-1. **MySQL 官方文档**：
-   - DDL Statements: https://dev.mysql.com/doc/refman/8.0/en/sql-data-definition-statements.html
-   - Online DDL: https://dev.mysql.com/doc/refman/8.0/en/innodb-online-ddl.html
+现在你脑子里应该有一张图了：
 
-2. **Oracle 官方文档**：
-   - SQL Language Reference: https://docs.oracle.com/en/database/oracle/oracle-database/
+```
+你写 SQL
+  → 连接器检查身份
+  → 解析器搞懂你什么意思  
+  → 优化器选最快路径
+  → 执行器执行
+  → 存储引擎读写内存或磁盘
+    → WAL 保证不改丢
+    → Checkpoint 保证不会太大
+    → 崩了也能恢复
+```
 
-3. **PostgreSQL 官方文档**：
-   - DDL: https://www.postgresql.org/docs/current/ddl.html
-   - Transactional DDL: https://wiki.postgresql.org/wiki/Transactional_DDL_in_PostgreSQL
-
-4. **最佳实践**：
-   - 在生产环境执行 DDL 前先在测试环境验证
-   - 使用版本控制管理 DDL 脚本
-   - 大表变更考虑使用在线工具（pt-online-schema-change、gh-ost）
-   - 始终备份数据后再执行 DDL 操作
+以后不管学什么数据库，你都是在学这张图在不同产品里的具体实现。
