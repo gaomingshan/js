@@ -222,3 +222,160 @@ SELECT username, email FROM users WHERE id = 100000;
 ```
 
 你写的每一行 SQL，最终都落在这条链的最后一环。
+
+---
+
+## 速查：InnoDB 行格式字节结构
+
+InnoDB 的行格式（以 DYNAMIC 为例）在磁盘上是这样的：
+
+```
+| 变长字段长度列表（1-2字节/字段） | NULL位图（1-2字节） | 行头信息（5-6字节） | 字段1 | 字段2 | ... |
+```
+
+**1. 变长字段长度列表：**
+- 只有 VARCHAR、VARBINARY、TEXT、BLOB 等变长字段会在此记录
+- 长度 ≤ 255 字节：用 1 字节存
+- 长度 > 255 字节：用 2 字节存
+- 列表**逆序**存放（从最后一个变长字段到第一个）
+
+**2. NULL 位图：**
+- 每个允许为 NULL 的字段占 1 bit
+- 总 bit 数 = NULL 字段数，向上取整到字节
+- 8 个字段以内占 1 字节，16 个以内占 2 字节
+
+**3. 行头（固定 5-6 字节）**
+- `DB_TRX_ID`（6 字节）：最后修改这行的事务 ID
+- `DB_ROLL_PTR`（7 字节）：指向 Undo Log 的回滚指针
+- `REC_INFO`：记录类型（普通行/索引根/索引叶/最小/最大）
+- `N_OWNED`：拥有的记录数（Page Directory 相关）
+
+**4. 实际字段值：**
+- NULL 的字段不占空间（由位图标记）
+- 每个字段按创建表时的顺序排列
+
+**示例计算：**
+```sql
+CREATE TABLE t (
+    id INT,              -- 4 字节，NOT NULL
+    name VARCHAR(50),    -- 变长
+    age TINYINT,         -- 1 字节，可为 NULL
+    email VARCHAR(100)   -- 变长，可为 NULL
+);
+-- 一行中 "alice", 25, NULL 的存储：
+-- 变长长度列表: name=5(1字节) + email=0(在NULL位图标记) → 1 字节
+-- NULL位图: 3个NULL字段(age,email) → 1 字节（只用3bit）
+-- 行头: 5 字节
+-- 字段: id(4) + "alice"(5) → age=NULL 不存 + email=NULL 不存
+-- 总计: 1 + 1 + 5 + 4 + 5 = 16 字节（不含行首的变长列表）
+```
+
+## 速查：页内部布局
+
+InnoDB 每页 16KB，内部结构：
+
+```
+| Fil Header(38) | Page Header(56) | Infimum+Supremum | User Records | Free Space | Page Directory | Fil Trailer(8) |
+```
+
+**1. File Header（38 字节）：**
+- FIL_PAGE_OFFSET：页号
+- FIL_PAGE_PREV / FIL_PAGE_NEXT：上一页/下一页指针（形成 B+Tree 叶子节点的双向链表）
+- FIL_PAGE_TYPE：页类型（索引页、Undo 页、系统页等）
+- FIL_PAGE_LSN：页最近修改的 LSN
+
+**2. Page Header（56 字节）：**
+- PAGE_N_RECS：记录数
+- PAGE_LEVEL：页在 B+Tree 中的层级（0=叶子）
+- PAGE_INDEX_ID：索引 ID
+- PAGE_DIRECTION：插入方向（left/right/none）
+
+**3. User Records：**
+你存的数据行，物理上顺序不一定连续（有碎片空间）。
+
+**4. Page Directory（页目录）：**
+- 由 slot 组成，每个 slot 指向一组记录（1-8 条记录）
+- slot 按主键顺序排列
+- **在一个页内找某行时，先在 Page Directory 二分查找找到 slot，再在 slot 内顺序遍历**
+- 这就是"页内查找也是 O(log n) 而不是 O(n)"的原因
+
+**5. 页空间分配：**
+- User Records 从页的底部向中间增长
+- Page Directory 从页的顶部向中间增长
+- Free Space 在中间，被两者"蚕食"
+- 当你插入新行时，从 Free Space 中分配
+
+## 速查：区（Extent）、段（Segment）、表空间
+
+### 区（Extent）
+
+- 64 个连续的页组成一个区（1MB）
+- InnoDB 分配空间的最小单位是区，不是页
+- 当一个段需要新空间时，一次分配一整区
+
+为什么要用区？**为了让数据在磁盘上尽量连续。** 连续的数据在顺序读取时性能远好于离散的数据。
+
+### 段（Segment）
+
+- 一个索引对应两个段：**叶子节点段** + **非叶子节点段**
+- 叶子节点段管理所有叶子页的空间
+- 非叶子节点段管理所有内部节点页的空间
+
+把叶子和非叶子分开存储的好处：**叶子节点的访问频率远高于非叶子节点，分开可以独立管理缓存策略。**
+
+### 表空间
+
+- `ibd` 文件就是一个表空间
+- 一个 InnoDB 表对应一个 .ibd 文件（独立表空间模式）
+- 表空间由若干个区（extent）组成
+- 系统表空间（ibdata1）存放数据字典、Undo 信息等
+
+```sql
+-- 查看表空间模式
+SHOW VARIABLES LIKE 'innodb_file_per_table';  -- ON=独立表空间
+
+-- 查看表空间文件大小
+SELECT file_name, round(bytes/1024/1024) as size_mb
+FROM information_schema.files
+WHERE file_name LIKE '%.ibd';
+```
+
+## 速查：碎片产生与回收
+
+### 碎片是怎么来的
+
+```
+1. DELETE 行 → 页中留下"空洞"（行只是标记删除，不回收空间）
+2. UPDATE 变长字段 → 新值比旧值长，旧位置放不下了，行移动到新页，原位变空洞
+3. 页分裂 → 原页数据分到两页，两页都只剩约 50% 利用率
+```
+
+### 怎么看碎片
+
+```sql
+-- MySQL: 比较 data_free 字段
+SELECT table_name, data_length, index_length, data_free,
+       ROUND(data_free / (data_length + index_length) * 100) AS free_pct
+FROM information_schema.tables
+WHERE table_schema = 'mydb' AND table_name = 'users';
+
+-- 如果 data_free 占比超过 20%，可以考虑重建
+```
+
+### 回收碎片
+
+```sql
+-- MySQL
+ALTER TABLE users ENGINE = InnoDB;  -- 重建表（会锁表，谨慎）
+OPTIMIZE TABLE users;                -- 同上，但可以在备库做
+
+-- PostgreSQL
+VACUUM FULL users;    -- 完全回收（锁表）
+CLUSTER users;        -- 按索引重排（需先建索引）
+
+-- Oracle
+ALTER TABLE users MOVE;
+ALTER INDEX idx_users REBUILD;
+```
+
+不是所有碎片都需要回收。小碎片（data_free < 10%）忽略，只在批量删除后 or 数据文件明显膨胀时做。
